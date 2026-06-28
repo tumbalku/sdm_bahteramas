@@ -1,0 +1,215 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Role {
+  ADMIN
+  STAFF
+  EMPLOYEE
+}
+
+enum DocumentArchiveCategory {
+  UTAMA
+  KONDISIONAL
+  PROFESI
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ==========================================
+// MASTER DATA KEPEGAWAIAN
+// ==========================================
+
+model EmploymentStatus {
+  id             String          @id @default(cuid())
+  name           String          @unique
+  employeeGroups EmployeeGroup[]
+  users          User[]
+}
+
+model EmployeeGroup {
+  id                 String           @id @default(cuid())
+  name               String
+  employmentStatusId String
+  employmentStatus   EmploymentStatus @relation(fields: [employmentStatusId], references: [id])
+  users              User[]
+
+  @@unique([name, employmentStatusId])
+}
+
+model ProfessionGroup {
+  id                     String                  @id @default(cuid())
+  name                   String                  @unique
+  employeePositions      EmployeePosition[]
+  users                  User[]
+  documentTypeProfessions DocumentTypeProfession[]
+}
+
+model EmployeePosition {
+  id                String          @id @default(cuid())
+  name              String
+  professionGroupId String
+  professionGroup   ProfessionGroup @relation(fields: [professionGroupId], references: [id])
+  users             User[]
+
+  @@unique([name, professionGroupId])
+}
+
+model EmployeeRank {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[]
+}
+
+model Workplace {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[]
+}
+
+// ==========================================
+// USER & AUTENTIKASI
+// ==========================================
+
+model User {
+  id                 String            @id @default(cuid())
+  employeeId         String            @unique // NIP Pegawai
+  email              String            @unique
+  passwordHash       String
+  name               String
+  role               Role              @default(EMPLOYEE)
+  gender             String?
+  birthDate          DateTime?
+  employmentStatusId String?
+  employmentStatus   EmploymentStatus? @relation(fields: [employmentStatusId], references: [id])
+  employeeGroupId    String?
+  employeeGroup      EmployeeGroup?    @relation(fields: [employeeGroupId], references: [id])
+  professionGroupId  String?
+  professionGroup    ProfessionGroup?  @relation(fields: [professionGroupId], references: [id])
+  employeePositionId String?
+  employeePosition   EmployeePosition? @relation(fields: [employeePositionId], references: [id])
+  employeeRankId     String?
+  employeeRank       EmployeeRank?     @relation(fields: [employeeRankId], references: [id])
+  workplaceId        String?
+  workplace          Workplace?        @relation(fields: [workplaceId], references: [id])
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  userRoles             UserRole[]
+  documents             DocumentRecord[]
+  verificationHistories VerificationHistory[]
+  securityLogs          SecurityLog[]
+
+  @@index([professionGroupId])
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role
+
+  @@unique([userId, role])
+}
+
+// ==========================================
+// MANAJEMEN DOKUMEN
+// ==========================================
+
+model DocumentType {
+  id                 String                  @id @default(cuid())
+  code               String                  @unique
+  name               String                  @unique
+  description        String?
+  archiveCategory    DocumentArchiveCategory
+  isMandatory        Boolean                 @default(false)
+  requiresExpiryDate Boolean                 @default(false)
+  allowedFormats     String                  // Contoh: "pdf,jpg,png"
+  maxSizeMb          Int
+  icon               String?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  documentProfessions DocumentTypeProfession[]
+  documentRecords     DocumentRecord[]
+
+  @@index([archiveCategory])
+}
+
+model DocumentTypeProfession {
+  id                String          @id @default(cuid())
+  documentTypeId    String
+  documentType      DocumentType    @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+  professionGroupId String
+  professionGroup   ProfessionGroup @relation(fields: [professionGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([documentTypeId, professionGroupId])
+}
+
+model DocumentRecord {
+  id             String         @id @default(cuid())
+  ownerId        String
+  owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  documentTypeId String
+  documentType   DocumentType   @relation(fields: [documentTypeId], references: [id])
+  status         DocumentStatus @default(PENDING)
+  fileName       String
+  filePath       String
+  issueDate      DateTime?
+  expiryDate     DateTime?
+  uploadedAt     DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  verificationHistories VerificationHistory[]
+
+  @@index([ownerId])
+  @@index([documentTypeId])
+  @@index([status])
+}
+
+model VerificationHistory {
+  id               String         @id @default(cuid())
+  documentRecordId String
+  documentRecord   DocumentRecord @relation(fields: [documentRecordId], references: [id], onDelete: Cascade)
+  status           DocumentStatus
+  reviewedById     String?
+  reviewedBy       User?          @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewNote       String?
+  reviewedAt       DateTime       @default(now())
+
+  @@index([documentRecordId])
+}
+
+// ==========================================
+// SECURITY AUDIT LOG
+// ==========================================
+
+model SecurityLog {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorName String
+  actorRole String
+  eventType String
+  resource  String
+  ipAddress String?
+  status    String
+  metadata  Json?
+
+  @@index([timestamp])
+  @@index([eventType])
+}

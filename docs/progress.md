@@ -35,6 +35,107 @@ Hanya tersedia PRD (`PRD-SMDP-PORTAL-v1.0-20260627.md`) dan dokumentasi awal.
 - [x] Inisialisasi project Next.js + TypeScript (selesai 2026-06-28)
 - [x] Setup Tailwind CSS + Shadcn UI (selesai 2026-06-28)
 - [x] Installasi dependensi npm (selesai 2026-06-28)
+- [x] Setup Prisma + koneksi PostgreSQL (selesai 2026-06-28)
+- [x] Buat `prisma/schema.prisma` (selesai 2026-06-28)
+- [x] Buat `prisma/seed.ts` (selesai 2026-06-28)
+- [x] Setup NextAuth.js (Credentials Provider) (selesai 2026-06-28)
+- [x] Buat `src/lib/prisma.ts` (singleton) (selesai 2026-06-28)
+- [x] Buat `src/lib/auth-utils.ts` (`requireRole`, `hasRole`) (selesai 2026-06-28)
+- [x] Buat `src/lib/api-client.ts` (fetch wrapper) (selesai 2026-06-28)
+- [x] Buat `src/lib/security-log.ts` (`logActivity`) (selesai 2026-06-28)
+- [x] Buat `src/lib/storage.ts` (`getStorageProvider`) (selesai 2026-06-28)
+- [x] Buat `src/lib/` utilities (`parseAllowedFormats`, `slugifyFileName`) (selesai 2026-06-28)
+- [x] Buat `src/app/providers.tsx` (QueryClientProvider) (selesai 2026-06-28)
+- [x] Buat `src/app/layout.tsx` (root layout) (selesai 2026-06-28)
+- [x] Buat `src/proxy.ts` (middleware autentikasi) (selesai 2026-06-28)
+- [x] Buat `src/app/(dashboard)/layout.tsx` (Sidebar + Navbar) (selesai 2026-06-28)
+
+### F01 — Autentikasi
+- [x] `src/modules/auth/service.ts` (selesai 2026-06-28)
+- [x] `src/modules/auth/validation.ts` (selesai 2026-06-28)
+- [x] `src/modules/auth/types.ts` (selesai 2026-06-28)
+- [x] `src/modules/auth/api.ts` (selesai 2026-06-28)
+- [x] `src/modules/auth/hooks.ts` (selesai 2026-06-28)
+- [x] `src/modules/auth/components/` (LoginForm, dll) (selesai 2026-06-28)
+- [x] `src/app/login/page.tsx` (selesai 2026-06-28)
+- [x] `src/app/api/v1/auth/[...nextauth]/route.ts` (selesai 2026-06-28)
+
+### F03 — Manajemen Jenis Dokumen
+- [x] `src/modules/document-types/service.ts` (selesai 2026-06-28)
+- [x] `src/modules/document-types/repository.ts` (selesai 2026-06-28)
+- [x] `src/modules/document-types/validation.ts` (selesai 2026-06-28)
+- [x] `src/modules/document-types/types.ts` (selesai 2026-06-28)
+- [x] `src/modules/document-types/api.ts` (selesai 2026-06-28)
+- [x] `src/modules/document-types/hooks.ts` (selesai 2026-06-28)
+- [x] `src/modules/document-types/components/` (selesai 2026-06-28)
+- [x] `src/app/api/v1/document-types/route.ts` (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/document-types/page.tsx` (selesai 2026-06-28)
+
+### F06 — Manajemen Pegawai (Users)
+- [x] `src/modules/users/service.ts` (selesai 2026-06-28)
+- [x] `src/modules/users/repository.ts` (selesai 2026-06-28)
+- [x] `src/modules/users/validation.ts` (selesai 2026-06-28)
+- [x] `src/modules/users/types.ts` (selesai 2026-06-28)
+- [x] `src/modules/users/api.ts` (selesai 2026-06-28)
+- `[x]` `src/modules/users/hooks.ts` (selesai 2026-06-28)
+- `[x]` `src/modules/users/components/` (selesai 2026-06-28)
+- `[x]` `src/app/api/v1/users/route.ts` (selesai 2026-06-28)
+- `[x]` `src/app/(dashboard)/users/page.tsx` (selesai 2026-06-28)
+
+### F04 — Manajemen Dokumen
+- [x] `src/modules/documents/service.ts` (selesai 2026-06-28)
+- [x] `src/modules/documents/repository.ts` (selesai 2026-06-28)
+- [x] `src/modules/documents/validation.ts` (selesai 2026-06-28)
+- [x] `src/modules/documents/types.ts` (selesai 2026-06-28)
+- [x] `src/modules/documents/api.ts` (selesai 2026-06-28)
+- [x] `src/modules/documents/hooks.ts` (selesai 2026-06-28)
+- [x] `src/modules/documents/components/` (DocumentTabs, DocumentUploadForm, dll) (selesai 2026-06-28)
+- [x] `src/app/api/v1/documents/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/v1/documents/upload/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/v1/documents/[id]/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/v1/documents/download/route.ts` (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/documents/page.tsx` (selesai 2026-06-28)
+
+### F05 — Verifikasi Dokumen
+- [x] `src/modules/verification/service.ts` (selesai 2026-06-28)
+- [x] `src/modules/verification/repository.ts` (selesai 2026-06-28)
+- [x] `src/modules/verification/validation.ts` (selesai 2026-06-28)
+- [x] `src/modules/verification/types.ts` (selesai 2026-06-28)
+- [x] `src/modules/verification/api.ts` (selesai 2026-06-28)
+- [x] `src/modules/verification/hooks.ts` (selesai 2026-06-28)
+- [x] `src/modules/verification/components/` (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/verification/page.tsx` (selesai 2026-06-28)
+- [x] `src/app/api/v1/verification/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/v1/verification/[id]/approve/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/v1/verification/[id]/reject/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/v1/verification/document/[id]/route.ts` (selesai 2026-06-28)
+
+### F07 — Profil
+- [x] `src/modules/profile/service.ts` (selesai 2026-06-28)
+- [x] `src/modules/profile/repository.ts` (selesai 2026-06-28)
+- [x] `src/modules/profile/validation.ts` (selesai 2026-06-28)
+- [x] `src/modules/profile/types.ts` (selesai 2026-06-28)
+- [x] `src/modules/profile/api.ts` (selesai 2026-06-28)
+- [x] `src/modules/profile/hooks.ts` (selesai 2026-06-28)
+- [x] `src/modules/profile/components/` (selesai 2026-06-28)
+- [x] `src/app/api/v1/profile/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/v1/profile/password/route.ts` (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/profile/page.tsx` (selesai 2026-06-28)
+
+### F08 — Security Logs
+- [x] `src/modules/security-logs/service.ts` (selesai 2026-06-28)
+- [x] `src/modules/security-logs/repository.ts` (selesai 2026-06-28)
+- [x] `src/modules/security-logs/types.ts` (selesai 2026-06-28)
+- [x] `src/modules/security-logs/api.ts` (selesai 2026-06-28)
+- [x] `src/modules/security-logs/hooks.ts` (selesai 2026-06-28)
+- [x] `src/modules/security-logs/components/` (selesai 2026-06-28)
+- [x] `src/app/api/v1/security-logs/route.ts` (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/security-logs/page.tsx` (selesai 2026-06-28)
+
+### F02 — Dashboard
+- [x] `src/modules/dashboard/hooks.ts` (selesai 2026-06-28)
+- [x] `src/modules/dashboard/components/` (StatsCard, dll) (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/dashboard/page.tsx` (selesai 2026-06-28)
 
 ---
 
@@ -46,103 +147,7 @@ Hanya tersedia PRD (`PRD-SMDP-PORTAL-v1.0-20260627.md`) dan dokumentasi awal.
 
 ## 🔴 Yang Belum Dibuat
 
-### Infrastructure / Setup Awal
-- [ ] Setup Prisma + koneksi PostgreSQL
-- [ ] Buat `prisma/schema.prisma` (lengkap sesuai PRD §8.4)
-- [ ] Buat `prisma/seed.ts` (data master awal)
-- [ ] Setup NextAuth.js (Credentials Provider)
-- [ ] Buat `src/lib/prisma.ts` (singleton)
-- [ ] Buat `src/lib/auth-utils.ts` (`requireRole`, `hasRole`)
-- [ ] Buat `src/lib/api-client.ts` (fetch wrapper)
-- [ ] Buat `src/lib/security-log.ts` (`logActivity`)
-- [ ] Buat `src/lib/storage.ts` (`getStorageProvider`)
-- [ ] Buat `src/lib/` utilities (`parseAllowedFormats`, `slugifyFileName`)
-- [ ] Buat `src/app/providers.tsx` (QueryClientProvider)
-- [ ] Buat `src/app/layout.tsx` (root layout)
-- [ ] Buat `src/proxy.ts` (middleware autentikasi)
-- [ ] Buat `src/app/(dashboard)/layout.tsx` (Sidebar + Navbar)
 
-### F01 — Autentikasi
-- [ ] `src/modules/auth/service.ts`
-- [ ] `src/modules/auth/validation.ts`
-- [ ] `src/modules/auth/types.ts`
-- [ ] `src/modules/auth/api.ts`
-- [ ] `src/modules/auth/hooks.ts`
-- [ ] `src/modules/auth/components/` (LoginForm, dll)
-- [ ] `src/app/login/page.tsx`
-- [ ] `src/app/api/v1/auth/[...nextauth]/route.ts`
-
-### F03 — Manajemen Jenis Dokumen
-- [ ] `src/modules/document-types/service.ts`
-- [ ] `src/modules/document-types/repository.ts`
-- [ ] `src/modules/document-types/validation.ts`
-- [ ] `src/modules/document-types/types.ts`
-- [ ] `src/modules/document-types/api.ts`
-- [ ] `src/modules/document-types/hooks.ts`
-- [ ] `src/modules/document-types/components/`
-- [ ] `src/app/api/v1/document-types/route.ts`
-- [ ] `src/app/(dashboard)/document-types/page.tsx`
-
-### F06 — Manajemen Pegawai (Users)
-- [ ] `src/modules/users/service.ts`
-- [ ] `src/modules/users/repository.ts`
-- [ ] `src/modules/users/validation.ts`
-- [ ] `src/modules/users/types.ts`
-- [ ] `src/modules/users/api.ts`
-- [ ] `src/modules/users/hooks.ts`
-- [ ] `src/modules/users/components/`
-- [ ] `src/app/api/v1/users/route.ts`
-- [ ] `src/app/(dashboard)/users/page.tsx`
-
-### F04 — Manajemen Dokumen
-- [ ] `src/modules/documents/service.ts`
-- [ ] `src/modules/documents/repository.ts`
-- [ ] `src/modules/documents/validation.ts`
-- [ ] `src/modules/documents/types.ts`
-- [ ] `src/modules/documents/api.ts`
-- [ ] `src/modules/documents/hooks.ts`
-- [ ] `src/modules/documents/components/` (DocumentTabs, DocumentUploadForm, dll)
-- [ ] `src/app/api/v1/documents/route.ts`
-- [ ] `src/app/api/v1/documents/upload/route.ts`
-- [ ] `src/app/api/v1/documents/[id]/route.ts`
-- [ ] `src/app/(dashboard)/documents/page.tsx`
-
-### F05 — Verifikasi Dokumen
-- [ ] `src/modules/verification/service.ts`
-- [ ] `src/modules/verification/repository.ts`
-- [ ] `src/modules/verification/validation.ts`
-- [ ] `src/modules/verification/types.ts`
-- [ ] `src/modules/verification/api.ts`
-- [ ] `src/modules/verification/hooks.ts`
-- [ ] `src/modules/verification/components/`
-- [ ] `src/app/(dashboard)/verification/page.tsx`
-- [ ] `src/app/(dashboard)/verification/[id]/page.tsx`
-
-### F07 — Profil
-- [ ] `src/modules/profile/service.ts`
-- [ ] `src/modules/profile/repository.ts`
-- [ ] `src/modules/profile/validation.ts`
-- [ ] `src/modules/profile/types.ts`
-- [ ] `src/modules/profile/api.ts`
-- [ ] `src/modules/profile/hooks.ts`
-- [ ] `src/modules/profile/components/`
-- [ ] `src/app/api/v1/profile/route.ts`
-- [ ] `src/app/(dashboard)/profile/page.tsx`
-
-### F08 — Security Logs
-- [ ] `src/modules/security-logs/service.ts`
-- [ ] `src/modules/security-logs/repository.ts`
-- [ ] `src/modules/security-logs/types.ts`
-- [ ] `src/modules/security-logs/api.ts`
-- [ ] `src/modules/security-logs/hooks.ts`
-- [ ] `src/modules/security-logs/components/`
-- [ ] `src/app/api/v1/security-logs/route.ts`
-- [ ] `src/app/(dashboard)/security-logs/page.tsx`
-
-### F02 — Dashboard
-- [ ] `src/modules/dashboard/hooks.ts`
-- [ ] `src/modules/dashboard/components/` (StatsCard, dll)
-- [ ] `src/app/(dashboard)/dashboard/page.tsx`
 
 ---
 

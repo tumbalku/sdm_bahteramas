@@ -1,0 +1,15 @@
+import { Metadata } from "next";
+import { DocumentsView } from "@/modules/documents/components/DocumentsView";
+
+export const metadata: Metadata = {
+  title: "Manajemen Dokumen | SMDP Portal",
+  description: "Kelola dokumen arsip kepegawaian Anda",
+};
+
+export default function DocumentsPage() {
+  return (
+    <div className="max-w-7xl mx-auto">
+      <DocumentsView />
+    </div>
+  );
+}
