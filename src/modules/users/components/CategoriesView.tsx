@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Skeleton, CardSkeleton } from "@/components/ui/skeleton";
 import { MasterCategoryCard } from "@/components/MasterCategoryCard";
 import {
   Loader2,
@@ -39,7 +40,7 @@ export function CategoriesView() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/users/categories");
+      const res = await fetch("/api/v1/users/categories", { cache: "no-store" });
       const json = await res.json();
       if (res.ok && json.success && json.data) {
         setEmploymentStatuses(json.data.employmentStatuses || []);
@@ -138,9 +139,16 @@ export function CategoriesView() {
 
   if (fetchLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="w-10 h-10 mb-4 animate-spin text-primary" />
-        <p className="text-sm font-semibold">Memuat Data Master Kategori Pegawai...</p>
+      <div className="space-y-6 animate-fade-in pb-8">
+        <div className="flex items-center gap-4 pb-4 border-b border-border/60">
+          <Skeleton className="w-12 h-12 rounded-2xl" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-6 w-48 rounded-lg" />
+            <Skeleton className="h-4 w-96 rounded-lg" />
+          </div>
+        </div>
+
+        <CardSkeleton count={4} gridClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" />
       </div>
     );
   }
@@ -155,12 +163,12 @@ export function CategoriesView() {
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={() => handleOpenAddModal("STATUS")} className="rounded-xl shadow-md">
               <Plus className="w-4 h-4 mr-2" />
-              Tambah Data Master
+              Tambah Master
             </Button>
             <Link href="/users">
               <Button variant="outline" className="rounded-xl">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Kembali ke Manajemen Pegawai
+                Kembali
               </Button>
             </Link>
           </div>

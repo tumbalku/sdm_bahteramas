@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 interface DocumentListProps {
   documents: DocumentRecordDto[];
   isLoading: boolean;
-  onDelete: (id: string) => void;
+  onDelete: (doc: DocumentRecordDto) => void;
   currentUserRole: string;
   currentUserId: string;
 }
@@ -152,11 +152,7 @@ export function DocumentList({
                   variant="outline"
                   size="icon"
                   className="rounded-xl border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
-                  onClick={() => {
-                    if (confirm("Apakah Anda yakin ingin menghapus dokumen ini?")) {
-                      onDelete(doc.id);
-                    }
-                  }}
+                  onClick={() => onDelete(doc)}
                   title="Hapus Dokumen"
                 >
                   <Trash2 className="w-4 h-4" />

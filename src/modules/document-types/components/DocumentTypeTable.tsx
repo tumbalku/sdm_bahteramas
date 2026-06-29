@@ -20,24 +20,33 @@ export function DocumentTypeTable({
 }: DocumentTypeTableProps) {
   const columns: Column<DocumentTypeRecord>[] = [
     {
-      header: "Kode / Nama",
-      render: (item) => (
-        <div>
-          <div className="font-bold text-foreground flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-mono shrink-0">
-              {item.code}
-            </span>
-            <span className="truncate max-w-[200px] sm:max-w-[280px]" title={item.name}>
-              {item.name}
-            </span>
+      header: "Kode",
+      className: "whitespace-nowrap",
+      render: (item) => {
+        const displayCode = item.code.length > 15 ? `${item.code.slice(0, 15)}...` : item.code;
+        return (
+          <span
+            className="inline-block px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-mono font-bold align-middle"
+            title={item.code}
+          >
+            {displayCode}
+          </span>
+        );
+      },
+    },
+    {
+      header: "Nama Dokumen",
+      render: (item) => {
+        const displayName = item.name.length > 30 ? `${item.name.slice(0, 30)}...` : item.name;
+        return (
+          <div
+            className="font-semibold text-foreground text-sm whitespace-nowrap"
+            title={item.name}
+          >
+            {displayName}
           </div>
-          {item.description && (
-            <p className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">
-              {item.description}
-            </p>
-          )}
-        </div>
-      ),
+        );
+      },
     },
     {
       header: "Kategori Arsip",
@@ -80,9 +89,13 @@ export function DocumentTypeTable({
       header: "Format & Ukuran",
       className: "whitespace-nowrap",
       render: (item) => {
-        const formattedSize = item.maxSizeMb < 1
-          ? `${Math.round(item.maxSizeMb * 1024)} KB`
-          : `${item.maxSizeMb} MB`;
+        let formattedSize = `${item.maxSizeMb} MB`;
+        if (item.maxSizeMb < 1) {
+          formattedSize = `${Math.round(item.maxSizeMb * 1024)} KB`;
+        } else if (item.maxSizeMb > 50) {
+          formattedSize = `${Math.round(item.maxSizeMb)} KB`;
+        }
+
         return (
           <div className="text-xs space-y-0.5">
             <div className="font-mono text-foreground font-semibold">
@@ -94,24 +107,39 @@ export function DocumentTypeTable({
       },
     },
     {
-      header: "Target Profesi",
-      render: (item) =>
-        item.targetProfessions && item.targetProfessions.length > 0 ? (
-          <div className="flex flex-wrap gap-1 max-w-xs">
-            {item.targetProfessions.map((tp) => (
+      header: "Target Pegawai",
+      render: (item) => {
+        const allTargets = [
+          ...(item.targetStatuses || []).map((t) => ({ ...t, label: "Status" })),
+          ...(item.targetGroups || []).map((t) => ({ ...t, label: "Jenis" })),
+          ...(item.targetProfessions || []).map((t) => ({ ...t, label: "Profesi" })),
+          ...(item.targetRanks || []).map((t) => ({ ...t, label: "Golongan" })),
+          ...(item.targetWorkplaces || []).map((t) => ({ ...t, label: "Unit" })),
+        ];
+
+        return allTargets.length > 0 ? (
+          <div className="flex flex-wrap gap-1 max-w-[220px]">
+            {allTargets.slice(0, 3).map((t, i) => (
               <span
-                key={tp.id}
+                key={`${t.id}-${i}`}
                 className="px-2 py-0.5 rounded-md bg-accent text-accent-foreground text-[11px] font-medium whitespace-nowrap"
+                title={`${t.label}: ${t.name}`}
               >
-                {tp.name}
+                {t.name}
               </span>
             ))}
+            {allTargets.length > 3 && (
+              <span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold">
+                +{allTargets.length - 3} lainnya
+              </span>
+            )}
           </div>
         ) : (
           <span className="text-xs text-muted-foreground italic whitespace-nowrap">
-            Semua Profesi
+            Semua Pegawai
           </span>
-        ),
+        );
+      },
     },
     {
       header: "Aksi",

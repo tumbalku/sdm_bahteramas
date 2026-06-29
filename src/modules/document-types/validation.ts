@@ -27,6 +27,10 @@ export const createDocumentTypeSchema = z.object({
     .max(100, "Ukuran file maksimal 100 MB"),
   icon: z.string().optional(),
   professionGroupIds: z.array(z.string()).optional().default([]),
+  employmentStatusIds: z.array(z.string()).optional().default([]),
+  employeeGroupIds: z.array(z.string()).optional().default([]),
+  employeeRankIds: z.array(z.string()).optional().default([]),
+  workplaceIds: z.array(z.string()).optional().default([]),
 });
 
 export const updateDocumentTypeSchema = createDocumentTypeSchema.partial();

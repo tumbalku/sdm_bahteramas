@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
 import { Edit, ArrowLeft, Loader2, Check } from "lucide-react";
 import { useDocumentType, useUpdateDocumentType } from "../hooks";
+import { TargetCriteriaSelector } from "./TargetCriteriaSelector";
 import { cn } from "@/lib/utils";
 
 const FORMAT_OPTIONS = [
@@ -36,6 +37,12 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
   const [sizeValue, setSizeValue] = useState<number>(5);
   const [sizeUnit, setSizeUnit] = useState<"KB" | "MB">("MB");
 
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [selectedProfessions, setSelectedProfessions] = useState<string[]>([]);
+  const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
+  const [selectedWorkplaces, setSelectedWorkplaces] = useState<string[]>([]);
+
   useEffect(() => {
     if (initialData) {
       setCode(initialData.code);
@@ -53,6 +60,12 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
         setSizeValue(initialData.maxSizeMb);
         setSizeUnit("MB");
       }
+
+      if (initialData.targetStatuses) setSelectedStatuses(initialData.targetStatuses.map((s) => s.id));
+      if (initialData.targetGroups) setSelectedGroups(initialData.targetGroups.map((g) => g.id));
+      if (initialData.targetProfessions) setSelectedProfessions(initialData.targetProfessions.map((p) => p.id));
+      if (initialData.targetRanks) setSelectedRanks(initialData.targetRanks.map((r) => r.id));
+      if (initialData.targetWorkplaces) setSelectedWorkplaces(initialData.targetWorkplaces.map((w) => w.id));
     }
   }, [initialData]);
 
@@ -82,6 +95,11 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
           requiresExpiryDate,
           allowedFormats: selectedFormats.join(","),
           maxSizeMb: calculatedMb,
+          employmentStatusIds: selectedStatuses,
+          employeeGroupIds: selectedGroups,
+          professionGroupIds: selectedProfessions,
+          employeeRankIds: selectedRanks,
+          workplaceIds: selectedWorkplaces,
         }
       },
       {
@@ -131,9 +149,9 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
         }
       />
 
-      <div className="bg-card border border-border rounded-3xl p-6 lg:p-8 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold mb-2">Kode Dokumen *</label>
               <input
@@ -141,7 +159,7 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="Contoh: STR, KTP, SIP"
-                className="w-full px-4 py-3 rounded-2xl border border-input bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">Kode unik identifikasi dokumen (huruf kapital).</p>
@@ -245,6 +263,20 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
               Batas ukuran berkas maksimal saat diunggah pegawai ({sizeValue} {sizeUnit}).
             </p>
           </div>
+
+          {/* Target Criteria Selection Panel */}
+          <TargetCriteriaSelector
+            selectedStatuses={selectedStatuses}
+            setSelectedStatuses={setSelectedStatuses}
+            selectedGroups={selectedGroups}
+            setSelectedGroups={setSelectedGroups}
+            selectedProfessions={selectedProfessions}
+            setSelectedProfessions={setSelectedProfessions}
+            selectedRanks={selectedRanks}
+            setSelectedRanks={setSelectedRanks}
+            selectedWorkplaces={selectedWorkplaces}
+            setSelectedWorkplaces={setSelectedWorkplaces}
+          />
 
           <div className="p-4 bg-muted/40 rounded-2xl border border-border/60 space-y-3">
             <label className="flex items-center gap-3 cursor-pointer select-none">

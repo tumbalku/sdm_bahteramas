@@ -75,7 +75,7 @@ export function CategoryFormModal({
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <h3 className="text-xl font-bold">
-              {initialData ? "Edit Data Master" : "Tambah Data Master"}
+              {initialData ? "Edit Master" : "Tambah Master"}
             </h3>
           </div>
           <Button
@@ -177,7 +177,7 @@ export function CategoryFormModal({
               ) : initialData ? (
                 "Perbarui"
               ) : (
-                "Simpan Data"
+                "Simpan"
               )}
             </Button>
           </div>

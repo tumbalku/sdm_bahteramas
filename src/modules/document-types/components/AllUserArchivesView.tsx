@@ -4,11 +4,12 @@ import Image from "next/image";
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { useDocuments } from "@/modules/documents/hooks";
+import { useDocuments, useDeleteDocument } from "@/modules/documents/hooks";
 import { DataTable, Column } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
 import { CompletenessCard } from "@/components/CompletenessCard";
 import { EmployeeFilterBar, EmployeeFilterState } from "@/components/EmployeeFilterBar";
+import { LayeredDeleteModal } from "@/components/LayeredDeleteModal";
 import { Button } from "@/components/ui/button";
 import {
   FolderArchive,
@@ -19,6 +20,7 @@ import {
   Download,
   FileText,
   User,
+  Trash2,
 } from "lucide-react";
 import { DocumentRecordDto } from "@/modules/documents/types";
 import { format } from "date-fns";
@@ -65,6 +67,18 @@ export function AllUserArchivesView() {
   }, [filterValues]);
 
   const { data: documents = [], isLoading: isLoadingDocs } = useDocuments(filters);
+  const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument();
+  const [docToDelete, setDocToDelete] = useState<DocumentRecordDto | null>(null);
+
+  const handleConfirmDelete = () => {
+    if (docToDelete) {
+      deleteDocument(docToDelete.id, {
+        onSuccess: () => {
+          setDocToDelete(null);
+        },
+      });
+    }
+  };
 
   // Calculate overall completeness stats across documents
   const overallStats = useMemo(() => {
@@ -82,22 +96,31 @@ export function AllUserArchivesView() {
     {
       header: "Pegawai",
       render: (item) => (
-        <div className="flex items-center gap-3">
-          <div className="relative w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-primary/20 overflow-hidden">
-            {item.owner?.avatarUrl ? (
-              <Image src={item.owner.avatarUrl} alt={item.owner.name} fill className="object-cover" unoptimized />
-            ) : (
-              item.owner?.name ? item.owner.name.charAt(0).toUpperCase() : "U"
-            )}
-          </div>
-          <div>
-            <div className="font-bold text-foreground whitespace-nowrap">{item.owner?.name || "Tidak Diketahui"}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1.5 font-mono whitespace-nowrap mt-0.5">
-              <User className="w-3 h-3 text-muted-foreground/70" />
-              <span>NIP: {item.owner?.employeeId || "-"}</span>
+        item.owner ? (
+          <Link
+            href={`/users/${item.owner.id}`}
+            className="flex items-center gap-3 hover:bg-accent/50 p-1.5 -ml-1.5 rounded-xl transition-colors w-max group cursor-pointer"
+          >
+            <div className="relative w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-primary/20 overflow-hidden group-hover:ring-2 group-hover:ring-primary/40 transition-all">
+              {item.owner.avatarUrl ? (
+                <Image src={item.owner.avatarUrl} alt={item.owner.name} fill className="object-cover" unoptimized />
+              ) : (
+                item.owner.name ? item.owner.name.charAt(0).toUpperCase() : "U"
+              )}
             </div>
-          </div>
-        </div>
+            <div>
+              <div className="font-bold text-foreground whitespace-nowrap group-hover:text-primary transition-colors">
+                {item.owner.name}
+              </div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5 font-mono whitespace-nowrap mt-0.5">
+                <User className="w-3 h-3 text-muted-foreground/70" />
+                <span>NIP: {item.owner.employeeId || "-"}</span>
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className="text-xs text-muted-foreground italic">Tidak Diketahui</div>
+        )
       ),
     },
     {
@@ -179,15 +202,27 @@ export function AllUserArchivesView() {
       headerClassName: "text-right",
       className: "text-right whitespace-nowrap",
       render: (item) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleDownload(item.filePath)}
-          className="h-8 px-3 text-xs gap-1.5 rounded-xl border-border hover:bg-accent font-semibold"
-        >
-          <Download className="w-3.5 h-3.5 text-primary" />
-          Unduh
-        </Button>
+        <div className="flex items-center justify-end gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDownload(item.filePath)}
+            className="h-8 px-2.5 text-xs gap-1 rounded-xl border-border hover:bg-accent font-semibold"
+            title="Unduh Berkas"
+          >
+            <Download className="w-3.5 h-3.5 text-primary" />
+            <span>Unduh</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDocToDelete(item)}
+            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
+            title="Hapus Dokumen Arsip"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -231,6 +266,22 @@ export function AllUserArchivesView() {
         emptyDescription="Belum ada dokumen yang diunggah sesuai dengan pencarian atau filter ini."
         emptyIcon={FileText}
         keyExtractor={(item) => item.id}
+      />
+
+      {/* Layered Security Verification Modal for Document Archive Deletion */}
+      <LayeredDeleteModal
+        isOpen={Boolean(docToDelete)}
+        onClose={() => setDocToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Berkas Arsip Permanen"
+        itemName={docToDelete?.fileName || docToDelete?.documentType?.name || ""}
+        itemType="berkas arsip dokumen"
+        impactDetails={[
+          `File '${docToDelete?.fileName}' milik pegawai '${docToDelete?.owner?.name || "Pegawai"}' akan dihapus permanen dari server.`,
+          "Status verifikasi dan rekam jejak histori verifikasi dokumen ini akan dibersihkan.",
+          "Tindakan ini tidak dapat dibatalkan atau dikembalikan dengan cara apapun.",
+        ]}
+        isLoading={isDeleting}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import { EmployeeFilterBar, EmployeeFilterState } from "@/components/EmployeeFil
 import { useDeleteUser, useUsers } from "../hooks";
 import { UserRecord } from "../types";
 import { UserTable } from "./UserTable";
+import { LayeredDeleteModal } from "@/components/LayeredDeleteModal";
 
 export function UsersView() {
   const [filterValues, setFilterValues] = useState<EmployeeFilterState>({
@@ -19,18 +20,18 @@ export function UsersView() {
     employeePositionId: "",
   });
 
-  const { data: users = [], isLoading, error } = useUsers(filterValues);
+  const [userToDelete, setUserToDelete] = useState<UserRecord | null>(null);
 
+  const { data: users = [], isLoading, error } = useUsers(filterValues);
   const deleteMutation = useDeleteUser();
 
-  const handleDelete = (item: UserRecord) => {
-    if (
-      confirm(
-        `Apakah Anda yakin ingin menghapus akun pegawai '${item.name}' (${item.employeeId})?`
-      )
-    ) {
-      deleteMutation.mutate(item.id);
-    }
+  const handleConfirmDelete = () => {
+    if (!userToDelete) return;
+    deleteMutation.mutate(userToDelete.id, {
+      onSuccess: () => {
+        setUserToDelete(null);
+      },
+    });
   };
 
   return (
@@ -51,7 +52,7 @@ export function UsersView() {
             <Link href="/users/new">
               <Button className="rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 px-6 shrink-0">
                 <UserPlus className="w-4 h-4 mr-2" />
-                Tambah Pegawai Baru
+                Tambah Pegawai
               </Button>
             </Link>
           </div>
@@ -72,7 +73,24 @@ export function UsersView() {
       <UserTable
         data={users}
         isLoading={isLoading}
-        onDelete={handleDelete}
+        onDelete={(item) => setUserToDelete(item)}
+      />
+
+      {/* GitHub-Style Layered Delete Modal for User Account Deletion */}
+      <LayeredDeleteModal
+        isOpen={Boolean(userToDelete)}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Akun Pegawai Permanen"
+        itemName={userToDelete?.employeeId || ""}
+        itemType="akun pegawai"
+        impactDetails={[
+          `Akun atas nama '${userToDelete?.name}' akan dihapus secara permanen dari sistem.`,
+          "Seluruh arsip dokumen yang diunggah oleh pegawai ini akan kehilangan asosiasi kepemilikan.",
+          "Hak akses login pegawai ke SIMDP akan dicabut secara serta-merta.",
+          "Aksi penghapusan ini tidak dapat dibatalkan.",
+        ]}
+        isLoading={deleteMutation.isPending}
       />
     </div>
   );

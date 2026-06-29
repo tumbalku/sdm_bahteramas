@@ -134,15 +134,32 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/security-logs/` |
-| **Status** | 🔴 Belum dimulai |
+| **Status** | 🟢 Selesai |
 | **Role** | `ADMIN` |
 | **Dependency** | F01 (Auth) |
 
 **Sub-fitur:**
 - Tampilkan daftar log aktivitas
 - Filter by event type, aktor, rentang tanggal
-- Pagination
-- Detail metadata per log entry
+- Pembersihan otomatis (*auto-cleanup*) berbasis retensi dinamis
+- Banner informasi peringatan retensi
+
+---
+
+### F09 — Pengaturan Sistem / System Settings (settings)
+
+| Atribut | Detail |
+|---|---|
+| **Modul** | `src/modules/settings/` |
+| **Status** | 🟡 Sedang dikerjakan |
+| **Role** | `ADMIN` |
+| **Dependency** | F01 (Auth) |
+
+**Sub-fitur:**
+- Form pengaturan konfigurasi dinamis berbasis database (tabel `SystemSetting`)
+- Pengaturan media (maksimal ukuran avatar upload KB)
+- Pengaturan audit retensi (retensi security log dalam hari)
+- Logika fallback otomatis dari `.env`
 
 ---
 
@@ -150,14 +167,15 @@
 
 | Kode | Feature | Status |
 |---|---|---|
-| F01 | Autentikasi | 🔴 Belum dimulai |
-| F02 | Dashboard | 🔴 Belum dimulai |
-| F03 | Manajemen Jenis Dokumen | 🔴 Belum dimulai |
-| F04 | Manajemen Dokumen | 🔴 Belum dimulai |
-| F05 | Verifikasi Dokumen | 🔴 Belum dimulai |
-| F06 | Manajemen Pegawai | 🔴 Belum dimulai |
-| F07 | Profil Mandiri | 🔴 Belum dimulai |
-| F08 | Security Logs | 🔴 Belum dimulai |
+| F01 | Autentikasi | 🟢 Selesai |
+| F02 | Dashboard | 🟢 Selesai |
+| F03 | Manajemen Jenis Dokumen | 🟢 Selesai |
+| F04 | Manajemen Dokumen | 🟢 Selesai |
+| F05 | Verifikasi Dokumen | 🟢 Selesai |
+| F06 | Manajemen Pegawai | 🟢 Selesai |
+| F07 | Profil Mandiri | 🟢 Selesai |
+| F08 | Security Logs | 🟢 Selesai |
+| F09 | Pengaturan Sistem (Settings) | 🟡 Sedang dikerjakan |
 
 **Legend:**
 - 🔴 Belum dimulai

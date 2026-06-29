@@ -17,9 +17,12 @@ export async function createCategoryService(
   if (actor) {
     await logActivity({
       actorId: actor.id,
-      actorEmail: actor.email,
-      eventType: "USER_UPDATED",
-      details: `Menambahkan master data kategori ${type}: ${name}`,
+      actorName: actor.name || actor.email,
+      actorRole: actor.role,
+      eventType: "CATEGORY_CREATED",
+      resource: "/api/v1/users/categories",
+      status: "success",
+      metadata: { type, name, parentId },
     });
   }
 
@@ -38,9 +41,12 @@ export async function updateCategoryService(
   if (actor) {
     await logActivity({
       actorId: actor.id,
-      actorEmail: actor.email,
-      eventType: "USER_UPDATED",
-      details: `Memperbarui master data kategori ${type} (${id}): ${name}`,
+      actorName: actor.name || actor.email,
+      actorRole: actor.role,
+      eventType: "CATEGORY_UPDATED",
+      resource: `/api/v1/users/categories/${id}`,
+      status: "success",
+      metadata: { type, name, parentId },
     });
   }
 
@@ -57,9 +63,12 @@ export async function deleteCategoryService(
   if (actor) {
     await logActivity({
       actorId: actor.id,
-      actorEmail: actor.email,
-      eventType: "USER_UPDATED",
-      details: `Menghapus master data kategori ${type} (${id})`,
+      actorName: actor.name || actor.email,
+      actorRole: actor.role,
+      eventType: "CATEGORY_DELETED",
+      resource: `/api/v1/users/categories/${id}`,
+      status: "success",
+      metadata: { type, id },
     });
   }
 

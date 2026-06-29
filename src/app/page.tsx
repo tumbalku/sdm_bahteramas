@@ -93,12 +93,10 @@ export default function LandingPage() {
       {/* Navbar */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between max-w-7xl">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="SIMDP Logo" className="w-8 h-8 object-contain shrink-0" />
             <span className="font-extrabold text-xl tracking-tight">
-              SMDP<span className="text-primary">.</span>
+              SIMDP<span className="text-primary">.</span>
             </span>
           </div>
 
@@ -181,12 +179,12 @@ export default function LandingPage() {
           <div className="flex-1 space-y-8 text-center lg:text-left z-10">
             <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary backdrop-blur-sm">
               <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
-              Sistem Manajemen Kepegawaian v1.0
+              RSUD BAHTERAMAS v1.0
             </div>
 
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-              Sistem Manajemen <br className="hidden md:block" />
-              Dokumen &amp; <span className="text-primary">Kepatuhan</span>
+              System Informasi <br className="hidden md:block" />
+              Manajemen Dokumen <span className="text-primary">Pegawai</span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
@@ -370,17 +368,15 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="w-full border-t border-border bg-card">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="SIMDP Logo" className="w-7 h-7 object-contain shrink-0" />
             <span className="font-extrabold tracking-tight text-lg text-foreground">
-              SMDP<span className="text-primary">.</span>
+              SIMDP<span className="text-primary">.</span>
             </span>
           </div>
 
           <div className="text-sm font-semibold text-muted-foreground text-center md:text-left">
-            &copy; {new Date().getFullYear()} Sistem Manajemen Dokumen Pegawai. Hak Cipta Dilindungi.
+            &copy; {new Date().getFullYear()} System Informasi Manajemen Dokumen Pegawai RSUD BAHTERAMAS.
           </div>
 
           <div className="flex items-center gap-6 text-sm font-semibold text-muted-foreground">

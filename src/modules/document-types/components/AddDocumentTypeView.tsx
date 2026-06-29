@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
 import { FilePlus, ArrowLeft, Loader2, Check } from "lucide-react";
 import { useCreateDocumentType } from "../hooks";
+import { TargetCriteriaSelector } from "./TargetCriteriaSelector";
 import { cn } from "@/lib/utils";
 
 const FORMAT_OPTIONS = [
@@ -30,6 +31,12 @@ export function AddDocumentTypeView() {
   const [selectedFormats, setSelectedFormats] = useState<string[]>(["pdf", "jpg", "png"]);
   const [sizeValue, setSizeValue] = useState<number>(5);
   const [sizeUnit, setSizeUnit] = useState<"KB" | "MB">("MB");
+
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [selectedProfessions, setSelectedProfessions] = useState<string[]>([]);
+  const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
+  const [selectedWorkplaces, setSelectedWorkplaces] = useState<string[]>([]);
 
   const toggleFormat = (fmtId: string) => {
     setSelectedFormats((prev) =>
@@ -55,6 +62,11 @@ export function AddDocumentTypeView() {
         requiresExpiryDate,
         allowedFormats: selectedFormats.join(","),
         maxSizeMb: calculatedMb,
+        employmentStatusIds: selectedStatuses,
+        employeeGroupIds: selectedGroups,
+        professionGroupIds: selectedProfessions,
+        employeeRankIds: selectedRanks,
+        workplaceIds: selectedWorkplaces,
       },
       {
         onSuccess: () => {
@@ -68,7 +80,7 @@ export function AddDocumentTypeView() {
     <div className="page-container space-y-6 pb-12 animate-fade-in">
       <PageHeader
         icon={FilePlus}
-        title="Tambah Jenis Dokumen Baru"
+        title="Tambah Dokumen"
         description="Buat kriteria dan klasifikasi berkas kepegawaian baru."
         action={
           <Button
@@ -82,9 +94,9 @@ export function AddDocumentTypeView() {
         }
       />
 
-      <div className="bg-card border border-border rounded-3xl p-6 lg:p-8 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold mb-2">Kode Dokumen *</label>
               <input
@@ -92,7 +104,7 @@ export function AddDocumentTypeView() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="Contoh: STR, KTP, SIP"
-                className="w-full px-4 py-3 rounded-2xl border border-input bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">Kode unik identifikasi dokumen (huruf kapital).</p>
@@ -188,14 +200,28 @@ export function AddDocumentTypeView() {
                 onChange={(e) => setSizeUnit(e.target.value as "KB" | "MB")}
                 className="px-5 py-3 rounded-2xl border border-input bg-background text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer shadow-xs"
               >
-                <option value="MB font-semibold">MB (Megabyte)</option>
-                <option value="KB font-semibold">KB (Kilobyte)</option>
+                <option value="MB">MB (Megabyte)</option>
+                <option value="KB">KB (Kilobyte)</option>
               </select>
             </div>
             <p className="text-xs text-muted-foreground mt-1.5">
               Batas ukuran berkas maksimal saat diunggah pegawai ({sizeValue} {sizeUnit}).
             </p>
           </div>
+
+          {/* Target Criteria Selection Panel */}
+          <TargetCriteriaSelector
+            selectedStatuses={selectedStatuses}
+            setSelectedStatuses={setSelectedStatuses}
+            selectedGroups={selectedGroups}
+            setSelectedGroups={setSelectedGroups}
+            selectedProfessions={selectedProfessions}
+            setSelectedProfessions={setSelectedProfessions}
+            selectedRanks={selectedRanks}
+            setSelectedRanks={setSelectedRanks}
+            selectedWorkplaces={selectedWorkplaces}
+            setSelectedWorkplaces={setSelectedWorkplaces}
+          />
 
           <div className="p-4 bg-muted/40 rounded-2xl border border-border/60 space-y-3">
             <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -247,7 +273,7 @@ export function AddDocumentTypeView() {
                   Menyimpan...
                 </>
               ) : (
-                "Simpan Jenis Dokumen"
+                "Simpan Dokumen"
               )}
             </Button>
           </div>

@@ -7,8 +7,11 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "SMDP Portal",
-  description: "Sistem Manajemen Dokumen Pegawai",
+  title: "SIMDP - RSUD Bahteramas",
+  description: "System Informasi Manajemen Dokumen Pegawai RSUD BAHTERAMAS",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({

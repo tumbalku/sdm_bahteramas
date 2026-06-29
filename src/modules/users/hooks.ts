@@ -36,14 +36,14 @@ export function useMasterCategories() {
   return useQuery({
     queryKey: ["users", "categories"],
     queryFn: async () => {
-      const res = await fetch("/api/v1/users/categories");
+      const res = await fetch("/api/v1/users/categories", { cache: "no-store" });
       const json = await res.json();
       if (!res.ok || !json.success) {
         throw new Error(json.error || "Gagal memuat data master kategori");
       }
       return json.data;
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    staleTime: 0,
   });
 }
 

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import { getPendingDocumentsService } from "@/modules/verification/service";
 
+// Verification API Route
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

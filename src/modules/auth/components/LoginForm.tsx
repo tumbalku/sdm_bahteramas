@@ -35,12 +35,10 @@ export function LoginForm() {
     <div className="w-full max-w-md mx-auto p-8 rounded-3xl bg-card border border-border shadow-2xl shadow-primary/5">
       {/* Header Form */}
       <div className="text-center mb-8">
-        <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4 text-primary-foreground shadow-lg shadow-primary/30">
-          <ShieldCheck className="w-8 h-8" />
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight">Masuk ke SMDP Portal</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gunakan NIP atau Email pegawai Anda
+        <img src="/logo.png" alt="SIMDP Logo" className="w-16 h-16 object-contain mx-auto mb-4" />
+        <h2 className="text-2xl font-bold tracking-tight">Masuk ke SIMDP</h2>
+        <p className="text-xs text-muted-foreground mt-1 font-medium">
+          System Informasi Manajemen Dokumen Pegawai RSUD BAHTERAMAS
         </p>
       </div>
 

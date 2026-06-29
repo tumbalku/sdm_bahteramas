@@ -8,12 +8,20 @@ export interface MasterItemSummary {
 export interface UserRecord {
   id: string;
   employeeId: string;
+  nik?: string | null;
   email: string;
   name: string;
   avatarUrl?: string | null;
   role: Role;
   gender?: string | null;
   birthDate?: Date | null;
+  academicDegree?: string | null;
+  lastEducation?: string | null;
+  religion?: string | null;
+  maritalStatus?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  joinDate?: Date | null;
   employmentStatus?: MasterItemSummary | null;
   employeeGroup?: MasterItemSummary | null;
   professionGroup?: MasterItemSummary | null;
@@ -26,12 +34,20 @@ export interface UserRecord {
 
 export interface CreateUserInput {
   employeeId: string;
+  nik?: string | null;
   email: string;
   password?: string;
   name: string;
   role: Role;
   gender?: string;
   birthDate?: string;
+  academicDegree?: string;
+  lastEducation?: string;
+  religion?: string;
+  maritalStatus?: string;
+  phone?: string;
+  address?: string;
+  joinDate?: string;
   employmentStatusId?: string;
   employeeGroupId?: string;
   professionGroupId?: string;
@@ -42,12 +58,20 @@ export interface CreateUserInput {
 
 export interface UpdateUserInput {
   employeeId?: string;
+  nik?: string | null;
   email?: string;
   password?: string;
   name?: string;
   role?: Role;
   gender?: string;
   birthDate?: string;
+  academicDegree?: string;
+  lastEducation?: string;
+  religion?: string;
+  maritalStatus?: string;
+  phone?: string;
+  address?: string;
+  joinDate?: string;
   employmentStatusId?: string;
   employeeGroupId?: string;
   professionGroupId?: string;

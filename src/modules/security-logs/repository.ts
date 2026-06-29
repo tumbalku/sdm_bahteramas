@@ -1,9 +1,39 @@
 import { prisma } from "@/lib/prisma";
 import { SecurityLogFilterParams } from "./types";
 import { Prisma } from "@prisma/client";
+import { EXCLUDED_EVENT_TYPES } from "@/lib/security-log";
+import { getSystemSetting } from "@/lib/system-settings";
+
+export async function deleteExpiredSecurityLogs() {
+  try {
+    const retentionDaysStr = await getSystemSetting("SECURITY_LOG_RETENTION_DAYS", "30");
+    const retentionDays = parseInt(retentionDaysStr, 10);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    const result = await prisma.securityLog.deleteMany({
+      where: {
+        timestamp: {
+          lt: cutoffDate,
+        },
+      },
+    });
+    return result.count;
+  } catch (error) {
+    console.error("❌ Gagal menghapus security logs kadaluwarsa:", error);
+    return 0;
+  }
+}
 
 export async function findSecurityLogs(filters: SecurityLogFilterParams) {
-  const where: Prisma.SecurityLogWhereInput = {};
+  // Jalankan pembersihan log yang sudah kadaluwarsa secara otomatis
+  await deleteExpiredSecurityLogs();
+
+  const where: Prisma.SecurityLogWhereInput = {
+    eventType: {
+      notIn: EXCLUDED_EVENT_TYPES,
+    },
+  };
 
   if (filters.startDate && filters.endDate) {
     const endOfDay = new Date(filters.endDate);
@@ -30,7 +60,7 @@ export async function findSecurityLogs(filters: SecurityLogFilterParams) {
     where.actorId = filters.actorId;
   }
   
-  if (filters.eventType) {
+  if (filters.eventType && !EXCLUDED_EVENT_TYPES.includes(filters.eventType)) {
     where.eventType = filters.eventType;
   }
 

@@ -3,8 +3,25 @@
 import { useEffect, useState } from "react";
 import { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { FormField } from "@/components/ui/form";
 import { X, Loader2 } from "lucide-react";
 import { CreateUserInput, UserRecord } from "../types";
+import { format } from "date-fns";
+import {
+  RELIGION_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+  GENDER_OPTIONS,
+  EDUCATION_OPTIONS,
+} from "@/lib/constants";
+
+const ROLE_OPTIONS = [
+  { value: "EMPLOYEE", label: "EMPLOYEE (Pegawai)" },
+  { value: "STAFF", label: "STAFF (Verifikator)" },
+  { value: "ADMIN", label: "ADMIN (Administrator)" },
+];
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -22,27 +39,51 @@ export function UserFormModal({
   initialData,
 }: UserFormModalProps) {
   const [employeeId, setEmployeeId] = useState("");
+  const [nik, setNik] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("EMPLOYEE");
   const [gender, setGender] = useState("L");
+  const [birthDate, setBirthDate] = useState("");
+  const [academicDegree, setAcademicDegree] = useState("");
+  const [lastEducation, setLastEducation] = useState("");
+  const [religion, setReligion] = useState("");
+  const [maritalStatus, setMaritalStatus] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
 
   useEffect(() => {
     if (initialData) {
       setEmployeeId(initialData.employeeId);
-      setEmail(initialData.email);
-      setPassword("");
+      setNik(initialData.nik || "");
       setName(initialData.name);
+      setEmail(initialData.email);
       setRole(initialData.role);
       setGender(initialData.gender || "L");
+      setBirthDate(initialData.birthDate ? format(new Date(initialData.birthDate), "yyyy-MM-dd") : "");
+      setAcademicDegree(initialData.academicDegree || "");
+      setLastEducation(initialData.lastEducation || "");
+      setReligion(initialData.religion || "");
+      setMaritalStatus(initialData.maritalStatus || "");
+      setPhone(initialData.phone || "");
+      setAddress(initialData.address || "");
+      setPassword("");
     } else {
       setEmployeeId("");
-      setEmail("");
-      setPassword("Pegawai123!");
+      setNik("");
       setName("");
+      setEmail("");
+      setPassword("");
       setRole("EMPLOYEE");
       setGender("L");
+      setBirthDate("");
+      setAcademicDegree("");
+      setLastEducation("");
+      setReligion("");
+      setMaritalStatus("");
+      setPhone("");
+      setAddress("");
     }
   }, [initialData, isOpen]);
 
@@ -50,121 +91,182 @@ export function UserFormModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
+    const data: CreateUserInput = {
       employeeId,
-      email,
-      ...(password && { password }),
+      nik: nik || undefined,
       name,
+      email,
       role,
       gender,
-    });
+      birthDate: birthDate || undefined,
+      academicDegree: academicDegree || undefined,
+      lastEducation: lastEducation || undefined,
+      religion: religion || undefined,
+      maritalStatus: maritalStatus || undefined,
+      phone: phone || undefined,
+      address: address || undefined,
+    };
+    if (password) {
+      data.password = password;
+    } else if (!initialData) {
+      data.password = "Pegawai123!";
+    }
+    onSubmit(data);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg rounded-3xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header Modal */}
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <h3 className="text-xl font-bold">
+      <div className="bg-card border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+          <h3 className="font-bold text-lg text-foreground">
             {initialData ? "Edit Data Pegawai" : "Tambah Pegawai Baru"}
           </h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="rounded-full h-8 w-8"
-          >
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8">
             <X className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Body Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">NIP / ID Pegawai</label>
-              <input
+            <FormField label="NIP / NIK" required>
+              <Input
                 type="text"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 placeholder="Contoh: 19900101..."
-                className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="font-mono"
                 required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Role Sistem</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as Role)}
-                className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-semibold"
-              >
-                <option value="EMPLOYEE">EMPLOYEE (Pegawai)</option>
-                <option value="STAFF">STAFF (Verifikator)</option>
-                <option value="ADMIN">ADMIN (Administrator)</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Nama Lengkap</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Nama lengkap beserta gelar..."
-              className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              required
-            />
+            </FormField>
+            <FormField label="NIK KTP (16 Digit)">
+              <Input
+                type="text"
+                value={nik}
+                onChange={(e) => setNik(e.target.value)}
+                placeholder="16 Digit NIK..."
+                className="font-mono"
+              />
+            </FormField>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Email Log-in</label>
-              <input
+            <FormField label="Nama Lengkap" required>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nama lengkap..."
+                required
+              />
+            </FormField>
+            <FormField label="Role Sistem">
+              <Select
+                value={role}
+                onChange={(e) => setRole(e.target.value as Role)}
+                options={ROLE_OPTIONS}
+                className="font-semibold"
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Email Log-in" required>
+              <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="pegawai@domain.com"
-                className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Jenis Kelamin</label>
-              <select
+            </FormField>
+            <FormField label="Gelar Akademik">
+              <Input
+                type="text"
+                value={academicDegree}
+                onChange={(e) => setAcademicDegree(e.target.value)}
+                placeholder="Contoh: S.Ked, Sp.B"
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Jenis Kelamin">
+              <Select
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                <option value="L">Laki-laki</option>
-                <option value="P">Perempuan</option>
-              </select>
-            </div>
+                options={GENDER_OPTIONS}
+              />
+            </FormField>
+            <FormField label="Agama">
+              <Select
+                value={religion}
+                onChange={(e) => setReligion(e.target.value)}
+                options={RELIGION_OPTIONS}
+                placeholder="-- Pilih Agama --"
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Status Pernikahan">
+              <Select
+                value={maritalStatus}
+                onChange={(e) => setMaritalStatus(e.target.value)}
+                options={MARITAL_STATUS_OPTIONS}
+                placeholder="-- Pilih Status --"
+              />
+            </FormField>
+            <FormField label="Pendidikan Terakhir">
+              <Select
+                value={lastEducation}
+                onChange={(e) => setLastEducation(e.target.value)}
+                options={EDUCATION_OPTIONS}
+                placeholder="-- Pilih Pendidikan --"
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Tanggal Lahir">
+              <Input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+              />
+            </FormField>
+            <FormField label="Nomor Telepon">
+              <Input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="081234567890"
+                className="font-mono"
+              />
+            </FormField>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              {initialData ? "Kata Sandi Baru (Kosongkan jika tidak diubah)" : "Kata Sandi Default"}
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={initialData ? "••••••••" : "Default: Pegawai123!"}
-              className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              required={!initialData}
-            />
+            <FormField label={initialData ? "Sandi Baru (Opsional)" : "Kata Sandi"}>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={initialData ? "Biarkan kosong jika tidak diubah" : "Default: Pegawai123!"}
+              />
+            </FormField>
           </div>
 
-          {/* Footer Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="rounded-xl"
-            >
+          <FormField label="Alamat Lengkap">
+            <Textarea
+              rows={2}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Alamat domisili lengkap..."
+            />
+          </FormField>
+
+          <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
               Batal
             </Button>
             <Button type="submit" disabled={isLoading} className="rounded-xl px-6">
@@ -174,7 +276,7 @@ export function UserFormModal({
                   Menyimpan...
                 </>
               ) : (
-                "Simpan Data"
+                "Simpan Pegawai"
               )}
             </Button>
           </div>

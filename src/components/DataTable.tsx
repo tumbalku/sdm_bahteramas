@@ -2,8 +2,9 @@
 
 import { ReactNode, useState, useEffect, Fragment } from "react";
 import { cn } from "@/lib/utils";
-import { FileCheck, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TableSkeleton } from "@/components/ui/skeleton";
 
 export interface Column<T> {
   header: ReactNode;
@@ -53,18 +54,12 @@ export function DataTable<T>({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
 
-  // Reset to first page whenever data length or page size changes
   useEffect(() => {
     setCurrentPage(1);
   }, [data.length, pageSize]);
 
   if (isLoading) {
-    return (
-      <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center animate-pulse">
-        <Loader2 className="w-8 h-8 mb-3 animate-spin text-primary opacity-70" />
-        <p className="text-sm font-medium">{loadingMessage || "Memuat data..."}</p>
-      </div>
-    );
+    return <TableSkeleton rows={5} cols={columns.length} className={className} />;
   }
 
   if (data.length === 0) {
@@ -151,7 +146,6 @@ export function DataTable<T>({
           </div>
 
           <div className="flex items-center gap-4 flex-wrap justify-center">
-            {/* Page Size Selector */}
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground font-medium">Tampilkan:</span>
               <select
@@ -167,7 +161,6 @@ export function DataTable<T>({
               </select>
             </div>
 
-            {/* Navigation Buttons */}
             <div className="flex items-center gap-1">
               <Button
                 variant="outline"

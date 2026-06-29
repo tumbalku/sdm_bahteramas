@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth-utils";
 import { AddDocumentTypeView } from "@/modules/document-types/components/AddDocumentTypeView";
 
 export const metadata: Metadata = {
-  title: "Tambah Jenis Dokumen | SMDP Portal",
+  title: "Tambah Jenis Dokumen | SIMDP",
   description: "Buat kriteria dan jenis dokumen kepegawaian baru",
 };
 

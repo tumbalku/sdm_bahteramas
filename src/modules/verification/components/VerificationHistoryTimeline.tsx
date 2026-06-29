@@ -3,8 +3,8 @@
 import { useDocumentVerificationHistory } from "../hooks";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { CheckCircle, XCircle, Clock, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface VerificationHistoryTimelineProps {
   documentId: string;
@@ -15,8 +15,17 @@ export function VerificationHistoryTimeline({ documentId }: VerificationHistoryT
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="space-y-4 animate-fade-in py-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-card border border-border p-4 rounded-xl shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-5 w-20 rounded-full" />
+              <Skeleton className="h-4 w-28 rounded-md" />
+            </div>
+            <Skeleton className="h-4 w-40 rounded-md" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -45,12 +54,10 @@ export function VerificationHistoryTimeline({ documentId }: VerificationHistoryT
         
         return (
           <div key={item.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-            {/* Icon */}
             <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-background bg-card shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm relative z-10">
               <Icon className={`w-5 h-5 ${isApproved ? "text-green-500" : "text-red-500"}`} />
             </div>
             
-            {/* Card */}
             <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-card border border-border p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isApproved ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}>

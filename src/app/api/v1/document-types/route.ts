@@ -6,16 +6,24 @@ import {
 } from "@/modules/document-types/service";
 import { DocumentArchiveCategory } from "@prisma/client";
 
+// Master Document Types API Endpoint
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category") as DocumentArchiveCategory | undefined;
     const professionGroupId = searchParams.get("professionGroupId") || undefined;
+    const forUser = searchParams.get("forUser") === "true";
 
-    const data = await getAllDocumentTypes({
-      category: category || undefined,
-      professionGroupId,
-    });
+    const currentUser = await getCurrentUser();
+
+    const data = await getAllDocumentTypes(
+      {
+        category: category || undefined,
+        professionGroupId,
+        forUser,
+      },
+      currentUser
+    );
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {

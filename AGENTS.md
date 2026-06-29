@@ -178,6 +178,7 @@ Semua implementasi mengacu pada PRD `PRD-SMDP-PORTAL-v1.0-20260627.md`. Lihat `d
 
 ## Important Conventions
 
+- **Aturan Komponen UI (Shadcn UI):** Dilarang keras membuat komponen UI dasar dari nol (custom CSS/scratch) jika komponen tersebut sudah disediakan oleh Shadcn UI. Selalu gunakan atau unduh/install komponen resmi Shadcn UI (seperti `Dialog`, `Sheet`, `Select`, `Input`, `Table`, `Badge`, `Tabs`, `DropdownMenu`, `Avatar`, `Skeleton`, `Card`, `Alert`, `FormItem`, `FormLabel`, `FormField`, dll.) ke dalam `src/components/ui/`. Pembungkus form field (label + input/select/textarea) WAJIB menggunakan komponen `<FormField label="...">` dari `@/components/ui/form` untuk mencegah pengulangan markup manual `<div><label>...</label><Input /></div>`.
 - **Path alias wajib** `@/` ke `src/` — contoh: `import { prisma } from "@/lib/prisma"`
 - **Folder modul:** kebab-case (`document-types/`)
 - **Komponen React:** PascalCase (`DocumentTabs.tsx`)

@@ -8,9 +8,10 @@ import { useDocumentTypes } from "@/modules/document-types/hooks";
 import { DocumentTabs, TabStat } from "./DocumentTabs";
 import { DocumentList } from "./DocumentList";
 import { DocumentUploadModal } from "./DocumentUploadModal";
+import { LayeredDeleteModal } from "@/components/LayeredDeleteModal";
 import { Button } from "@/components/ui/button";
-import { UploadCloud, FileText, CheckCircle2 } from "lucide-react";
-import { DocumentUploadInput } from "../types";
+import { UploadCloud, FileText } from "lucide-react";
+import { DocumentUploadInput, DocumentRecordDto } from "../types";
 import { PageHeader } from "@/components/PageHeader";
 import { CompletenessCard } from "@/components/CompletenessCard";
 
@@ -18,13 +19,14 @@ export function DocumentsView() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<DocumentArchiveCategory>("UTAMA");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState<DocumentRecordDto | null>(null);
 
-  const currentUserRole = session?.user?.role || "EMPLOYEE";
-  const currentUserId = session?.user?.id || "";
+  const currentUserRole = (session?.user as any)?.role || "EMPLOYEE";
+  const currentUserId = (session?.user as any)?.id || "";
 
-  // Fetch all user documents and master document types
+  // Fetch all user documents and master document types applicable for this employee
   const { data: allDocuments = [], isLoading: isLoadingDocs } = useDocuments({});
-  const { data: allDocTypes = [] } = useDocumentTypes();
+  const { data: allDocTypes = [] } = useDocumentTypes({ forUser: true });
 
   const uploadMutation = useUploadDocument();
   const deleteMutation = useDeleteDocument();
@@ -73,8 +75,13 @@ export function DocumentsView() {
     });
   };
 
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+  const handleConfirmDelete = () => {
+    if (!docToDelete) return;
+    deleteMutation.mutate(docToDelete.id, {
+      onSuccess: () => {
+        setDocToDelete(null);
+      },
+    });
   };
 
   return (
@@ -111,7 +118,7 @@ export function DocumentsView() {
       <DocumentList
         documents={currentTabDocuments}
         isLoading={isLoadingDocs}
-        onDelete={handleDelete}
+        onDelete={(doc) => setDocToDelete(doc)}
         currentUserRole={currentUserRole}
         currentUserId={currentUserId}
       />
@@ -122,6 +129,21 @@ export function DocumentsView() {
         onSubmit={handleUploadSubmit}
         isLoading={uploadMutation.isPending}
         activeCategory={activeTab}
+      />
+
+      <LayeredDeleteModal
+        isOpen={Boolean(docToDelete)}
+        onClose={() => setDocToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Dokumen Berkas"
+        itemName={docToDelete?.fileName || ""}
+        itemType="dokumen berkas"
+        impactDetails={[
+          "File dokumen fisik akan dihapus dari server penyimpanan.",
+          "Riwayat verifikasi dan status persetujuan dokumen ini akan hilang permanen.",
+          "Persentase kelengkapan berkas Anda akan berkurang secara otomatis.",
+        ]}
+        isLoading={deleteMutation.isPending}
       />
     </div>
   );

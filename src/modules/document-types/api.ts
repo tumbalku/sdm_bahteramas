@@ -11,6 +11,7 @@ export async function getDocumentTypesApi(filters?: DocumentTypeFilter) {
   if (filters?.category) params.set("category", filters.category);
   if (filters?.professionGroupId)
     params.set("professionGroupId", filters.professionGroupId);
+  if (filters?.forUser) params.set("forUser", "true");
 
   const url = `/api/v1/document-types${
     params.toString() ? `?${params.toString()}` : ""

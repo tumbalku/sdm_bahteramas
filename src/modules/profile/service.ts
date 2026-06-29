@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import { logActivity } from "@/lib/security-log";
-import { prisma } from "@/lib/prisma";
 import {
   findUserProfileById,
   updateUserProfile,
@@ -14,7 +13,6 @@ export async function getProfileService(userId: string) {
     throw new Error("Profil tidak ditemukan");
   }
   
-  // Sembunyikan password hash
   const { passwordHash, ...safeProfile } = profile;
   return safeProfile;
 }
@@ -32,23 +30,27 @@ export async function updateProfileService(
 
   const updatedUser = await updateUserProfile(userId, {
     name: input.name,
+    nik: input.nik,
     gender: input.gender,
     birthDate: input.birthDate ? new Date(input.birthDate) : null,
+    academicDegree: input.academicDegree,
+    lastEducation: input.lastEducation,
+    religion: input.religion,
+    maritalStatus: input.maritalStatus,
+    phone: input.phone,
+    address: input.address,
   });
 
-  await logActivity(
-    {
-      actorId: actor.id,
-      actorName: actor.name,
-      actorRole: actor.role,
-      eventType: "PROFILE_UPDATED",
-      resource: `User:${userId}`,
-      ipAddress,
-      status: "SUCCESS",
-      metadata: { changes: { name: input.name } },
-    },
-    prisma
-  );
+  await logActivity({
+    actorId: actor.id,
+    actorName: actor.name,
+    actorRole: actor.role,
+    eventType: "PROFILE_UPDATED",
+    resource: `User:${userId}`,
+    ipAddress,
+    status: "success",
+    metadata: { changes: { name: input.name } },
+  });
 
   return updatedUser;
 }
@@ -72,18 +74,15 @@ export async function changePasswordService(
   const newHash = await bcrypt.hash(input.newPassword, 10);
   await updateUserPassword(userId, newHash);
 
-  await logActivity(
-    {
-      actorId: actor.id,
-      actorName: actor.name,
-      actorRole: actor.role,
-      eventType: "PASSWORD_CHANGED",
-      resource: `User:${userId}`,
-      ipAddress,
-      status: "SUCCESS",
-    },
-    prisma
-  );
+  await logActivity({
+    actorId: actor.id,
+    actorName: actor.name,
+    actorRole: actor.role,
+    eventType: "PASSWORD_CHANGED",
+    resource: `User:${userId}`,
+    ipAddress,
+    status: "success",
+  });
 
   return true;
 }

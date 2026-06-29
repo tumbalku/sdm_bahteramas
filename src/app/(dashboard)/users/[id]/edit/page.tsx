@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth-utils";
 import { UserFormView } from "@/modules/users/components/UserFormView";
 
 export const metadata: Metadata = {
-  title: "Edit Data Pegawai | SMDP Portal",
+  title: "Edit Data Pegawai | SIMDP",
   description: "Ubah data pegawai dan kualifikasi kepegawaian",
 };
 

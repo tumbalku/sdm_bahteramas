@@ -27,11 +27,14 @@ export function UserTable({ data, isLoading, onDelete }: UserTableProps) {
             )}
           </div>
           <div>
-            <div className="font-bold text-foreground whitespace-nowrap group-hover:text-primary transition-colors">{item.name}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5 font-mono whitespace-nowrap">
-              <span>NIP: {item.employeeId}</span>
-              <span>•</span>
-              <span>{item.email}</span>
+            <div
+              className="font-bold text-foreground group-hover:text-primary transition-colors text-sm whitespace-nowrap"
+              title={item.name}
+            >
+              {item.name.length > 30 ? `${item.name.slice(0, 30)}...` : item.name}
+            </div>
+            <div className="text-xs text-muted-foreground font-mono mt-0.5 whitespace-nowrap">
+              NIP: {item.employeeId}
             </div>
           </div>
         </Link>
@@ -45,13 +48,12 @@ export function UserTable({ data, isLoading, onDelete }: UserTableProps) {
         const isStaff = item.role === "STAFF";
         return (
           <span
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-              isAdmin
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${isAdmin
                 ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20"
                 : isStaff
-                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-            }`}
+                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+              }`}
           >
             <Shield className="w-3 h-3" />
             {item.role}
@@ -86,7 +88,7 @@ export function UserTable({ data, isLoading, onDelete }: UserTableProps) {
         ),
     },
     {
-      header: "Status Kepegawaian",
+      header: "Status",
       className: "whitespace-nowrap",
       render: (item) =>
         item.employmentStatus ? (

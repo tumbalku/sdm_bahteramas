@@ -25,6 +25,11 @@
 | Komponen tabel | PascalCase + `Table` suffix | `UserTable`, `DocumentTable` |
 | Komponen kartu/card | PascalCase + `Card` suffix | `StatsCard`, `VerificationCard` |
 
+### 2.1 Penggunaan Komponen UI (Shadcn UI Standards)
+1. **Dilarang Keras Kustomisasi Dari Nol (No Reinventing the Wheel):** Jangan pernah membuat komponen UI dasar dari scratch (HTML/CSS murni atau div kustom) jika komponen tersebut sudah didukung oleh ekosistem Shadcn UI.
+2. **Pengunduhan & Pemasangan:** Selalu install/unduh atau gunakan komponen resmi Shadcn UI (misalnya `Dialog`, `Sheet`, `Select`, `Input`, `Table`, `Badge`, `Tabs`, `DropdownMenu`, `Avatar`, `Skeleton`, `Card`, `Alert`, `Separator`, dll.) ke dalam folder `src/components/ui/`.
+3. **Komposisi Komponen:** Komponen domain pada `src/modules/` wajib mengimpor dan merakit (*compose*) komponen Shadcn UI dari `@/components/ui/`.
+
 ---
 
 ## 3. Penamaan Custom Hook

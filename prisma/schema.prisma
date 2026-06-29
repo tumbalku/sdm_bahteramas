@@ -34,18 +34,20 @@ enum DocumentStatus {
 // ==========================================
 
 model EmploymentStatus {
-  id             String          @id @default(cuid())
-  name           String          @unique
+  id             String                       @id @default(cuid())
+  name           String                       @unique
   employeeGroups EmployeeGroup[]
   users          User[]
+  documentStatuses DocumentTypeEmploymentStatus[]
 }
 
 model EmployeeGroup {
-  id                 String           @id @default(cuid())
+  id                 String                       @id @default(cuid())
   name               String
   employmentStatusId String
-  employmentStatus   EmploymentStatus @relation(fields: [employmentStatusId], references: [id])
+  employmentStatus   EmploymentStatus             @relation(fields: [employmentStatusId], references: [id])
   users              User[]
+  documentGroups     DocumentTypeEmployeeGroup[]
 
   @@unique([name, employmentStatusId])
 }
@@ -69,15 +71,17 @@ model EmployeePosition {
 }
 
 model EmployeeRank {
-  id    String @id @default(cuid())
-  name  String @unique
-  users User[]
+  id            String                   @id @default(cuid())
+  name          String                   @unique
+  users         User[]
+  documentRanks DocumentTypeEmployeeRank[]
 }
 
 model Workplace {
-  id    String @id @default(cuid())
-  name  String @unique
-  users User[]
+  id                String                 @id @default(cuid())
+  name              String                 @unique
+  users             User[]
+  documentWorkplaces DocumentTypeWorkplace[]
 }
 
 // ==========================================
@@ -87,6 +91,7 @@ model Workplace {
 model User {
   id                 String            @id @default(cuid())
   employeeId         String            @unique // NIP Pegawai
+  nik                String?           @unique // NIK KTP (16 Digit)
   email              String            @unique
   passwordHash       String
   name               String
@@ -94,6 +99,13 @@ model User {
   role               Role              @default(EMPLOYEE)
   gender             String?
   birthDate          DateTime?
+  academicDegree     String?
+  lastEducation      String?
+  religion           String?
+  maritalStatus      String?
+  phone              String?
+  address            String?
+  joinDate           DateTime?
   employmentStatusId String?
   employmentStatus   EmploymentStatus? @relation(fields: [employmentStatusId], references: [id])
   employeeGroupId    String?
@@ -135,20 +147,24 @@ model UserRole {
 // ==========================================
 
 model DocumentType {
-  id                 String                  @id @default(cuid())
-  code               String                  @unique
-  name               String                  @unique
+  id                 String                          @id @default(cuid())
+  code               String                          @unique
+  name               String                          @unique
   description        String?
   archiveCategory    DocumentArchiveCategory
-  isMandatory        Boolean                 @default(false)
-  requiresExpiryDate Boolean                 @default(false)
-  allowedFormats     String                  // Contoh: "pdf,jpg,png"
+  isMandatory        Boolean                         @default(false)
+  requiresExpiryDate Boolean                         @default(false)
+  allowedFormats     String                          // Contoh: "pdf,jpg,png"
   maxSizeMb          Float
   icon               String?
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
+  createdAt          DateTime                        @default(now())
+  updatedAt          DateTime                        @updatedAt
 
   documentProfessions DocumentTypeProfession[]
+  documentStatuses    DocumentTypeEmploymentStatus[]
+  documentGroups      DocumentTypeEmployeeGroup[]
+  documentRanks       DocumentTypeEmployeeRank[]
+  documentWorkplaces  DocumentTypeWorkplace[]
   documentRecords     DocumentRecord[]
 
   @@index([archiveCategory])
@@ -162,6 +178,46 @@ model DocumentTypeProfession {
   professionGroup   ProfessionGroup @relation(fields: [professionGroupId], references: [id], onDelete: Cascade)
 
   @@unique([documentTypeId, professionGroupId])
+}
+
+model DocumentTypeEmploymentStatus {
+  id                 String           @id @default(cuid())
+  documentTypeId     String
+  documentType       DocumentType     @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+  employmentStatusId String
+  employmentStatus   EmploymentStatus @relation(fields: [employmentStatusId], references: [id], onDelete: Cascade)
+
+  @@unique([documentTypeId, employmentStatusId])
+}
+
+model DocumentTypeEmployeeGroup {
+  id              String        @id @default(cuid())
+  documentTypeId  String
+  documentType    DocumentType  @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+  employeeGroupId String
+  employeeGroup   EmployeeGroup @relation(fields: [employeeGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([documentTypeId, employeeGroupId])
+}
+
+model DocumentTypeEmployeeRank {
+  id             String       @id @default(cuid())
+  documentTypeId String
+  documentType   DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+  employeeRankId String
+  employeeRank   EmployeeRank @relation(fields: [employeeRankId], references: [id], onDelete: Cascade)
+
+  @@unique([documentTypeId, employeeRankId])
+}
+
+model DocumentTypeWorkplace {
+  id             String       @id @default(cuid())
+  documentTypeId String
+  documentType   DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+  workplaceId    String
+  workplace      Workplace    @relation(fields: [workplaceId], references: [id], onDelete: Cascade)
+
+  @@unique([documentTypeId, workplaceId])
 }
 
 model DocumentRecord {
@@ -218,3 +274,16 @@ model SecurityLog {
   @@index([timestamp])
   @@index([eventType])
 }
+
+// ==========================================
+// PENGATURAN SISTEM (SYSTEM SETTINGS)
+// ==========================================
+
+model SystemSetting {
+  key         String   @id
+  value       String
+  label       String?
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+

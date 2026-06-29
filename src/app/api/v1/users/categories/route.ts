@@ -21,7 +21,7 @@ export async function GET() {
     const data = await getCategoriesService();
     return NextResponse.json(
       { success: true, data },
-      { headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=600" } }
+      { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   } catch (error: any) {
     return NextResponse.json(

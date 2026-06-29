@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { SecurityLogsView } from "@/modules/security-logs/components/SecurityLogsView";
 
 export const metadata: Metadata = {
-  title: "Security Logs | SMDP Portal",
+  title: "Security Logs | SIMDP",
   description: "Audit trail dan rekam aktivitas sistem",
 };
 

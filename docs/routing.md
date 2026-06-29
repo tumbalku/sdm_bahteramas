@@ -35,6 +35,7 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 | `/document-types` | `(dashboard)/document-types/page.tsx` | `ADMIN` | Master jenis dokumen |
 | `/users` | `(dashboard)/users/page.tsx` | `ADMIN` | CRUD pegawai + import/export CSV |
 | `/security-logs` | `(dashboard)/security-logs/page.tsx` | `ADMIN` | Audit trail |
+| `/settings` | `(dashboard)/settings/page.tsx` | `ADMIN` | Pengaturan & konfigurasi sistem dinamis |
 | `/profile` | `(dashboard)/profile/page.tsx` | Semua role | Update biodata mandiri |
 
 ---
@@ -57,6 +58,8 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 | `/api/v1/users/export` | `GET` | *(belum ada file)* | `ADMIN` |
 | `/api/v1/users/import` | `POST` | *(belum ada file)* | `ADMIN` |
 | `/api/v1/security-logs` | `GET` | `api/v1/security-logs/route.ts` | `ADMIN` |
+| `/api/v1/settings` | `GET`, `PATCH` | `api/v1/settings/route.ts` | `ADMIN` |
+
 
 ---
 

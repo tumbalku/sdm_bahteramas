@@ -3,8 +3,9 @@
 import { DocumentRecordDto } from "@/modules/documents/types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { FileSearch, CheckCircle, Clock } from "lucide-react";
+import { FileSearch, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CardSkeleton } from "@/components/ui/skeleton";
 
 interface VerificationListProps {
   documents: DocumentRecordDto[];
@@ -14,12 +15,7 @@ interface VerificationListProps {
 
 export function VerificationList({ documents, isLoading, onReview }: VerificationListProps) {
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground animate-pulse">
-        <Clock className="w-12 h-12 mb-4 opacity-50" />
-        <p>Memuat daftar dokumen...</p>
-      </div>
-    );
+    return <CardSkeleton count={6} gridClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in" />;
   }
 
   if (documents.length === 0) {

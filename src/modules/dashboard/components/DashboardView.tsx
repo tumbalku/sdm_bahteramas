@@ -4,13 +4,13 @@ import { useDashboardStats } from "../hooks";
 import { StatsCard } from "./StatsCard";
 import { RecentDocumentsTable } from "./RecentDocumentsTable";
 import { ExpiringDocumentsList } from "./ExpiringDocumentsList";
+import { Skeleton, CardSkeleton, TableSkeleton } from "@/components/ui/skeleton";
 import { 
   FileText, 
   CheckCircle, 
   Clock, 
   XCircle,
-  LayoutDashboard,
-  Loader2
+  LayoutDashboard
 } from "lucide-react";
 import { Role } from "@prisma/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -26,9 +26,25 @@ export function DashboardView({ userRole }: DashboardViewProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-12 h-12 mb-4 animate-spin text-primary opacity-50" />
-        <p className="text-muted-foreground">Memuat data dashboard...</p>
+      <div className="space-y-6 animate-fade-in pb-8">
+        <div className="flex items-center gap-4 pb-4 border-b border-border/60">
+          <Skeleton className="w-12 h-12 rounded-2xl" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-6 w-48 rounded-lg" />
+            <Skeleton className="h-4 w-96 rounded-lg" />
+          </div>
+        </div>
+
+        <CardSkeleton count={4} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <div className="lg:col-span-2">
+            <TableSkeleton rows={5} cols={4} />
+          </div>
+          <div className="lg:col-span-1">
+            <TableSkeleton rows={4} cols={2} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -43,7 +59,7 @@ export function DashboardView({ userRole }: DashboardViewProps) {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-8">
       <PageHeader
         icon={LayoutDashboard}
         title="Dashboard"
@@ -54,7 +70,6 @@ export function DashboardView({ userRole }: DashboardViewProps) {
         }
       />
 
-      {/* Stats Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total Dokumen"
@@ -82,12 +97,11 @@ export function DashboardView({ userRole }: DashboardViewProps) {
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2 h-[450px]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        <div className="lg:col-span-2 h-[380px]">
           <RecentDocumentsTable documents={stats.recentDocuments} />
         </div>
-        <div className="lg:col-span-1 h-[450px]">
+        <div className="lg:col-span-1 h-[380px]">
           <ExpiringDocumentsList documents={stats.expiringDocuments} />
         </div>
       </div>

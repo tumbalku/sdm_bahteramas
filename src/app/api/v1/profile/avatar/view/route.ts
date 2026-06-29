@@ -18,8 +18,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Parameter file wajib diisi" }, { status: 400 });
     }
 
-    // Hanya izinkan file yang dimulai dengan "avatar_" untuk mencegah LFI
-    if (!fileName.startsWith("avatar_")) {
+    // Hanya izinkan nama file aman yang valid (misal: NIP_profile.jpg atau avatar_XXX.jpg)
+    if (path.basename(fileName) !== fileName || (!fileName.includes("_profile.") && !fileName.startsWith("avatar_"))) {
       return NextResponse.json({ message: "File tidak valid" }, { status: 403 });
     }
 

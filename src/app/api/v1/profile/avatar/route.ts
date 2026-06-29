@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-options";
 import { getStorageProvider } from "@/lib/storage";
 import { prisma } from "@/lib/prisma";
 import path from "path";
+import { getSystemSetting } from "@/lib/system-settings";
 
 export async function POST(request: Request) {
   try {
@@ -25,16 +26,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Format file tidak didukung" }, { status: 400 });
     }
 
-    const maxSizeKb = parseInt(process.env.MAX_AVATAR_UPLOAD_SIZE_KB || "200", 10);
+    const maxSizeKbStr = await getSystemSetting("MAX_AVATAR_UPLOAD_SIZE_KB", "200");
+    const maxSizeKb = parseInt(maxSizeKbStr, 10);
     const MAX_SIZE = maxSizeKb * 1024;
     
     if (file.size > MAX_SIZE) {
       return NextResponse.json({ message: `Ukuran file terlalu besar (maksimal ${maxSizeKb}KB)` }, { status: 400 });
     }
 
+    const userId = (session.user as any).id;
     const currentUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { avatarUrl: true }
+      where: { id: userId },
+      select: { id: true, employeeId: true, avatarUrl: true }
     });
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -43,19 +46,15 @@ export async function POST(request: Request) {
     const storage = getStorageProvider();
     
     const ext = path.extname(file.name) || ".jpg";
-    const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
-    const safeFileName = `avatar_${session.user.id}_${timestamp}${ext}`;
+    const identifier = currentUser?.employeeId || currentUser?.id || userId;
+    const safeFileName = `${identifier}_profile${ext}`;
 
-    const savedFileName = await storage.uploadFile(buffer, safeFileName);
-    const fileUrl = `/api/v1/profile/avatar/view?file=${savedFileName}`;
-
-    // Hapus file avatar lama
+    // Hapus file avatar lama jika ada dan beda nama file
     if (currentUser?.avatarUrl) {
       try {
-        // Asumsi URL format: /api/v1/profile/avatar/view?file=avatar_XXX.jpg
         const url = new URL(currentUser.avatarUrl, "http://localhost");
         const oldFile = url.searchParams.get("file");
-        if (oldFile) {
+        if (oldFile && oldFile !== safeFileName) {
           await storage.deleteFile(oldFile);
         }
       } catch (e) {
@@ -63,9 +62,12 @@ export async function POST(request: Request) {
       }
     }
 
+    const savedFileName = await storage.uploadFile(buffer, safeFileName);
+    const fileUrl = `/api/v1/profile/avatar/view?file=${savedFileName}`;
+
     // Simpan ke DB
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: userId },
       data: { avatarUrl: fileUrl },
     });
 

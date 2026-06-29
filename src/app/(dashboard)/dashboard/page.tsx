@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth-utils";
 import { DashboardView } from "@/modules/dashboard/components/DashboardView";
 
 export const metadata: Metadata = {
-  title: "Dashboard | SMDP Portal",
+  title: "Dashboard | SIMDP",
   description: "Ringkasan metrik dan aktivitas dokumen",
 };
 

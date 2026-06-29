@@ -18,8 +18,13 @@ import {
   IdCard,
   User,
   Camera,
+  Phone,
+  Calendar,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { Skeleton, CardSkeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
 
 export function ProfileView() {
   const { data: profile, isLoading, error } = useProfile();
@@ -41,9 +46,8 @@ export function ProfileView() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="w-10 h-10 mb-3 animate-spin opacity-50 text-primary" />
-        <p className="text-sm font-medium">Memuat profil pengguna...</p>
+      <div className="space-y-5 animate-fade-in max-w-7xl mx-auto pb-8">
+        <CardSkeleton count={3} gridClassName="grid grid-cols-1 md:grid-cols-3 gap-5" />
       </div>
     );
   }
@@ -66,7 +70,7 @@ export function ProfileView() {
   const currentRole = roleConfig[profile.role] || roleConfig.EMPLOYEE;
 
   return (
-    <div className="space-y-5 animate-fade-in max-w-7xl mx-auto">
+    <div className="space-y-5 animate-fade-in max-w-7xl mx-auto pb-8">
       {/* Page Header */}
       <PageHeader
         icon={UserCircle2}
@@ -91,7 +95,6 @@ export function ProfileView() {
                 profile.name.charAt(0).toUpperCase()
               )}
               
-              {/* Overlay for hover */}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 {isUploadingAvatar ? (
                   <Loader2 className="w-6 h-6 text-white animate-spin" />
@@ -110,7 +113,10 @@ export function ProfileView() {
             />
 
             <h2 className="text-xl font-bold text-foreground line-clamp-1">{profile.name}</h2>
-            <span className={`px-2.5 py-0.5 mt-1.5 text-[11px] font-bold rounded-full border ${currentRole.className}`}>
+            {profile.academicDegree && (
+              <p className="text-xs text-muted-foreground font-medium">{profile.academicDegree}</p>
+            )}
+            <span className={`px-2.5 py-0.5 mt-2 text-[11px] font-bold rounded-full border ${currentRole.className}`}>
               {currentRole.label}
             </span>
 
@@ -122,11 +128,25 @@ export function ProfileView() {
                 <span className="font-mono font-bold text-foreground">{profile.employeeId}</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-xl bg-accent/30 border border-border/50">
+                <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
+                  <IdCard className="w-3.5 h-3.5 text-primary" /> NIK
+                </span>
+                <span className="font-mono font-bold text-foreground">{profile.nik || "-"}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-xl bg-accent/30 border border-border/50">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium truncate pr-2">
                   <Mail className="w-3.5 h-3.5 text-primary shrink-0" /> Email
                 </span>
                 <span className="font-semibold text-foreground truncate max-w-[160px]" title={profile.email}>
                   {profile.email}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-xl bg-accent/30 border border-border/50">
+                <span className="text-muted-foreground flex items-center gap-1.5 font-medium truncate pr-2">
+                  <Phone className="w-3.5 h-3.5 text-primary shrink-0" /> Telepon
+                </span>
+                <span className="font-mono font-semibold text-foreground">
+                  {profile.phone || "-"}
                 </span>
               </div>
             </div>
@@ -140,7 +160,14 @@ export function ProfileView() {
             </div>
 
             <div className="space-y-2.5 text-xs">
-              {/* Item 1: Kelompok Profesi */}
+              <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
+                <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
+                  <Calendar className="w-3.5 h-3.5 text-primary" /> Tanggal Masuk
+                </span>
+                <span className="font-bold text-foreground text-right">
+                  {profile.joinDate ? format(new Date(profile.joinDate), "dd MMM yyyy", { locale: idLocale }) : "-"}
+                </span>
+              </div>
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
                   <Stethoscope className="w-3.5 h-3.5 text-primary" /> Profesi
@@ -149,8 +176,6 @@ export function ProfileView() {
                   {profile.professionGroup?.name || <span className="text-muted-foreground italic font-normal">-</span>}
                 </span>
               </div>
-
-              {/* Item 2: Jabatan */}
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
                   <Briefcase className="w-3.5 h-3.5 text-primary" /> Jabatan
@@ -159,8 +184,6 @@ export function ProfileView() {
                   {profile.employeePosition?.name || <span className="text-muted-foreground italic font-normal">-</span>}
                 </span>
               </div>
-
-              {/* Item 3: Status Kepegawaian */}
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
                   <BadgeCheck className="w-3.5 h-3.5 text-primary" /> Status
@@ -169,8 +192,6 @@ export function ProfileView() {
                   {profile.employmentStatus?.name || <span className="text-muted-foreground italic font-normal">-</span>}
                 </span>
               </div>
-
-              {/* Item 4: Golongan */}
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
                   <Award className="w-3.5 h-3.5 text-primary" /> Golongan
@@ -179,8 +200,6 @@ export function ProfileView() {
                   {profile.employeeGroup?.name || <span className="text-muted-foreground italic font-normal">-</span>}
                 </span>
               </div>
-
-              {/* Item 5: Pangkat */}
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
                   <User className="w-3.5 h-3.5 text-primary" /> Pangkat
@@ -189,8 +208,6 @@ export function ProfileView() {
                   {profile.employeeRank?.name || <span className="text-muted-foreground italic font-normal">-</span>}
                 </span>
               </div>
-
-              {/* Item 6: Unit Kerja */}
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
                   <Building2 className="w-3.5 h-3.5 text-primary" /> Penempatan
@@ -204,13 +221,9 @@ export function ProfileView() {
         </div>
 
         {/* Right Column: Update Biodata & Security Forms (8 cols) */}
-        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
-          <div className="md:col-span-1">
-            <UpdateProfileForm profile={profile} />
-          </div>
-          <div className="md:col-span-1">
-            <ChangePasswordForm />
-          </div>
+        <div className="lg:col-span-8 space-y-5">
+          <UpdateProfileForm profile={profile} />
+          <ChangePasswordForm />
         </div>
       </div>
     </div>

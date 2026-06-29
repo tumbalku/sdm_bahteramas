@@ -6,6 +6,11 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { FormField } from "@/components/ui/form";
+import { Skeleton, CardSkeleton } from "@/components/ui/skeleton";
 import {
   Loader2,
   UserPlus,
@@ -13,17 +18,27 @@ import {
   Save,
   User,
   Briefcase,
-  ShieldCheck,
-  Building2,
-  Award,
+  GraduationCap,
 } from "lucide-react";
 import { useCreateUser, useUpdateUser, useUser } from "../hooks";
-import { CreateUserInput, UserRecord } from "../types";
+import { CreateUserInput } from "../types";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import {
+  RELIGION_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+  GENDER_OPTIONS,
+  EDUCATION_OPTIONS,
+} from "@/lib/constants";
+
+const ROLE_OPTIONS = [
+  { value: "EMPLOYEE", label: "EMPLOYEE (Pegawai Biasa)" },
+  { value: "STAFF", label: "STAFF (Verifikator Dokumen)" },
+  { value: "ADMIN", label: "ADMIN (Administrator Akses Penuh)" },
+];
 
 interface UserFormViewProps {
-  userId?: string; // Jika ada userId, maka mode EDIT
+  userId?: string;
 }
 
 interface MasterCategories {
@@ -35,24 +50,31 @@ interface MasterCategories {
 
 export function UserFormView({ userId }: UserFormViewProps) {
   const router = useRouter();
-  const isEditMode = !!userId;
+  const isEditMode = Boolean(userId);
 
   const { data: existingUser, isLoading: isLoadingUser } = useUser(userId || "");
-  const createMutation = useCreateUser();
-  const updateMutation = useUpdateUser();
 
-  // Categories Master Data
   const [categories, setCategories] = useState<MasterCategories | null>(null);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
-  // Form States
+  const createMutation = useCreateUser();
+  const updateMutation = useUpdateUser();
+
   const [employeeId, setEmployeeId] = useState("");
+  const [nik, setNik] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("EMPLOYEE");
   const [gender, setGender] = useState("L");
   const [birthDate, setBirthDate] = useState("");
+  const [academicDegree, setAcademicDegree] = useState("");
+  const [lastEducation, setLastEducation] = useState("");
+  const [religion, setReligion] = useState("");
+  const [maritalStatus, setMaritalStatus] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [joinDate, setJoinDate] = useState("");
 
   const [employmentStatusId, setEmploymentStatusId] = useState("");
   const [employeeGroupId, setEmployeeGroupId] = useState("");
@@ -61,17 +83,16 @@ export function UserFormView({ userId }: UserFormViewProps) {
   const [employeeRankId, setEmployeeRankId] = useState("");
   const [workplaceId, setWorkplaceId] = useState("");
 
-  // Fetch Master Categories
   useEffect(() => {
     async function fetchCategories() {
       try {
         const res = await fetch("/api/v1/users/categories");
         const json = await res.json();
-        if (res.ok && json.success) {
+        if (res.ok && json.success && json.data) {
           setCategories(json.data);
         }
       } catch (err) {
-        toast.error("Gagal memuat data master kategori");
+        toast.error("Gagal memuat master data kategori");
       } finally {
         setIsLoadingCategories(false);
       }
@@ -79,18 +100,22 @@ export function UserFormView({ userId }: UserFormViewProps) {
     fetchCategories();
   }, []);
 
-  // Populate Existing User Data in Edit Mode
   useEffect(() => {
-    if (existingUser) {
-      setEmployeeId(existingUser.employeeId);
-      setEmail(existingUser.email);
-      setPassword("");
-      setName(existingUser.name);
-      setRole(existingUser.role);
+    if (isEditMode && existingUser) {
+      setEmployeeId(existingUser.employeeId || "");
+      setNik(existingUser.nik || "");
+      setName(existingUser.name || "");
+      setEmail(existingUser.email || "");
+      setRole(existingUser.role || "EMPLOYEE");
       setGender(existingUser.gender || "L");
-      setBirthDate(
-        existingUser.birthDate ? format(new Date(existingUser.birthDate), "yyyy-MM-dd") : ""
-      );
+      setBirthDate(existingUser.birthDate ? format(new Date(existingUser.birthDate), "yyyy-MM-dd") : "");
+      setAcademicDegree(existingUser.academicDegree || "");
+      setLastEducation(existingUser.lastEducation || "");
+      setReligion(existingUser.religion || "");
+      setMaritalStatus(existingUser.maritalStatus || "");
+      setPhone(existingUser.phone || "");
+      setAddress(existingUser.address || "");
+      setJoinDate(existingUser.joinDate ? format(new Date(existingUser.joinDate), "yyyy-MM-dd") : "");
 
       setEmploymentStatusId(existingUser.employmentStatus?.id || "");
       setEmployeeGroupId(existingUser.employeeGroup?.id || "");
@@ -99,38 +124,50 @@ export function UserFormView({ userId }: UserFormViewProps) {
       setEmployeeRankId(existingUser.employeeRank?.id || "");
       setWorkplaceId(existingUser.workplace?.id || "");
     }
-  }, [existingUser]);
+  }, [isEditMode, existingUser]);
 
-  // Available sub-items based on parent selection
-  const selectedStatusObj = categories?.employmentStatuses.find((s) => s.id === employmentStatusId);
-  const availableGroups = selectedStatusObj?.employeeGroups || [];
+  const availableGroups =
+    categories?.employmentStatuses.find((s) => s.id === employmentStatusId)?.employeeGroups || [];
 
-  const selectedProfObj = categories?.professionGroups.find((p) => p.id === professionGroupId);
-  const availablePositions = selectedProfObj?.employeePositions || [];
+  const availablePositions =
+    categories?.professionGroups.find((p) => p.id === professionGroupId)?.employeePositions || [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload: CreateUserInput = {
+    if (!employeeId || !name || !email) {
+      toast.error("NIP, Nama, dan Email wajib diisi!");
+      return;
+    }
+
+    const payload: any = {
       employeeId,
-      email,
+      nik: nik || null,
       name,
+      email,
       role,
       gender,
-      birthDate: birthDate || undefined,
-      employmentStatusId: employmentStatusId || undefined,
-      employeeGroupId: employeeGroupId || undefined,
-      professionGroupId: professionGroupId || undefined,
-      employeePositionId: employeePositionId || undefined,
-      employeeRankId: employeeRankId || undefined,
-      workplaceId: workplaceId || undefined,
+      birthDate: birthDate || null,
+      academicDegree: academicDegree || null,
+      lastEducation: lastEducation || null,
+      religion: religion || null,
+      maritalStatus: maritalStatus || null,
+      phone: phone || null,
+      address: address || null,
+      joinDate: joinDate || null,
+      employmentStatusId: employmentStatusId || null,
+      employeeGroupId: employeeGroupId || null,
+      professionGroupId: professionGroupId || null,
+      employeePositionId: employeePositionId || null,
+      employeeRankId: employeeRankId || null,
+      workplaceId: workplaceId || null,
     };
 
     if (password) {
       payload.password = password;
     }
 
-    if (isEditMode) {
+    if (isEditMode && userId) {
       updateMutation.mutate(
         { id: userId, input: payload },
         {
@@ -141,9 +178,9 @@ export function UserFormView({ userId }: UserFormViewProps) {
       );
     } else {
       if (!password) {
-        payload.password = "Pegawai123!"; // Default password
+        payload.password = "Pegawai123!";
       }
-      createMutation.mutate(payload, {
+      createMutation.mutate(payload as CreateUserInput, {
         onSuccess: () => {
           router.push("/users");
         },
@@ -155,141 +192,195 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
   if (isEditMode && isLoadingUser) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="w-10 h-10 mb-4 animate-spin text-primary" />
-        <p className="text-sm font-semibold">Memuat Data Pegawai...</p>
+      <div className="space-y-6 animate-fade-in max-w-5xl pb-8">
+        <CardSkeleton count={3} gridClassName="grid grid-cols-1 gap-6" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-8">
       <PageHeader
         icon={UserPlus}
-        title={isEditMode ? "Edit Data Pegawai" : "Tambah Pegawai Baru"}
+        title={isEditMode ? "Edit Pegawai" : "Tambah Pegawai"}
         description={
           isEditMode
-            ? `Memperbarui profil dan kualifikasi pegawai (${existingUser?.name})`
-            : "Tambahkan akun pengguna dan isi lengkap data master kepegawaian."
+            ? "Perbarui informasi profil, biodata, serta kualifikasi kepegawaian pengguna"
+            : "Tambahkan akun dan data kualifikasi pegawai baru ke dalam sistem"
         }
         action={
           <Link href="/users">
             <Button variant="outline" className="rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Batal & Kembali
+              Kembali
             </Button>
           </Link>
         }
       />
 
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl">
-        {/* Section 1: Informasi Akun & Demografi */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-5xl">
+        {/* Section 1: Kredensial Akses & Akun */}
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="border-b border-border pb-3 flex items-center gap-2">
             <User className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-bold text-foreground">1. Informasi Akun & Biodata</h3>
+            <h3 className="text-lg font-bold text-foreground">1. Kredensial Akses & Identitas Otentikasi</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                NIP / ID Pegawai <span className="text-red-500">*</span>
-              </label>
-              <input
+            <FormField label="NIP / NRK (Nomor Induk Pegawai)" required>
+              <Input
                 type="text"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                placeholder="Contoh: 199001012020011001"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                placeholder="Contoh: 199001012015011001"
+                className="font-mono"
                 required
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Nama Lengkap & Gelar <span className="text-red-500">*</span>
-              </label>
-              <input
+            <FormField label="NIK (Nomor Induk Kependudukan / KTP)">
+              <Input
+                type="text"
+                value={nik}
+                onChange={(e) => setNik(e.target.value)}
+                placeholder="16 Digit NIK KTP..."
+                className="font-mono"
+              />
+            </FormField>
+
+            <FormField label="Nama Lengkap (Tanpa Gelar)" required>
+              <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Contoh: dr. Ahmad Fajar, Sp.PD"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                placeholder="Nama sesuai KTP / Dokumen Resmi"
                 required
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Email Sistem (Login) <span className="text-red-500">*</span>
-              </label>
-              <input
+            <FormField label="Alamat Email Aktif" required>
+              <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="pegawai@rsud.go.id"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                placeholder="pegawai@rsudbahteramas.go.id"
                 required
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Role Hak Akses <span className="text-red-500">*</span>
-              </label>
-              <select
+            <FormField label="Role Hak Akses" required>
+              <Select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                <option value="EMPLOYEE">EMPLOYEE (Pegawai Biasa)</option>
-                <option value="STAFF">STAFF (Verifikator Dokumen)</option>
-                <option value="ADMIN">ADMIN (Administrator Akses Penuh)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Jenis Kelamin</label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                <option value="L">Laki-laki</option>
-                <option value="P">Perempuan</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Tanggal Lahir</label>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                options={ROLE_OPTIONS}
               />
-            </div>
+            </FormField>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">
-                {isEditMode ? "Kata Sandi Baru (Kosongkan jika tidak diganti)" : "Kata Sandi (Default: Pegawai123!)"}
-              </label>
-              <input
+            <FormField label={isEditMode ? "Kata Sandi Baru (Kosongkan jika tidak diganti)" : "Kata Sandi (Default: Pegawai123!)"}>
+              <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={isEditMode ? "Isi hanya jika ingin mengubah kata sandi" : "Pegawai123!"}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                placeholder={isEditMode ? "Isi hanya jika ingin mengubah kata sandi..." : "Kosongkan untuk menggunakan sandi default (Pegawai123!)"}
               />
-            </div>
+            </FormField>
           </div>
         </div>
 
-        {/* Section 2: Kategori & Kualifikasi Kepegawaian */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+        {/* Section 2: Biodata Tambahan Pegawai */}
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="border-b border-border pb-3 flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-bold text-foreground">2. Biodata & Informasi Pribadi</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField label="Gelar Akademik">
+              <Input
+                type="text"
+                value={academicDegree}
+                onChange={(e) => setAcademicDegree(e.target.value)}
+                placeholder="Contoh: S.Kep., Ns. / Sp.B"
+              />
+            </FormField>
+
+            <FormField label="Jenis Kelamin">
+              <Select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                options={GENDER_OPTIONS}
+              />
+            </FormField>
+
+            <FormField label="Tanggal Lahir">
+              <Input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+              />
+            </FormField>
+
+            <FormField label="Agama">
+              <Select
+                value={religion}
+                onChange={(e) => setReligion(e.target.value)}
+                options={RELIGION_OPTIONS}
+                placeholder="-- Pilih Agama --"
+              />
+            </FormField>
+
+            <FormField label="Status Pernikahan">
+              <Select
+                value={maritalStatus}
+                onChange={(e) => setMaritalStatus(e.target.value)}
+                options={MARITAL_STATUS_OPTIONS}
+                placeholder="-- Pilih Status Pernikahan --"
+              />
+            </FormField>
+
+            <FormField label="Tanggal Masuk Kerja">
+              <Input
+                type="date"
+                value={joinDate}
+                onChange={(e) => setJoinDate(e.target.value)}
+              />
+            </FormField>
+
+            <FormField label="Pendidikan Terakhir">
+              <Select
+                value={lastEducation}
+                onChange={(e) => setLastEducation(e.target.value)}
+                options={EDUCATION_OPTIONS}
+                placeholder="-- Pilih Pendidikan Terakhir --"
+              />
+            </FormField>
+
+            <FormField label="Nomor Telepon / WhatsApp">
+              <Input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="081234567890"
+                className="font-mono"
+              />
+            </FormField>
+
+            <FormField label="Alamat Lengkap" className="md:col-span-2">
+              <Textarea
+                rows={3}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota/Kabupaten..."
+              />
+            </FormField>
+          </div>
+        </div>
+
+        {/* Section 3: Kategori & Kualifikasi Kepegawaian */}
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="border-b border-border pb-3 flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-bold text-foreground">2. Master Kategori & Kualifikasi Kepegawaian</h3>
+            <h3 className="text-lg font-bold text-foreground">3. Master Kategori & Kualifikasi Kepegawaian</h3>
           </div>
 
           {isLoadingCategories ? (
@@ -298,137 +389,89 @@ export function UserFormView({ userId }: UserFormViewProps) {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Status Kepegawaian */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Status Kepegawaian</label>
-                <select
+              <FormField label="Status Kepegawaian">
+                <Select
                   value={employmentStatusId}
                   onChange={(e) => {
                     setEmploymentStatusId(e.target.value);
-                    setEmployeeGroupId(""); // Reset child selection
+                    setEmployeeGroupId("");
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="">-- Pilih Status (e.g. ASN, Non ASN) --</option>
-                  {categories?.employmentStatuses.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  options={categories?.employmentStatuses.map((s) => ({ value: s.id, label: s.name }))}
+                  placeholder="-- Pilih Status (e.g. ASN, Non ASN) --"
+                />
+              </FormField>
 
-              {/* Jenis Kepegawaian */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Jenis Kepegawaian (Sub-Status)</label>
-                <select
+              <FormField label="Jenis Kepegawaian (Sub-Status)">
+                <Select
                   value={employeeGroupId}
                   onChange={(e) => setEmployeeGroupId(e.target.value)}
                   disabled={!employmentStatusId || availableGroups.length === 0}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                >
-                  <option value="">-- Pilih Jenis (e.g. PNS, PPPK) --</option>
-                  {availableGroups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  options={availableGroups.map((g) => ({ value: g.id, label: g.name }))}
+                  placeholder="-- Pilih Jenis (e.g. PNS, PPPK) --"
+                />
+              </FormField>
 
-              {/* Kelompok Profesi */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Kelompok Profesi</label>
-                <select
+              <FormField label="Kelompok Profesi">
+                <Select
                   value={professionGroupId}
                   onChange={(e) => {
                     setProfessionGroupId(e.target.value);
-                    setEmployeePositionId(""); // Reset child selection
+                    setEmployeePositionId("");
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="">-- Pilih Profesi (e.g. Medis, Administrasi) --</option>
-                  {categories?.professionGroups.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  options={categories?.professionGroups.map((p) => ({ value: p.id, label: p.name }))}
+                  placeholder="-- Pilih Profesi (e.g. Medis, Administrasi) --"
+                />
+              </FormField>
 
-              {/* Jabatan */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Jabatan (Sub-Profesi)</label>
-                <select
+              <FormField label="Jabatan (Sub-Profesi)">
+                <Select
                   value={employeePositionId}
                   onChange={(e) => setEmployeePositionId(e.target.value)}
                   disabled={!professionGroupId || availablePositions.length === 0}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                >
-                  <option value="">-- Pilih Jabatan (e.g. Dokter, Programmer) --</option>
-                  {availablePositions.map((pos) => (
-                    <option key={pos.id} value={pos.id}>
-                      {pos.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  options={availablePositions.map((pos) => ({ value: pos.id, label: pos.name }))}
+                  placeholder="-- Pilih Jabatan --"
+                />
+              </FormField>
 
-              {/* Pangkat & Golongan */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Pangkat / Golongan</label>
-                <select
+              <FormField label="Pangkat / Golongan">
+                <Select
                   value={employeeRankId}
                   onChange={(e) => setEmployeeRankId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="">-- Pilih Pangkat (e.g. Pembina (IV/a)) --</option>
-                  {categories?.employeeRanks.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  options={categories?.employeeRanks.map((r) => ({ value: r.id, label: r.name }))}
+                  placeholder="-- Pilih Pangkat --"
+                />
+              </FormField>
 
-              {/* Tempat Tugas */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Tempat Tugas / Unit Kerja</label>
-                <select
+              <FormField label="Tempat / Unit Tugas">
+                <Select
                   value={workplaceId}
                   onChange={(e) => setWorkplaceId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="">-- Pilih Tempat Tugas (e.g. Ruang ICCU) --</option>
-                  {categories?.workplaces.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  options={categories?.workplaces.map((w) => ({ value: w.id, label: w.name }))}
+                  placeholder="-- Pilih Tempat Tugas --"
+                />
+              </FormField>
             </div>
           )}
         </div>
 
-        {/* Action Submit Buttons */}
-        <div className="flex items-center justify-end gap-4 pt-2">
+        {/* Action Button Bar */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
           <Link href="/users">
-            <Button type="button" variant="outline" className="rounded-xl px-6">
+            <Button type="button" variant="outline" className="rounded-xl px-5">
               Batal
             </Button>
           </Link>
-          <Button type="submit" disabled={isSubmitting} className="rounded-xl px-8 shadow-md shadow-primary/25">
+          <Button type="submit" disabled={isSubmitting} className="rounded-xl px-6">
             {isSubmitting ? (
-              <span className="inline-flex items-center">
+              <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                <span>Menyimpan...</span>
-              </span>
+                {isEditMode ? "Menyimpan..." : "Menambahkan..."}
+              </>
             ) : (
-              <span className="inline-flex items-center">
+              <>
                 <Save className="w-4 h-4 mr-2" />
-                <span>{isEditMode ? "Simpan Perubahan" : "Simpan Pegawai Baru"}</span>
-              </span>
+                {isEditMode ? "Simpan Perubahan" : "Simpan Pegawai"}
+              </>
             )}
           </Button>
         </div>

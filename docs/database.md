@@ -55,6 +55,13 @@ Data utama pegawai + akun login.
 | `role` | Role | Role utama (default: EMPLOYEE) |
 | `gender` | String? | Opsional |
 | `birthDate` | DateTime? | Opsional |
+| `academicDegree` | String? | Gelar akademik (e.g. S.Ked, Sp.B) |
+| `lastEducation` | String? | Pendidikan terakhir (SD, SMP, SMA/SMK, D3, D4/S1, S2, S3, Spesialis) |
+| `religion` | String? | Agama (Islam, Kristen, Katolik, Hindu, Buddha, Khonghucu) |
+| `maritalStatus` | String? | Status pernikahan (Belum Kawin, Kawin, Cerai Hidup, Cerai Meninggal) |
+| `phone` | String? | Nomor telepon / WA |
+| `address` | String? | Alamat lengkap tempat tinggal |
+| `joinDate` | DateTime? | Tanggal masuk kerja pegawai |
 | `employmentStatusId` | String? | FK → EmploymentStatus |
 | `employeeGroupId` | String? | FK → EmployeeGroup |
 | `professionGroupId` | String? | FK → ProfessionGroup |
@@ -105,7 +112,7 @@ Master jenis dokumen. Menentukan kategori arsip dan target profesi.
 
 ### `DocumentTypeProfession`
 Tabel relasi M:N antara `DocumentType` dan `ProfessionGroup`.
-Menentukan jenis dokumen mana yang dipersyaratkan untuk profesi tertentu.
+Menentukan jenis dokumen mana yang dipersyaratkan untuk kelompok profesi tertentu.
 
 | Kolom | Tipe | Keterangan |
 |---|---|---|
@@ -114,6 +121,62 @@ Menentukan jenis dokumen mana yang dipersyaratkan untuk profesi tertentu.
 | `professionGroupId` | String FK | → ProfessionGroup (onDelete: Cascade) |
 
 **Constraint:** `@@unique([documentTypeId, professionGroupId])`
+
+---
+
+### `DocumentTypeEmploymentStatus`
+Tabel relasi M:N antara `DocumentType` dan `EmploymentStatus`.
+Menentukan jenis dokumen mana yang dipersyaratkan untuk status kepegawaian tertentu (e.g. ASN, Non ASN).
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `id` | String (cuid) PK | |
+| `documentTypeId` | String FK | → DocumentType (onDelete: Cascade) |
+| `employmentStatusId` | String FK | → EmploymentStatus (onDelete: Cascade) |
+
+**Constraint:** `@@unique([documentTypeId, employmentStatusId])`
+
+---
+
+### `DocumentTypeEmployeeGroup`
+Tabel relasi M:N antara `DocumentType` dan `EmployeeGroup`.
+Menentukan jenis dokumen mana yang dipersyaratkan untuk jenis kepegawaian tertentu (e.g. PNS, PPPK, BLUD Tetap, BLUD Kontrak).
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `id` | String (cuid) PK | |
+| `documentTypeId` | String FK | → DocumentType (onDelete: Cascade) |
+| `employeeGroupId` | String FK | → EmployeeGroup (onDelete: Cascade) |
+
+**Constraint:** `@@unique([documentTypeId, employeeGroupId])`
+
+---
+
+### `DocumentTypeEmployeeRank`
+Tabel relasi M:N antara `DocumentType` dan `EmployeeRank`.
+Menentukan jenis dokumen mana yang dipersyaratkan untuk pangkat/golongan tertentu.
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `id` | String (cuid) PK | |
+| `documentTypeId` | String FK | → DocumentType (onDelete: Cascade) |
+| `employeeRankId` | String FK | → EmployeeRank (onDelete: Cascade) |
+
+**Constraint:** `@@unique([documentTypeId, employeeRankId])`
+
+---
+
+### `DocumentTypeWorkplace`
+Tabel relasi M:N antara `DocumentType` dan `Workplace`.
+Menentukan jenis dokumen mana yang dipersyaratkan untuk unit kerja / tempat tugas tertentu.
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `id` | String (cuid) PK | |
+| `documentTypeId` | String FK | → DocumentType (onDelete: Cascade) |
+| `workplaceId` | String FK | → Workplace (onDelete: Cascade) |
+
+**Constraint:** `@@unique([documentTypeId, workplaceId])`
 
 ---
 
@@ -248,6 +311,20 @@ Unit kerja / satuan kerja pegawai.
 
 ---
 
+### `SystemSetting`
+Tabel penyimpan konfigurasi dan preferensi sistem dinas yang dapat diatur oleh ADMIN secara dinamis via UI Halaman Settings.
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `key` | String PK | Identifikasi kunci pengaturan (contoh: `MAX_AVATAR_UPLOAD_SIZE_KB`, `SECURITY_LOG_RETENTION_DAYS`) |
+| `value` | String | Nilai konfigurasi tersimpan dalam bentuk string |
+| `label` | String? | Nama manusiawi untuk tampilan UI |
+| `description` | String? | Penjelasan/deskripsi fungsi pengaturan |
+| `updatedAt` | DateTime | Waktu terakhir kali diubah |
+
+---
+
+
 ## 5. ERD (Entity Relationship)
 
 ```mermaid
@@ -289,17 +366,40 @@ erDiagram
 
 ---
 
-## 7. Cascade & Constraint Penting
+## 7. Cascade & Constraint Penting (Kebijakan Penghapusan Data)
 
-| Aksi | Efek |
-|---|---|
-| Hapus `User` | → CASCADE: `UserRole`, `DocumentRecord` ikut terhapus |
-| Hapus `User` reviewer | → SET NULL: `VerificationHistory.reviewedById` menjadi NULL |
-| Hapus `User` aktor log | → SET NULL: `SecurityLog.actorId` menjadi NULL |
-| Hapus `DocumentRecord` | → CASCADE: `VerificationHistory` ikut terhapus |
-| Hapus `DocumentType` | → CASCADE: `DocumentTypeProfession` ikut terhapus |
+Untuk menjaga integritas data kepegawaian dan audit trail, aplikasi menggunakan kombinasi strategi **CASCADE** dan **SET NULL** saat data dihapus oleh Admin:
 
-> **Rule:** `VerificationHistory` dan `SecurityLog` **tidak boleh dihapus secara langsung** — integritas audit harus terjaga.
+### A. Tabel & Data yang Di-CASCADE (Terhapus Otomatis)
+
+Data anak atau data relasi langsung yang tidak memiliki arti tanpa entitas utamanya akan otomatis terhapus (*Cascade*):
+
+| Penghapusan Entitas Utama | Data yang Di-CASCADE (Terhapus Otomatis) | Alasan & Dampak |
+|---|---|---|
+| **Hapus Akun `User`** | `UserRole`, `DocumentRecord` milik pegawai tersebut | Seluruh hak akses role dan berkas dokumen milik akun tersebut dibersihkan dari database. |
+| **Hapus `DocumentRecord`** | `VerificationHistory` terkait berkas tersebut | Seluruh histori catatan verifikasi dokumen tersebut ikut terhapus. |
+| **Hapus `DocumentType`** | `DocumentTypeProfession`, `DocumentTypeEmploymentStatus`, `DocumentTypeEmployeeGroup`, `DocumentTypeEmployeeRank`, `DocumentTypeWorkplace` | Seluruh kriteria pemetaan target kualifikasi dokumen tersebut dibersihkan. |
+| **Hapus Master `EmploymentStatus`** | `EmployeeGroup` (Jenis Kepegawaian di bawahnya) & `DocumentTypeEmploymentStatus` | Sub-kategori jenis kepegawaian induk tersebut ikut dibersihkan. |
+| **Hapus Master `ProfessionGroup`** | `EmployeePosition` (Jabatan di bawahnya) & `DocumentTypeProfession` | Sub-kategori jabatan induk tersebut ikut dibersihkan. |
+
+---
+
+### B. Tabel & Data yang Di-SET NULL (Pegawai/Audit Tetap Aman & Utuh)
+
+Data penting seperti **Akun Pegawai** dan **Log Audit** **TIDAK PERNAH DI-CASCADE** ketika master data atau user reviewer dihapus. Tautan relasinya di-SET NULL agar akun pegawai dan riwayat hukum audit tidak pernah hilang:
+
+| Penghapusan Master / User | Field yang Di-SET NULL | Perlindungan Data |
+|---|---|---|
+| **Hapus Master `EmploymentStatus`** | `User.employmentStatusId` → `NULL` | **Akun Pegawai TETAP ADA.** Pegawai hanya kehilangan label statusnya dan siap diset ulang oleh Admin. |
+| **Hapus Master `EmployeeGroup`** | `User.employeeGroupId` → `NULL` | **Akun Pegawai TETAP ADA.** Pegawai hanya kehilangan label jenis kepegawaiannya. |
+| **Hapus Master `ProfessionGroup`** | `User.professionGroupId` → `NULL` | **Akun Pegawai TETAP ADA.** Pegawai hanya kehilangan label kelompok profesinya. |
+| **Hapus Master `EmployeePosition`** | `User.employeePositionId` → `NULL` | **Akun Pegawai TETAP ADA.** Pegawai hanya kehilangan label jabatannya. |
+| **Hapus Master `EmployeeRank`** | `User.employeeRankId` → `NULL` | **Akun Pegawai TETAP ADA.** Pegawai hanya kehilangan label pangkat/golongannya. |
+| **Hapus Master `Workplace`** | `User.workplaceId` → `NULL` | **Akun Pegawai TETAP ADA.** Pegawai hanya kehilangan label unit kerjanya. |
+| **Hapus `User` (Reviewer/Verifikator)** | `VerificationHistory.reviewedById` → `NULL` | Histori verifikasi dokumen tetap tersimpan utuh untuk kebutuhan audit pertanggungjawaban. |
+| **Hapus `User` (Aktor Kegiatan)** | `SecurityLog.actorId` → `NULL` | Log aktivitas keamanan tetap tersimpan utuh. Nama aktor (`actorName`) dan role (`actorRole`) tetap tercatat permanen dalam teks snapshot log. |
+
+> **⚠️ Aturan Hukum Audit Sistem:** Tabel `VerificationHistory` dan `SecurityLog` **TIDAK BOLEH DIHAPUS** secara langsung dari sistem untuk menjamin integritas hukum dan pelacakan audit (*audit trail*).
 
 ---
 

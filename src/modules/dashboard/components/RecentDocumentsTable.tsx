@@ -19,62 +19,62 @@ export function RecentDocumentsTable({ documents }: RecentDocumentsTableProps) {
   }
 
   return (
-    <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm flex flex-col h-full">
-      <div className="p-5 border-b border-border bg-background flex justify-between items-center">
-        <h3 className="font-bold flex items-center gap-2">
-          <FileText className="w-5 h-5 text-primary" />
+    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-xs flex flex-col h-full">
+      <div className="px-4 py-2.5 border-b border-border bg-background flex justify-between items-center shrink-0">
+        <h3 className="font-bold text-sm flex items-center gap-2">
+          <FileText className="w-4 h-4 text-primary" />
           Dokumen Terbaru
         </h3>
-        <Link href="/documents" className="text-xs font-medium text-primary hover:underline flex items-center">
+        <Link href="/documents" className="text-xs font-semibold text-primary hover:underline flex items-center">
           Lihat Semua <ArrowRight className="w-3 h-3 ml-1" />
         </Link>
       </div>
       
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted/30 text-muted-foreground text-xs uppercase tracking-wider">
+      <div className="overflow-x-auto flex-1">
+        <table className="w-full text-xs text-left">
+          <thead className="bg-muted/40 text-muted-foreground font-semibold uppercase tracking-wider text-[10px]">
             <tr>
-              <th className="px-5 py-3 font-medium">Dokumen</th>
-              <th className="px-5 py-3 font-medium">Pemilik</th>
-              <th className="px-5 py-3 font-medium">Diunggah</th>
-              <th className="px-5 py-3 font-medium text-right">Status</th>
+              <th className="px-3.5 py-2">Dokumen</th>
+              <th className="px-3.5 py-2">Pemilik</th>
+              <th className="px-3.5 py-2">Diunggah</th>
+              <th className="px-3.5 py-2 text-right">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-border/60">
             {documents.map((doc) => {
               let statusStyle = "";
               let statusLabel = "";
               
               if (doc.status === "PENDING") {
-                statusStyle = "bg-amber-100 text-amber-700 border-amber-200";
+                statusStyle = "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20";
                 statusLabel = "Menunggu";
               } else if (doc.status === "APPROVED") {
-                statusStyle = "bg-green-100 text-green-700 border-green-200";
+                statusStyle = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20";
                 statusLabel = "Disetujui";
               } else {
-                statusStyle = "bg-red-100 text-red-700 border-red-200";
+                statusStyle = "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20";
                 statusLabel = "Ditolak";
               }
 
               return (
-                <tr key={doc.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-5 py-3">
-                    <div className="font-medium text-foreground line-clamp-1 max-w-[200px]" title={doc.documentType?.name}>
+                <tr key={doc.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-3.5 py-2.5">
+                    <div className="font-semibold text-foreground line-clamp-1 max-w-[180px]" title={doc.documentType?.name}>
                       {doc.documentType?.name}
                     </div>
-                    <div className="text-[10px] uppercase font-bold text-muted-foreground mt-0.5">
+                    <div className="text-[9px] uppercase font-bold text-muted-foreground">
                       {doc.documentType?.archiveCategory}
                     </div>
                   </td>
-                  <td className="px-5 py-3">
-                    <div className="text-sm font-medium">{doc.owner?.name}</div>
-                    <div className="text-xs text-muted-foreground font-mono">{doc.owner?.employeeId}</div>
+                  <td className="px-3.5 py-2.5">
+                    <div className="font-medium text-foreground text-xs">{doc.owner?.name}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono">{doc.owner?.employeeId}</div>
                   </td>
-                  <td className="px-5 py-3 text-muted-foreground text-xs whitespace-nowrap">
+                  <td className="px-3.5 py-2.5 text-muted-foreground text-[11px] whitespace-nowrap">
                     {format(new Date(doc.uploadedAt), "dd MMM yy, HH:mm", { locale: localeId })}
                   </td>
-                  <td className="px-5 py-3 text-right">
-                    <span className={`inline-block px-2.5 py-1 text-[10px] font-bold uppercase rounded-full border ${statusStyle}`}>
+                  <td className="px-3.5 py-2.5 text-right">
+                    <span className={`inline-block px-2 py-0.5 text-[9px] font-bold uppercase rounded-full border ${statusStyle}`}>
                       {statusLabel}
                     </span>
                   </td>

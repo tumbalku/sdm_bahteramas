@@ -7,6 +7,7 @@ export const createUserSchema = z.object({
     .min(3, "NIP / ID Pegawai minimal 3 karakter")
     .max(50, "NIP / ID Pegawai maksimal 50 karakter")
     .trim(),
+  nik: z.string().optional().nullable(),
   email: z.string().email("Format email tidak valid").trim(),
   password: z
     .string()
@@ -21,14 +22,21 @@ export const createUserSchema = z.object({
   role: z.nativeEnum(Role, {
     errorMap: () => ({ message: "Role pengguna tidak valid" }),
   }),
-  gender: z.string().optional(),
-  birthDate: z.string().optional(),
-  employmentStatusId: z.string().optional(),
-  employeeGroupId: z.string().optional(),
-  professionGroupId: z.string().optional(),
-  employeePositionId: z.string().optional(),
-  employeeRankId: z.string().optional(),
-  workplaceId: z.string().optional(),
+  gender: z.string().optional().nullable(),
+  birthDate: z.string().optional().nullable(),
+  academicDegree: z.string().optional().nullable(),
+  lastEducation: z.string().optional().nullable(),
+  religion: z.string().optional().nullable(),
+  maritalStatus: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  joinDate: z.string().optional().nullable(),
+  employmentStatusId: z.string().optional().nullable(),
+  employeeGroupId: z.string().optional().nullable(),
+  professionGroupId: z.string().optional().nullable(),
+  employeePositionId: z.string().optional().nullable(),
+  employeeRankId: z.string().optional().nullable(),
+  workplaceId: z.string().optional().nullable(),
 });
 
 export const updateUserSchema = createUserSchema.partial();

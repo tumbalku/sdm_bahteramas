@@ -11,17 +11,30 @@ export interface LogActivityParams {
   metadata?: Record<string, any>;
 }
 
+export const EXCLUDED_EVENT_TYPES = [
+  "USER_LOGIN",
+  "USER_LOGIN_SUCCESS",
+  "USER_LOGIN_FAILED",
+  "USER_LOGOUT",
+  "PROFILE_UPDATED",
+  "PASSWORD_CHANGED",
+];
+
 export async function logActivity(params: LogActivityParams) {
   try {
+    if (EXCLUDED_EVENT_TYPES.includes(params.eventType)) {
+      return;
+    }
+
     await prisma.securityLog.create({
       data: {
         actorId: params.actorId || null,
-        actorName: params.actorName,
-        actorRole: params.actorRole,
-        eventType: params.eventType,
-        resource: params.resource,
+        actorName: params.actorName || "System / Unknown",
+        actorRole: params.actorRole || "SYSTEM",
+        eventType: params.eventType || "SYSTEM_EVENT",
+        resource: params.resource || "/api/v1/system",
         ipAddress: params.ipAddress || null,
-        status: params.status,
+        status: params.status || "success",
         metadata: params.metadata || undefined,
       },
     });

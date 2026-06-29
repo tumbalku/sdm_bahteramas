@@ -9,10 +9,73 @@ import {
 } from "./types";
 import { createDocumentTypeSchema, updateDocumentTypeSchema } from "./validation";
 
+import { prisma } from "@/lib/prisma";
+
+export function isDocumentTypeApplicableToUser(docType: DocumentTypeRecord, userProfile: any): boolean {
+  if (!userProfile) return true;
+
+  // 1. Status Kepegawaian (ASN, Non ASN, dll)
+  if (docType.targetStatuses && docType.targetStatuses.length > 0) {
+    if (!userProfile.employmentStatusId || !docType.targetStatuses.some((s) => s.id === userProfile.employmentStatusId)) {
+      return false;
+    }
+  }
+
+  // 2. Jenis Kepegawaian (PNS, PPPK, BLUD, dll)
+  if (docType.targetGroups && docType.targetGroups.length > 0) {
+    if (!userProfile.employeeGroupId || !docType.targetGroups.some((g) => g.id === userProfile.employeeGroupId)) {
+      return false;
+    }
+  }
+
+  // 3. Kelompok Profesi (Medis, Keperawatan, dll)
+  if (docType.targetProfessions && docType.targetProfessions.length > 0) {
+    if (!userProfile.professionGroupId || !docType.targetProfessions.some((p) => p.id === userProfile.professionGroupId)) {
+      return false;
+    }
+  }
+
+  // 4. Pangkat / Golongan
+  if (docType.targetRanks && docType.targetRanks.length > 0) {
+    if (!userProfile.employeeRankId || !docType.targetRanks.some((r) => r.id === userProfile.employeeRankId)) {
+      return false;
+    }
+  }
+
+  // 5. Tempat / Unit Tugas
+  if (docType.targetWorkplaces && docType.targetWorkplaces.length > 0) {
+    if (!userProfile.workplaceId || !docType.targetWorkplaces.some((w) => w.id === userProfile.workplaceId)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export async function getAllDocumentTypes(
-  filters?: DocumentTypeFilter
+  filters?: DocumentTypeFilter,
+  currentUser?: AuthUser | null
 ): Promise<DocumentTypeRecord[]> {
-  return repo.findManyDocumentTypes(filters);
+  const allTypes = await repo.findManyDocumentTypes(filters);
+
+  if (filters?.forUser && currentUser) {
+    const userProfile = await prisma.user.findUnique({
+      where: { id: currentUser.id },
+      select: {
+        employmentStatusId: true,
+        employeeGroupId: true,
+        professionGroupId: true,
+        employeeRankId: true,
+        workplaceId: true,
+      },
+    });
+
+    if (userProfile) {
+      return allTypes.filter((docType) => isDocumentTypeApplicableToUser(docType, userProfile));
+    }
+  }
+
+  return allTypes;
 }
 
 export async function getDocumentTypeById(

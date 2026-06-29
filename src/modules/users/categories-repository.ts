@@ -89,21 +89,36 @@ export async function updateCategoryItem(id: string, type: CategoryType, name: s
 export async function deleteCategoryItem(id: string, type: CategoryType) {
   switch (type) {
     case "STATUS":
-      // Hapus anak terlebih dahulu jika ada
+      await prisma.documentTypeEmploymentStatus.deleteMany({ where: { employmentStatusId: id } });
+      await prisma.user.updateMany({ where: { employmentStatusId: id }, data: { employmentStatusId: null } });
       await prisma.employeeGroup.deleteMany({ where: { employmentStatusId: id } });
-      return prisma.employmentStatus.delete({ where: { id } });
+      await prisma.employmentStatus.deleteMany({ where: { id } });
+      return true;
     case "GROUP":
-      return prisma.employeeGroup.delete({ where: { id } });
+      await prisma.documentTypeEmployeeGroup.deleteMany({ where: { employeeGroupId: id } });
+      await prisma.user.updateMany({ where: { employeeGroupId: id }, data: { employeeGroupId: null } });
+      await prisma.employeeGroup.deleteMany({ where: { id } });
+      return true;
     case "PROFESSION":
-      // Hapus anak terlebih dahulu jika ada
+      await prisma.documentTypeProfession.deleteMany({ where: { professionGroupId: id } });
+      await prisma.user.updateMany({ where: { professionGroupId: id }, data: { professionGroupId: null } });
       await prisma.employeePosition.deleteMany({ where: { professionGroupId: id } });
-      return prisma.professionGroup.delete({ where: { id } });
+      await prisma.professionGroup.deleteMany({ where: { id } });
+      return true;
     case "POSITION":
-      return prisma.employeePosition.delete({ where: { id } });
+      await prisma.user.updateMany({ where: { employeePositionId: id }, data: { employeePositionId: null } });
+      await prisma.employeePosition.deleteMany({ where: { id } });
+      return true;
     case "RANK":
-      return prisma.employeeRank.delete({ where: { id } });
+      await prisma.documentTypeEmployeeRank.deleteMany({ where: { employeeRankId: id } });
+      await prisma.user.updateMany({ where: { employeeRankId: id }, data: { employeeRankId: null } });
+      await prisma.employeeRank.deleteMany({ where: { id } });
+      return true;
     case "WORKPLACE":
-      return prisma.workplace.delete({ where: { id } });
+      await prisma.documentTypeWorkplace.deleteMany({ where: { workplaceId: id } });
+      await prisma.user.updateMany({ where: { workplaceId: id }, data: { workplaceId: null } });
+      await prisma.workplace.deleteMany({ where: { id } });
+      return true;
     default:
       throw new Error("Tipe kategori tidak valid");
   }

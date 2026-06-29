@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus, Filter, FileSpreadsheet, FolderArchive } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { LayeredDeleteModal } from "@/components/LayeredDeleteModal";
 import {
   useDeleteDocumentType,
   useDocumentTypes,
@@ -18,6 +19,8 @@ export function DocumentTypesView() {
     DocumentArchiveCategory | "ALL"
   >("ALL");
 
+  const [itemToDelete, setItemToDelete] = useState<DocumentTypeRecord | null>(null);
+
   const filters =
     selectedCategory === "ALL" ? {} : { category: selectedCategory };
 
@@ -27,12 +30,16 @@ export function DocumentTypesView() {
   const deleteMutation = useDeleteDocumentType();
 
   const handleDelete = (item: DocumentTypeRecord) => {
-    if (
-      confirm(
-        `Apakah Anda yakin ingin menghapus jenis dokumen '${item.name}'?`
-      )
-    ) {
-      deleteMutation.mutate(item.id);
+    setItemToDelete(item);
+  };
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      deleteMutation.mutate(itemToDelete.id, {
+        onSuccess: () => {
+          setItemToDelete(null);
+        },
+      });
     }
   };
 
@@ -59,7 +66,7 @@ export function DocumentTypesView() {
                 className="rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 px-6 shrink-0"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Tambah Jenis Dokumen
+                Tambah Dokumen
               </Button>
             </Link>
           </div>
@@ -100,6 +107,24 @@ export function DocumentTypesView() {
         isLoading={isLoading}
         onDelete={handleDelete}
       />
+
+      {/* Layered Security Delete Modal */}
+      {itemToDelete && (
+        <LayeredDeleteModal
+          isOpen={!!itemToDelete}
+          onClose={() => setItemToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Konfirmasi Hapus Jenis Dokumen"
+          itemName={itemToDelete.name}
+          itemType="jenis dokumen"
+          impactDetails={[
+            `Seluruh kriteria kualifikasi target sasaran untuk '${itemToDelete.name}' akan dihapus permanen.`,
+            "Tindakan ini tidak dapat dibatalkan atau dikembalikan.",
+            "Pegawai tidak akan lagi melihat persyaratan jenis dokumen ini di dashboard mereka.",
+          ]}
+          isLoading={deleteMutation.isPending}
+        />
+      )}
     </div>
   );
 }

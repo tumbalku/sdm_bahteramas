@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { ProfileView } from "@/modules/profile/components/ProfileView";
 
 export const metadata: Metadata = {
-  title: "Profil Saya | SMDP Portal",
+  title: "Profil Saya | SIMDP",
   description: "Kelola profil dan keamanan akun Anda",
 };
 
