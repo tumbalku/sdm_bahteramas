@@ -12,14 +12,17 @@ import {
   LayoutDashboard,
   Loader2
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { Role } from "@prisma/client";
+import { PageHeader } from "@/components/PageHeader";
 
-export function DashboardView() {
-  const { data: session } = useSession();
+interface DashboardViewProps {
+  userRole?: Role;
+}
+
+export function DashboardView({ userRole }: DashboardViewProps) {
   const { data: stats, isLoading, error } = useDashboardStats();
 
-  const role = session?.user?.role;
-  const isEmployee = role === "EMPLOYEE";
+  const isEmployee = userRole === "EMPLOYEE";
 
   if (isLoading) {
     return (
@@ -41,19 +44,15 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <LayoutDashboard className="w-6 h-6 text-primary" />
-            Dashboard
-          </h2>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {isEmployee 
-              ? "Ringkasan metrik dan dokumen pribadi Anda"
-              : "Ringkasan metrik dan aktivitas dokumen seluruh pegawai"}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={LayoutDashboard}
+        title="Dashboard"
+        description={
+          isEmployee 
+            ? "Ringkasan metrik dan dokumen pribadi Anda"
+            : "Ringkasan metrik dan aktivitas dokumen seluruh pegawai"
+        }
+      />
 
       {/* Stats Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

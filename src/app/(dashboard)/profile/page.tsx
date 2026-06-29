@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ProfilePage() {
   return (
-    <div className="p-2 md:p-4">
+    <div className="page-container">
       <ProfileView />
     </div>
   );

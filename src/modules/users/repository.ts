@@ -24,6 +24,14 @@ export async function findManyUsers(filters?: UserFilter): Promise<UserRecord[]>
     where.employmentStatusId = filters.employmentStatusId;
   }
 
+  if (filters?.employeeGroupId) {
+    where.employeeGroupId = filters.employeeGroupId;
+  }
+
+  if (filters?.employeePositionId) {
+    where.employeePositionId = filters.employeePositionId;
+  }
+
   const items = await prisma.user.findMany({
     where,
     include: {
@@ -44,6 +52,7 @@ export async function findManyUsers(filters?: UserFilter): Promise<UserRecord[]>
     employeeId: u.employeeId,
     email: u.email,
     name: u.name,
+    avatarUrl: u.avatarUrl,
     role: u.role,
     gender: u.gender,
     birthDate: u.birthDate,
@@ -90,6 +99,7 @@ export async function findUserById(id: string): Promise<UserRecord | null> {
     employeeId: u.employeeId,
     email: u.email,
     name: u.name,
+    avatarUrl: u.avatarUrl,
     role: u.role,
     gender: u.gender,
     birthDate: u.birthDate,
@@ -154,6 +164,7 @@ export async function createUser(
     employeeId: u.employeeId,
     email: u.email,
     name: u.name,
+    avatarUrl: u.avatarUrl,
     role: u.role,
     gender: u.gender,
     birthDate: u.birthDate,
@@ -220,6 +231,7 @@ export async function updateUser(
     employeeId: u.employeeId,
     email: u.email,
     name: u.name,
+    avatarUrl: u.avatarUrl,
     role: u.role,
     gender: u.gender,
     birthDate: u.birthDate,

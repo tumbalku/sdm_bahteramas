@@ -3,7 +3,41 @@ import { getCurrentUser, hasRole } from "@/lib/auth-utils";
 import {
   deleteDocumentTypeService,
   updateDocumentTypeService,
+  getDocumentTypeById,
 } from "@/modules/document-types/service";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user || !hasRole(user, ["ADMIN", "STAFF"])) {
+      return NextResponse.json(
+        { success: false, error: "Akses ditolak." },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+    const data = await getDocumentTypeById(id);
+
+    if (!data) {
+      return NextResponse.json(
+        { success: false, error: "Data jenis dokumen tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal mengambil data jenis dokumen" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PATCH(
   req: NextRequest,

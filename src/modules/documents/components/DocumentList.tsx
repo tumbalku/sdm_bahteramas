@@ -3,7 +3,7 @@
 import { DocumentRecordDto } from "../types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Download, Trash2, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Download, Trash2, FileText, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DocumentListProps {
@@ -52,7 +52,7 @@ export function DocumentList({
 
   const canDelete = (doc: DocumentRecordDto) => {
     if (currentUserRole === "ADMIN") return true;
-    if (currentUserRole === "EMPLOYEE") {
+    if (currentUserRole === "EMPLOYEE" || currentUserRole === "STAFF") {
       return doc.ownerId === currentUserId && doc.status !== "APPROVED";
     }
     return false;
@@ -66,6 +66,7 @@ export function DocumentList({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {documents.map((doc) => {
         const StatusIcon = statusConfig[doc.status].icon;
+        const lastRejection = doc.verificationHistories?.find((vh) => vh.status === "REJECTED");
         
         return (
           <div
@@ -91,6 +92,23 @@ export function DocumentList({
                 </p>
               </div>
             </div>
+
+            {doc.status === "REJECTED" && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-semibold text-red-600 dark:text-red-400">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>Alasan Penolakan:</span>
+                </div>
+                <p className="text-foreground/90 italic pl-5 leading-relaxed">
+                  "{lastRejection?.reviewNote || "Dokumen belum memenuhi kualifikasi persyaratan."}"
+                </p>
+                {lastRejection?.reviewedBy?.name && (
+                  <p className="text-[10px] text-muted-foreground text-right pt-0.5 font-medium">
+                    Oleh: {lastRejection.reviewedBy.name}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2 mt-auto text-sm">
               <div className="flex justify-between border-b border-border/50 pb-2">

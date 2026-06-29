@@ -39,58 +39,58 @@ export function ChangePasswordForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-3xl p-6 shadow-sm flex flex-col h-full">
-      <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-        <KeyRound className="w-5 h-5 text-primary" />
+    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-full">
+      <h3 className="text-base font-extrabold mb-1 flex items-center gap-2 text-foreground">
+        <KeyRound className="w-4 h-4 text-primary" />
         Keamanan Akun
       </h3>
-      <p className="text-sm text-muted-foreground mb-6">
-        Ganti kata sandi secara berkala untuk menjaga keamanan akun Anda.
+      <p className="text-xs text-muted-foreground mb-3">
+        Ganti kata sandi secara berkala untuk menjaga keamanan akun.
       </p>
 
-      <div className="space-y-4 flex-1">
+      <div className="space-y-3 flex-1 text-xs md:text-sm">
         <div>
-          <label className="block text-sm font-medium mb-1">Kata Sandi Saat Ini</label>
+          <label className="block font-semibold mb-1 text-foreground">Kata Sandi Saat Ini</label>
           <input
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-3.5 py-2 rounded-xl border border-input bg-background text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Kata Sandi Baru</label>
+          <label className="block font-semibold mb-1 text-foreground">Kata Sandi Baru</label>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-3.5 py-2 rounded-xl border border-input bg-background text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
             required
             minLength={8}
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Konfirmasi Kata Sandi Baru</label>
+          <label className="block font-semibold mb-1 text-foreground">Konfirmasi Kata Sandi Baru</label>
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-3.5 py-2 rounded-xl border border-input bg-background text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
             required
             minLength={8}
           />
         </div>
       </div>
 
-      <div className="mt-8 flex justify-end">
-        <Button type="submit" disabled={isPending} variant="secondary" className="rounded-xl px-6 w-full md:w-auto border border-border">
+      <div className="mt-5 flex justify-end pt-3 border-t border-border/40">
+        <Button type="submit" disabled={isPending} variant="secondary" className="rounded-xl px-5 h-9 text-xs font-bold w-full md:w-auto border border-border">
           {isPending ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
           ) : (
-            <KeyRound className="w-4 h-4 mr-2" />
+            <KeyRound className="w-3.5 h-3.5 mr-1.5" />
           )}
           Ganti Kata Sandi
         </Button>

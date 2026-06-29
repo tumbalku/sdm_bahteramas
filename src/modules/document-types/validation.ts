@@ -23,8 +23,8 @@ export const createDocumentTypeSchema = z.object({
     .min(1, "Format file diizinkan wajib diisi (contoh: pdf,jpg,png)"),
   maxSizeMb: z
     .number({ invalid_type_error: "Batas ukuran harus berupa angka" })
-    .min(1, "Ukuran file minimal 1 MB")
-    .max(50, "Ukuran file maksimal 50 MB"),
+    .min(0.01, "Ukuran file minimal 10 KB")
+    .max(100, "Ukuran file maksimal 100 MB"),
   icon: z.string().optional(),
   professionGroupIds: z.array(z.string()).optional().default([]),
 });

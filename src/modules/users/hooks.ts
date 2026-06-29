@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUserApi, deleteUserApi, getUsersApi, updateUserApi } from "./api";
+import { createUserApi, deleteUserApi, getUsersApi, updateUserApi, getUserApi } from "./api";
 import { CreateUserInput, UpdateUserInput, UserFilter } from "./types";
 
 export function useUsers(filters?: UserFilter) {
@@ -14,6 +14,36 @@ export function useUsers(filters?: UserFilter) {
       }
       return res.data || [];
     },
+  });
+}
+
+export function useUser(id: string) {
+  return useQuery({
+    queryKey: ["users", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await getUserApi(id);
+      if (!res.success) {
+        throw new Error(res.error || "Gagal mengambil data pegawai");
+      }
+      return res.data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useMasterCategories() {
+  return useQuery({
+    queryKey: ["users", "categories"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/users/categories");
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Gagal memuat data master kategori");
+      }
+      return json.data;
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
   });
 }
 

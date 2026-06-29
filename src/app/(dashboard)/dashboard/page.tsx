@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { DashboardView } from "@/modules/dashboard/components/DashboardView";
 
 export const metadata: Metadata = {
@@ -6,10 +7,11 @@ export const metadata: Metadata = {
   description: "Ringkasan metrik dan aktivitas dokumen",
 };
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
   return (
-    <div className="max-w-7xl mx-auto">
-      <DashboardView />
+    <div className="page-container">
+      <DashboardView userRole={user?.role} />
     </div>
   );
 }

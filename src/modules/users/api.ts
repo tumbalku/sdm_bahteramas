@@ -7,9 +7,15 @@ export async function getUsersApi(filters?: UserFilter) {
   if (filters?.professionGroupId) params.set("professionGroupId", filters.professionGroupId);
   if (filters?.workplaceId) params.set("workplaceId", filters.workplaceId);
   if (filters?.employmentStatusId) params.set("employmentStatusId", filters.employmentStatusId);
+  if (filters?.employeeGroupId) params.set("employeeGroupId", filters.employeeGroupId);
+  if (filters?.employeePositionId) params.set("employeePositionId", filters.employeePositionId);
 
   const url = `/api/v1/users${params.toString() ? `?${params.toString()}` : ""}`;
   return apiClient<UserRecord[]>(url, { method: "GET" });
+}
+
+export async function getUserApi(id: string) {
+  return apiClient<UserRecord>(`/api/v1/users/${id}`, { method: "GET" });
 }
 
 export async function createUserApi(input: CreateUserInput) {

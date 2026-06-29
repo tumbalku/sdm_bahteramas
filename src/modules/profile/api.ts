@@ -24,4 +24,15 @@ export const profileApi = {
     });
     if (!response.success) throw new Error(response.error);
   },
+
+  uploadAvatar: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient<{ avatarUrl: string }>("/api/v1/profile/avatar", {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.success) throw new Error(response.error);
+    return response.data?.avatarUrl || "";
+  },
 };

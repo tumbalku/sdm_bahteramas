@@ -8,7 +8,8 @@ export interface SecurityLogDto {
   ipAddress: string | null;
   status: string;
   metadata: any | null;
-  createdAt: Date;
+  timestamp: Date;
+  createdAt?: Date;
 }
 
 export interface SecurityLogFilterParams {
@@ -16,4 +17,6 @@ export interface SecurityLogFilterParams {
   endDate?: string;
   actorId?: string;
   eventType?: string;
+  page?: number;
+  limit?: number;
 }

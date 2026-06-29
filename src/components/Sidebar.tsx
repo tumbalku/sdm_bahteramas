@@ -37,7 +37,7 @@ const menuItems: MenuItem[] = [
     title: "Dokumen Saya",
     href: "/documents",
     icon: FileText,
-    roles: [Role.ADMIN, Role.EMPLOYEE],
+    roles: [Role.ADMIN, Role.STAFF, Role.EMPLOYEE],
   },
   {
     title: "Verifikasi Berkas",
@@ -81,14 +81,12 @@ export function Sidebar({ userRole }: SidebarProps) {
   return (
     <aside className="w-64 bg-card border-r border-border min-h-screen flex flex-col">
       {/* Brand Logo */}
-      <div className="p-6 border-b border-border flex items-center gap-3">
+      <div className="h-16 px-6 border-b border-border flex items-center gap-3 shrink-0">
         <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-md shadow-primary/20">
           <ShieldCheck className="w-5 h-5" />
         </div>
-        <div>
-          <h1 className="font-bold text-lg leading-none tracking-tight">SMDP Portal</h1>
-          <span className="text-xs text-muted-foreground">Arsip Pegawai</span>
-        </div>
+        <h1 className="font-bold text-lg leading-none tracking-tight">SMDP Portal</h1>
+
       </div>
 
       {/* Nav Menu */}

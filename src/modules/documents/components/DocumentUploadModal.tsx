@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, DragEvent } from "react";
 import { DocumentArchiveCategory } from "@prisma/client";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, UploadCloud } from "lucide-react";
+import { X, Loader2, UploadCloud, FileCheck } from "lucide-react";
 import { useDocumentTypes } from "@/modules/document-types/hooks";
 import { DocumentUploadInput } from "../types";
 
@@ -22,14 +22,17 @@ export function DocumentUploadModal({
   isLoading,
   activeCategory,
 }: DocumentUploadModalProps) {
-  const { data: documentTypes, isLoading: isLoadingTypes } = useDocumentTypes({
-    category: activeCategory,
-  });
+  const { data: documentTypes, isLoading: isLoadingTypes } = useDocumentTypes();
 
   const [documentTypeId, setDocumentTypeId] = useState("");
   const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const utamaTypes = documentTypes?.filter((t) => t.archiveCategory === "UTAMA") || [];
+  const kondisionalTypes = documentTypes?.filter((t) => t.archiveCategory === "KONDISIONAL") || [];
+  const profesiTypes = documentTypes?.filter((t) => t.archiveCategory === "PROFESI") || [];
 
   useEffect(() => {
     if (isOpen) {
@@ -37,12 +40,41 @@ export function DocumentUploadModal({
       setIssueDate("");
       setExpiryDate("");
       setFile(null);
+      setIsDragging(false);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const selectedType = documentTypes?.find((t) => t.id === documentTypeId);
+
+  const handleFileSelect = (selectedFile: File | undefined) => {
+    if (selectedFile) {
+      setFile(selectedFile);
+    }
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +90,7 @@ export function DocumentUploadModal({
     onSubmit({
       documentTypeId,
       issueDate: issueDate || undefined,
-      expiryDate: expiryDate || undefined,
+      expiryDate: selectedType?.requiresExpiryDate ? expiryDate || undefined : undefined,
       file,
       ownerId: "", // Akan di-override oleh backend session
     });
@@ -88,15 +120,37 @@ export function DocumentUploadModal({
               disabled={isLoadingTypes}
             >
               <option value="">-- Pilih Jenis Dokumen --</option>
-              {documentTypes?.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              ))}
+              {utamaTypes.length > 0 && (
+                <optgroup label="Arsip Utama">
+                  {utamaTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {kondisionalTypes.length > 0 && (
+                <optgroup label="Arsip Kondisional">
+                  {kondisionalTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {profesiTypes.length > 0 && (
+                <optgroup label="Arsip Profesi">
+                  {profesiTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className={selectedType?.requiresExpiryDate ? "grid grid-cols-2 gap-4" : "block"}>
             <div>
               <label className="block text-sm font-medium mb-1">Tanggal Terbit (Opsional)</label>
               <input
@@ -106,61 +160,91 @@ export function DocumentUploadModal({
                 className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Masa Berlaku {selectedType?.requiresExpiryDate && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                type="date"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                required={selectedType?.requiresExpiryDate}
-              />
-            </div>
+            {selectedType?.requiresExpiryDate && (
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Masa Berlaku <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  required
+                />
+              </div>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">File Dokumen</label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-input border-dashed rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors">
-              <div className="space-y-1 text-center">
-                <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                <div className="flex text-sm text-muted-foreground">
-                  <label className="relative cursor-pointer bg-transparent rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none">
-                    <span>Pilih file</span>
-                    <input
-                      type="file"
-                      className="sr-only"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setFile(e.target.files[0]);
-                        }
-                      }}
-                      accept={
-                        selectedType
-                          ? selectedType.allowedFormats
-                              .split(",")
-                              .map((f) => `.${f.trim()}`)
-                              .join(",")
-                          : "*"
-                      }
-                    />
-                  </label>
-                  <p className="pl-1">atau seret dan lepas</p>
+            
+            {/* Clickable & Drag-Drop Box */}
+            <label
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`mt-1 flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                isDragging
+                  ? "border-primary bg-primary/10 scale-[1.01]"
+                  : file
+                  ? "border-green-500/50 bg-green-500/5 hover:bg-green-500/10"
+                  : "border-input bg-muted/20 hover:bg-muted/40"
+              }`}
+            >
+              <input
+                type="file"
+                className="sr-only"
+                onChange={(e) => handleFileSelect(e.target.files?.[0])}
+                accept={
+                  selectedType
+                    ? selectedType.allowedFormats
+                        .split(",")
+                        .map((f) => `.${f.trim()}`)
+                        .join(",")
+                    : "*"
+                }
+              />
+              
+              <div className="space-y-1 text-center pointer-events-none">
+                {file ? (
+                  <FileCheck className="mx-auto h-12 w-12 text-green-600 animate-bounce" />
+                ) : (
+                  <UploadCloud className={`mx-auto h-12 w-12 ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
+                )}
+                
+                <div className="flex items-center justify-center text-sm text-muted-foreground">
+                  <span className="font-semibold text-primary underline underline-offset-2">
+                    {file ? "Ganti file" : "Pilih file"}
+                  </span>
+                  <span className="pl-1">atau seret dan lepas di sini</span>
                 </div>
+                
                 <p className="text-xs text-muted-foreground">
                   {selectedType ? (
-                    <>Format: {selectedType.allowedFormats} (Maks {selectedType.maxSizeMb}MB)</>
+                    <>
+                      Format: {selectedType.allowedFormats.toUpperCase()} (Maks{" "}
+                      {selectedType.maxSizeMb < 1
+                        ? `${Math.round(selectedType.maxSizeMb * 1024)} KB`
+                        : `${selectedType.maxSizeMb} MB`}
+                      )
+                    </>
                   ) : (
                     "Pilih jenis dokumen terlebih dahulu"
                   )}
                 </p>
               </div>
-            </div>
+            </label>
+
             {file && (
-              <p className="mt-2 text-sm text-green-600 font-medium break-all">
-                File terpilih: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
+              <div className="mt-2 p-3 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-between text-sm text-green-700 dark:text-green-400">
+                <span className="font-medium truncate max-w-[80%]">
+                  📄 {file.name}
+                </span>
+                <span className="text-xs shrink-0 font-semibold">
+                  ({file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(0)} KB` : `${(file.size / (1024 * 1024)).toFixed(2)} MB`})
+                </span>
+              </div>
             )}
           </div>
 

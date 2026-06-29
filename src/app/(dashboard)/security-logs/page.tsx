@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function SecurityLogsPage() {
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="page-container">
       <SecurityLogsView />
     </div>
   );

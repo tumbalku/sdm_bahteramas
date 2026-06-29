@@ -1,6 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, hasRole } from "@/lib/auth-utils";
-import { deleteUserService, updateUserService } from "@/modules/users/service";
+import { deleteUserService, updateUserService, getUserById } from "@/modules/users/service";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user || !hasRole(user, ["ADMIN"])) {
+      return NextResponse.json(
+        { success: false, error: "Akses ditolak. Membutuhkan role ADMIN." },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+    const data = await getUserById(id);
+
+    if (!data) {
+      return NextResponse.json(
+        { success: false, error: "Data pegawai tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal mengambil data pegawai" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PATCH(
   req: NextRequest,

@@ -11,11 +11,11 @@ export default async function DashboardLayout({
   const user = await requireRole(["ADMIN", "STAFF", "EMPLOYEE"]);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar userRole={user.role} />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Navbar userName={user.name} userRole={user.role} />
-        <main className="flex-1 p-6 lg:p-8 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-6 lg:p-8 overflow-y-auto bg-muted/40">{children}</main>
       </div>
     </div>
   );

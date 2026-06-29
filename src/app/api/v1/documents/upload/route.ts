@@ -13,11 +13,18 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     
+    const getStringOrUndefined = (val: FormDataEntryValue | null) => {
+      if (typeof val === "string" && val.trim() !== "" && val !== "null" && val !== "undefined") {
+        return val.trim();
+      }
+      return undefined;
+    };
+
     // Convert formData to simple object for Zod validation (non-file fields)
     const formFields = {
-      documentTypeId: formData.get("documentTypeId") as string,
-      issueDate: formData.get("issueDate") as string,
-      expiryDate: formData.get("expiryDate") as string,
+      documentTypeId: getStringOrUndefined(formData.get("documentTypeId")) || "",
+      issueDate: getStringOrUndefined(formData.get("issueDate")),
+      expiryDate: getStringOrUndefined(formData.get("expiryDate")),
     };
     
     const file = formData.get("file") as File | null;

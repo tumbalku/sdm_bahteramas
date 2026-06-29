@@ -5,6 +5,7 @@ import {
   createDocumentTypeApi,
   deleteDocumentTypeApi,
   getDocumentTypesApi,
+  getDocumentTypeApi,
   updateDocumentTypeApi,
 } from "./api";
 import {
@@ -23,6 +24,21 @@ export function useDocumentTypes(filters?: DocumentTypeFilter) {
       }
       return res.data || [];
     },
+  });
+}
+
+export function useDocumentType(id: string) {
+  return useQuery({
+    queryKey: ["document-types", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await getDocumentTypeApi(id);
+      if (!res.success) {
+        throw new Error(res.error || "Gagal mengambil jenis dokumen");
+      }
+      return res.data;
+    },
+    enabled: !!id,
   });
 }
 

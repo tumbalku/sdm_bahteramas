@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { UserProfileDto, UpdateProfileInput } from "../types";
 import { useUpdateProfile } from "../hooks";
 import { Button } from "@/components/ui/button";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, UserCircle2 } from "lucide-react";
 import { format } from "date-fns";
 
 interface UpdateProfileFormProps {
@@ -41,65 +41,54 @@ export function UpdateProfileForm({ profile }: UpdateProfileFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-3xl p-6 shadow-sm">
-      <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-full">
+      <h3 className="text-base font-extrabold mb-3 flex items-center gap-2 text-foreground">
+        <UserCircle2 className="w-4 h-4 text-primary" />
         Biodata Profil
       </h3>
 
-      <div className="space-y-4">
+      <div className="space-y-3 flex-1 text-xs md:text-sm">
         <div>
-          <label className="block text-sm font-medium mb-1">Nama Lengkap <span className="text-red-500">*</span></label>
+          <label className="block font-semibold mb-1 text-foreground">Nama Lengkap <span className="text-red-500">*</span></label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-3.5 py-2 rounded-xl border border-input bg-background text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
             required
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium mb-1">Jenis Kelamin</label>
+            <label className="block font-semibold mb-1 text-foreground">Jenis Kelamin</label>
             <select
               value={gender}
               onChange={(e) => setGender(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3.5 py-2 rounded-xl border border-input bg-background text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer font-medium"
             >
               <option value="L">Laki-laki</option>
               <option value="P">Perempuan</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Tanggal Lahir</label>
+            <label className="block font-semibold mb-1 text-foreground">Tanggal Lahir</label>
             <input
               type="date"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3.5 py-2 rounded-xl border border-input bg-background text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
             />
-          </div>
-        </div>
-        
-        {/* Read-only info fields below for context */}
-        <div className="pt-4 border-t border-border/50 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div className="bg-muted/30 p-3 rounded-xl border border-border/50">
-            <span className="block text-xs font-medium text-muted-foreground mb-1">Email Log-in</span>
-            <span className="text-sm font-semibold">{profile.email}</span>
-          </div>
-          <div className="bg-muted/30 p-3 rounded-xl border border-border/50">
-            <span className="block text-xs font-medium text-muted-foreground mb-1">NIP / ID Pegawai</span>
-            <span className="text-sm font-mono font-semibold">{profile.employeeId}</span>
           </div>
         </div>
       </div>
 
-      <div className="mt-8 flex justify-end">
-        <Button type="submit" disabled={isPending} className="rounded-xl px-6">
+      <div className="mt-5 flex justify-end pt-3 border-t border-border/40">
+        <Button type="submit" disabled={isPending} className="rounded-xl px-5 h-9 text-xs font-bold w-full md:w-auto">
           {isPending ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
           ) : (
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="w-3.5 h-3.5 mr-1.5" />
           )}
           Simpan Biodata
         </Button>

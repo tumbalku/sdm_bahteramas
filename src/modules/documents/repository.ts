@@ -25,6 +25,29 @@ export async function findDocuments(filters: DocumentFilterDto) {
       archiveCategory: filters.archiveCategory,
     };
   }
+  const ownerWhere: Prisma.UserWhereInput = {};
+  if (filters.search) {
+    ownerWhere.OR = [
+      { name: { contains: filters.search, mode: "insensitive" } },
+      { employeeId: { contains: filters.search, mode: "insensitive" } },
+    ];
+  }
+  if (filters.employmentStatusId) {
+    ownerWhere.employmentStatusId = filters.employmentStatusId;
+  }
+  if (filters.employeeGroupId) {
+    ownerWhere.employeeGroupId = filters.employeeGroupId;
+  }
+  if (filters.professionGroupId) {
+    ownerWhere.professionGroupId = filters.professionGroupId;
+  }
+  if (filters.employeePositionId) {
+    ownerWhere.employeePositionId = filters.employeePositionId;
+  }
+
+  if (Object.keys(ownerWhere).length > 0) {
+    where.owner = ownerWhere;
+  }
 
   return prisma.documentRecord.findMany({
     where,
@@ -35,6 +58,20 @@ export async function findDocuments(filters: DocumentFilterDto) {
           id: true,
           name: true,
           employeeId: true,
+          avatarUrl: true,
+        },
+      },
+      verificationHistories: {
+        take: 1,
+        orderBy: {
+          reviewedAt: "desc",
+        },
+        include: {
+          reviewedBy: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },
@@ -54,6 +91,7 @@ export async function findDocumentById(id: string) {
           id: true,
           name: true,
           employeeId: true,
+          avatarUrl: true,
         },
       },
     },

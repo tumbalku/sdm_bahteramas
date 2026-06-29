@@ -6,107 +6,208 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Starting database seeding...");
 
-  // 1. Seed Employment Statuses
-  const pns = await prisma.employmentStatus.upsert({
-    where: { name: "PNS" },
+  // 1. Seed Employment Statuses (Status Kepegawaian)
+  const asn = await prisma.employmentStatus.upsert({
+    where: { name: "ASN" },
     update: {},
-    create: { name: "PNS" },
+    create: { name: "ASN" },
   });
 
-  const pppk = await prisma.employmentStatus.upsert({
-    where: { name: "PPPK" },
+  const nonAsn = await prisma.employmentStatus.upsert({
+    where: { name: "Non ASN" },
     update: {},
-    create: { name: "PPPK" },
+    create: { name: "Non ASN" },
   });
 
-  const honorer = await prisma.employmentStatus.upsert({
-    where: { name: "Honorer / Non-ASN" },
-    update: {},
-    create: { name: "Honorer / Non-ASN" },
-  });
+  console.log("✅ Seeded Employment Statuses (ASN, Non ASN)");
 
-  console.log("✅ Seeded Employment Statuses");
-
-  // 2. Seed Employee Groups
-  await prisma.employeeGroup.upsert({
+  // 2. Seed Employee Groups (Jenis Kepegawaian)
+  const pns = await prisma.employeeGroup.upsert({
     where: {
       name_employmentStatusId: {
-        name: "Tenaga Kesehatan",
-        employmentStatusId: pns.id,
+        name: "PNS",
+        employmentStatusId: asn.id,
       },
     },
     update: {},
     create: {
-      name: "Tenaga Kesehatan",
-      employmentStatusId: pns.id,
+      name: "PNS",
+      employmentStatusId: asn.id,
     },
   });
 
-  await prisma.employeeGroup.upsert({
+  const pppk = await prisma.employeeGroup.upsert({
     where: {
       name_employmentStatusId: {
-        name: "Tenaga Non-Kesehatan",
-        employmentStatusId: pns.id,
+        name: "PPPK",
+        employmentStatusId: asn.id,
       },
     },
     update: {},
     create: {
-      name: "Tenaga Non-Kesehatan",
-      employmentStatusId: pns.id,
+      name: "PPPK",
+      employmentStatusId: asn.id,
     },
   });
 
-  console.log("✅ Seeded Employee Groups");
-
-  // 3. Seed Profession Groups
-  const dokter = await prisma.professionGroup.upsert({
-    where: { name: "Dokter / Medis" },
+  const honorer = await prisma.employeeGroup.upsert({
+    where: {
+      name_employmentStatusId: {
+        name: "Honorer / Kontrak",
+        employmentStatusId: nonAsn.id,
+      },
+    },
     update: {},
-    create: { name: "Dokter / Medis" },
+    create: {
+      name: "Honorer / Kontrak",
+      employmentStatusId: nonAsn.id,
+    },
   });
 
-  const perawat = await prisma.professionGroup.upsert({
+  console.log("✅ Seeded Employee Groups (PNS, PPPK, Honorer)");
+
+  // 3. Seed Profession Groups (Kelompok Profesi)
+  const medis = await prisma.professionGroup.upsert({
+    where: { name: "Medis" },
+    update: {},
+    create: { name: "Medis" },
+  });
+
+  const keperawatan = await prisma.professionGroup.upsert({
     where: { name: "Keperawatan" },
     update: {},
     create: { name: "Keperawatan" },
   });
 
-  const bidan = await prisma.professionGroup.upsert({
-    where: { name: "Kebidanan" },
+  const administrasi = await prisma.professionGroup.upsert({
+    where: { name: "Administrasi" },
     update: {},
-    create: { name: "Kebidanan" },
+    create: { name: "Administrasi" },
   });
 
-  const adminProf = await prisma.professionGroup.upsert({
-    where: { name: "Tenaga Administrasi" },
+  console.log("✅ Seeded Profession Groups (Medis, Keperawatan, Administrasi)");
+
+  // 4. Seed Employee Positions (Jabatan)
+  await prisma.employeePosition.upsert({
+    where: {
+      name_professionGroupId: {
+        name: "Dokter Spesialis",
+        professionGroupId: medis.id,
+      },
+    },
     update: {},
-    create: { name: "Tenaga Administrasi" },
+    create: {
+      name: "Dokter Spesialis",
+      professionGroupId: medis.id,
+    },
   });
 
-  console.log("✅ Seeded Profession Groups");
+  await prisma.employeePosition.upsert({
+    where: {
+      name_professionGroupId: {
+        name: "Dokter Umum",
+        professionGroupId: medis.id,
+      },
+    },
+    update: {},
+    create: {
+      name: "Dokter Umum",
+      professionGroupId: medis.id,
+    },
+  });
 
-  // 4. Seed Workplaces
+  await prisma.employeePosition.upsert({
+    where: {
+      name_professionGroupId: {
+        name: "Programmer / Pranata Komputer",
+        professionGroupId: administrasi.id,
+      },
+    },
+    update: {},
+    create: {
+      name: "Programmer / Pranata Komputer",
+      professionGroupId: administrasi.id,
+    },
+  });
+
+  await prisma.employeePosition.upsert({
+    where: {
+      name_professionGroupId: {
+        name: "Staf Administrasi",
+        professionGroupId: administrasi.id,
+      },
+    },
+    update: {},
+    create: {
+      name: "Staf Administrasi",
+      professionGroupId: administrasi.id,
+    },
+  });
+
+  console.log("✅ Seeded Employee Positions (Dokter, Programmer, etc)");
+
+  // 5. Seed Employee Ranks (Pangkat & Golongan)
+  await prisma.employeeRank.upsert({
+    where: { name: "Pembina (IV/a)" },
+    update: {},
+    create: { name: "Pembina (IV/a)" },
+  });
+
+  await prisma.employeeRank.upsert({
+    where: { name: "Penata (III/c)" },
+    update: {},
+    create: { name: "Penata (III/c)" },
+  });
+
+  await prisma.employeeRank.upsert({
+    where: { name: "Pengatur (II/c)" },
+    update: {},
+    create: { name: "Pengatur (II/c)" },
+  });
+
+  console.log("✅ Seeded Employee Ranks (Pembina, Penata, Pengatur)");
+
+  // 6. Seed Workplaces (Tempat Tugas)
+  await prisma.workplace.upsert({
+    where: { name: "Ruang ICCU" },
+    update: {},
+    create: { name: "Ruang ICCU" },
+  });
+
+  await prisma.workplace.upsert({
+    where: { name: "Ruang Isolasi" },
+    update: {},
+    create: { name: "Ruang Isolasi" },
+  });
+
   const workplaceMain = await prisma.workplace.upsert({
-    where: { name: "RSUD Bahteramas" },
+    where: { name: "RSUD Bahteramas - Sekretariat" },
     update: {},
-    create: { name: "RSUD Bahteramas" },
+    create: { name: "RSUD Bahteramas - Sekretariat" },
   });
 
-  console.log("✅ Seeded Workplaces");
+  console.log("✅ Seeded Workplaces (Ruang ICCU, Ruang Isolasi, Sekretariat)");
 
-  // 5. Seed Default Admin User
+  // 7. Seed Default Admin User
   const adminPasswordHash = await bcrypt.hash("Admin123!", 10);
   
   const adminUser = await prisma.user.upsert({
     where: { email: "admin@smdp.local" },
-    update: {},
+    update: {
+      employmentStatusId: asn.id,
+      employeeGroupId: pns.id,
+      professionGroupId: administrasi.id,
+      workplaceId: workplaceMain.id,
+    },
     create: {
       employeeId: "199001012020011001",
       email: "admin@smdp.local",
       passwordHash: adminPasswordHash,
       name: "Administrator Utama",
       role: Role.ADMIN,
-      professionGroupId: adminProf.id,
+      employmentStatusId: asn.id,
+      employeeGroupId: pns.id,
+      professionGroupId: administrasi.id,
       workplaceId: workplaceMain.id,
     },
   });
@@ -128,7 +229,7 @@ async function main() {
 
   console.log("✅ Seeded Default Admin User (admin@smdp.local / Admin123!)");
 
-  // 6. Seed Sample Document Types
+  // 8. Seed Sample Document Types
   const ktp = await prisma.documentType.upsert({
     where: { code: "KTP" },
     update: {},
@@ -198,13 +299,13 @@ async function main() {
     where: {
       documentTypeId_professionGroupId: {
         documentTypeId: str.id,
-        professionGroupId: dokter.id,
+        professionGroupId: medis.id,
       },
     },
     update: {},
     create: {
       documentTypeId: str.id,
-      professionGroupId: dokter.id,
+      professionGroupId: medis.id,
     },
   });
 
@@ -212,13 +313,13 @@ async function main() {
     where: {
       documentTypeId_professionGroupId: {
         documentTypeId: str.id,
-        professionGroupId: perawat.id,
+        professionGroupId: keperawatan.id,
       },
     },
     update: {},
     create: {
       documentTypeId: str.id,
-      professionGroupId: perawat.id,
+      professionGroupId: keperawatan.id,
     },
   });
 
@@ -226,13 +327,13 @@ async function main() {
     where: {
       documentTypeId_professionGroupId: {
         documentTypeId: sip.id,
-        professionGroupId: dokter.id,
+        professionGroupId: medis.id,
       },
     },
     update: {},
     create: {
       documentTypeId: sip.id,
-      professionGroupId: dokter.id,
+      professionGroupId: medis.id,
     },
   });
 

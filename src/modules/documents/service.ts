@@ -59,9 +59,10 @@ export async function uploadDocumentService(
   }
 
   // 3. Validasi ukuran file
-  const maxSizeInBytes = docType.maxSizeMb * 1024 * 1024;
+  const maxSizeInBytes = Math.round(docType.maxSizeMb * 1024 * 1024);
   if (input.file.size > maxSizeInBytes) {
-    throw new Error(`Ukuran file maksimal adalah ${docType.maxSizeMb} MB`);
+    const formattedMax = docType.maxSizeMb < 1 ? `${Math.round(docType.maxSizeMb * 1024)} KB` : `${docType.maxSizeMb} MB`;
+    throw new Error(`Ukuran file maksimal adalah ${formattedMax}`);
   }
 
   // 4. Generate nama file yang terstandarisasi
@@ -88,7 +89,7 @@ export async function uploadDocumentService(
     filePath: storageFileName,
     status: DocumentStatus.PENDING,
     issueDate: input.issueDate ? new Date(input.issueDate) : null,
-    expiryDate: input.expiryDate ? new Date(input.expiryDate) : null,
+    expiryDate: docType.requiresExpiryDate && input.expiryDate ? new Date(input.expiryDate) : null,
   });
 
   // 7. Catat aktivitas
@@ -113,8 +114,8 @@ export async function getDocumentsService(
   filters: DocumentFilterDto,
   actor: { id: string; role: string }
 ) {
-  // RBAC: EMPLOYEE hanya bisa melihat dokumennya sendiri
-  if (actor.role === "EMPLOYEE") {
+  // RBAC: EMPLOYEE & STAFF hanya bisa melihat dokumennya sendiri di "Dokumen Saya"
+  if (actor.role !== "ADMIN") {
     filters.ownerId = actor.id;
   }
 
@@ -132,16 +133,14 @@ export async function deleteDocumentService(
   }
 
   // RBAC rules:
-  // EMPLOYEE hanya bisa menghapus dokumen milik sendiri DAN statusnya bukan APPROVED
-  if (actor.role === "EMPLOYEE") {
+  // EMPLOYEE & STAFF hanya bisa menghapus dokumen milik sendiri DAN statusnya bukan APPROVED
+  if (actor.role === "EMPLOYEE" || actor.role === "STAFF") {
     if (document.ownerId !== actor.id) {
       throw new Error("Tidak memiliki akses untuk menghapus dokumen ini");
     }
     if (document.status === "APPROVED") {
       throw new Error("Tidak dapat menghapus dokumen yang sudah disetujui");
     }
-  } else if (actor.role === "STAFF") {
-    throw new Error("Staf tidak memiliki izin untuk menghapus dokumen");
   }
   // ADMIN boleh menghapus apapun
 

@@ -18,12 +18,16 @@ export async function GET(req: NextRequest) {
     const professionGroupId = searchParams.get("professionGroupId") || undefined;
     const workplaceId = searchParams.get("workplaceId") || undefined;
     const employmentStatusId = searchParams.get("employmentStatusId") || undefined;
+    const employeeGroupId = searchParams.get("employeeGroupId") || undefined;
+    const employeePositionId = searchParams.get("employeePositionId") || undefined;
 
     const data = await getAllUsers({
       search,
       professionGroupId,
       workplaceId,
       employmentStatusId,
+      employeeGroupId,
+      employeePositionId,
     });
 
     return NextResponse.json({ success: true, data });

@@ -9,19 +9,19 @@ export async function findSecurityLogs(filters: SecurityLogFilterParams) {
     const endOfDay = new Date(filters.endDate);
     endOfDay.setHours(23, 59, 59, 999);
     
-    where.createdAt = {
+    where.timestamp = {
       gte: new Date(filters.startDate),
       lte: endOfDay,
     };
   } else if (filters.startDate) {
-    where.createdAt = {
+    where.timestamp = {
       gte: new Date(filters.startDate),
     };
   } else if (filters.endDate) {
     const endOfDay = new Date(filters.endDate);
     endOfDay.setHours(23, 59, 59, 999);
     
-    where.createdAt = {
+    where.timestamp = {
       lte: endOfDay,
     };
   }
@@ -34,11 +34,16 @@ export async function findSecurityLogs(filters: SecurityLogFilterParams) {
     where.eventType = filters.eventType;
   }
 
+  const limit = Math.min(filters.limit || 100, 500);
+  const page = Math.max(filters.page || 1, 1);
+  const skip = (page - 1) * limit;
+
   return prisma.securityLog.findMany({
     where,
     orderBy: {
-      createdAt: "desc",
+      timestamp: "desc",
     },
-    take: 1000, // Hard limit to prevent massive payload, MVP
+    skip,
+    take: limit,
   });
 }

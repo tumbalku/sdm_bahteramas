@@ -19,12 +19,18 @@ export async function GET(request: Request) {
     const endDate = searchParams.get("endDate") || undefined;
     const actorId = searchParams.get("actorId") || undefined;
     const eventType = searchParams.get("eventType") || undefined;
+    const pageStr = searchParams.get("page");
+    const limitStr = searchParams.get("limit");
+    const page = pageStr ? parseInt(pageStr, 10) : undefined;
+    const limit = limitStr ? parseInt(limitStr, 10) : undefined;
 
     const logs = await getSecurityLogsService({
       startDate,
       endDate,
       actorId,
       eventType,
+      page,
+      limit,
     });
 
     return NextResponse.json(logs);

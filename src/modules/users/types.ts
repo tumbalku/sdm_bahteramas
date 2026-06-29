@@ -10,6 +10,7 @@ export interface UserRecord {
   employeeId: string;
   email: string;
   name: string;
+  avatarUrl?: string | null;
   role: Role;
   gender?: string | null;
   birthDate?: Date | null;
@@ -60,4 +61,6 @@ export interface UserFilter {
   professionGroupId?: string;
   workplaceId?: string;
   employmentStatusId?: string;
+  employeeGroupId?: string;
+  employeePositionId?: string;
 }

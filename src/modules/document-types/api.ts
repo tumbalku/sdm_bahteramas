@@ -18,6 +18,12 @@ export async function getDocumentTypesApi(filters?: DocumentTypeFilter) {
   return apiClient<DocumentTypeRecord[]>(url, { method: "GET" });
 }
 
+export async function getDocumentTypeApi(id: string) {
+  return apiClient<DocumentTypeRecord>(`/api/v1/document-types/${id}`, {
+    method: "GET",
+  });
+}
+
 export async function createDocumentTypeApi(input: CreateDocumentTypeInput) {
   return apiClient<DocumentTypeRecord>("/api/v1/document-types", {
     method: "POST",

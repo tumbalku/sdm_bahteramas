@@ -31,7 +31,17 @@ export interface DocumentRecordDto {
     id: string;
     name: string;
     employeeId: string;
+    avatarUrl?: string | null;
   };
+  verificationHistories?: {
+    id: string;
+    status: DocumentStatus;
+    reviewNote: string | null;
+    reviewedAt: Date;
+    reviewedBy?: {
+      name: string;
+    } | null;
+  }[];
 }
 
 export interface DocumentUploadInput {
@@ -46,4 +56,9 @@ export interface DocumentFilterDto {
   ownerId?: string;
   archiveCategory?: DocumentArchiveCategory;
   status?: DocumentStatus;
+  search?: string;
+  employmentStatusId?: string;
+  employeeGroupId?: string;
+  professionGroupId?: string;
+  employeePositionId?: string;
 }

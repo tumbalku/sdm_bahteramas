@@ -5,6 +5,7 @@ export interface UserProfileDto {
   employeeId: string;
   email: string;
   name: string;
+  avatarUrl: string | null;
   role: Role;
   gender: string | null;
   birthDate: Date | null;
