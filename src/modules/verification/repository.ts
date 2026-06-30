@@ -60,7 +60,7 @@ export async function findVerificationHistoryByDocument(documentRecordId: string
   return prisma.verificationHistory.findMany({
     where: { documentRecordId },
     include: {
-      reviewer: {
+      reviewedBy: {
         select: {
           id: true,
           name: true,

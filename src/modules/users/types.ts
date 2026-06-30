@@ -39,21 +39,21 @@ export interface CreateUserInput {
   password?: string;
   name: string;
   role: Role;
-  gender?: string;
-  birthDate?: string;
-  academicDegree?: string;
-  lastEducation?: string;
-  religion?: string;
-  maritalStatus?: string;
-  phone?: string;
-  address?: string;
-  joinDate?: string;
-  employmentStatusId?: string;
-  employeeGroupId?: string;
-  professionGroupId?: string;
-  employeePositionId?: string;
-  employeeRankId?: string;
-  workplaceId?: string;
+  gender?: string | null;
+  birthDate?: string | null;
+  academicDegree?: string | null;
+  lastEducation?: string | null;
+  religion?: string | null;
+  maritalStatus?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  joinDate?: string | null;
+  employmentStatusId?: string | null;
+  employeeGroupId?: string | null;
+  professionGroupId?: string | null;
+  employeePositionId?: string | null;
+  employeeRankId?: string | null;
+  workplaceId?: string | null;
 }
 
 export interface UpdateUserInput {
@@ -63,21 +63,21 @@ export interface UpdateUserInput {
   password?: string;
   name?: string;
   role?: Role;
-  gender?: string;
-  birthDate?: string;
-  academicDegree?: string;
-  lastEducation?: string;
-  religion?: string;
-  maritalStatus?: string;
-  phone?: string;
-  address?: string;
-  joinDate?: string;
-  employmentStatusId?: string;
-  employeeGroupId?: string;
-  professionGroupId?: string;
-  employeePositionId?: string;
-  employeeRankId?: string;
-  workplaceId?: string;
+  gender?: string | null;
+  birthDate?: string | null;
+  academicDegree?: string | null;
+  lastEducation?: string | null;
+  religion?: string | null;
+  maritalStatus?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  joinDate?: string | null;
+  employmentStatusId?: string | null;
+  employeeGroupId?: string | null;
+  professionGroupId?: string | null;
+  employeePositionId?: string | null;
+  employeeRankId?: string | null;
+  workplaceId?: string | null;
 }
 
 export interface UserFilter {

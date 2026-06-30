@@ -46,10 +46,9 @@ export async function approveDocumentService(
       eventType: "DOCUMENT_APPROVED",
       resource: `DocumentRecord:${document.id}`,
       ipAddress,
-      status: "SUCCESS",
+      status: "success",
       metadata: { ownerId: document.ownerId, fileName: document.fileName },
-    },
-    prisma
+    }
   );
 
   return true;
@@ -90,10 +89,9 @@ export async function rejectDocumentService(
       eventType: "DOCUMENT_REJECTED",
       resource: `DocumentRecord:${document.id}`,
       ipAddress,
-      status: "SUCCESS",
+      status: "success",
       metadata: { ownerId: document.ownerId, fileName: document.fileName, reviewNote },
-    },
-    prisma
+    }
   );
 
   return true;

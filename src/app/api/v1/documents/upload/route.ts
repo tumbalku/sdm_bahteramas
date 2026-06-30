@@ -59,8 +59,8 @@ export async function POST(request: Request) {
       {
         ownerId,
         documentTypeId: parseResult.data.documentTypeId,
-        issueDate: parseResult.data.issueDate,
-        expiryDate: parseResult.data.expiryDate,
+        issueDate: parseResult.data.issueDate ?? undefined,
+        expiryDate: parseResult.data.expiryDate ?? undefined,
         file,
       },
       actor,

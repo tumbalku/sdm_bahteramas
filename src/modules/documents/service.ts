@@ -101,10 +101,9 @@ export async function uploadDocumentService(
       eventType: "DOCUMENT_UPLOADED",
       resource: `DocumentRecord:${document.id}`,
       ipAddress,
-      status: "SUCCESS",
+      status: "success",
       metadata: { fileName: document.fileName, docType: docType.code },
-    },
-    prisma
+    }
   );
 
   return document;
@@ -160,10 +159,9 @@ export async function deleteDocumentService(
       eventType: "DOCUMENT_DELETED",
       resource: `DocumentRecord:${document.id}`,
       ipAddress,
-      status: "SUCCESS",
+      status: "success",
       metadata: { fileName: document.fileName },
-    },
-    prisma
+    }
   );
 
   return true;
