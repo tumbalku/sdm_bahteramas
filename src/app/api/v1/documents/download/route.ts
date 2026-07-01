@@ -24,6 +24,14 @@ function getContentType(fileName: string) {
   }
 }
 
+function getDownloadDisposition(contentType: string) {
+  if (contentType === "application/pdf" || contentType.startsWith("image/")) {
+    return "inline";
+  }
+
+  return "attachment";
+}
+
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -54,7 +62,10 @@ export async function GET(request: Request) {
 
     const storageProvider = process.env.STORAGE_PROVIDER || "local";
     let fileBuffer: Buffer;
-    let contentType = getContentType(document.fileName);
+    let contentType = getContentType(fileName);
+    if (contentType === "application/octet-stream") {
+      contentType = getContentType(document.fileName);
+    }
 
     if (storageProvider.toLowerCase() === "supabase" || /^https?:\/\//i.test(fileName)) {
       const storage = getStorageProvider();
@@ -66,7 +77,7 @@ export async function GET(request: Request) {
       }
 
       const responseContentType = response.headers.get("content-type");
-      if (responseContentType) {
+      if (responseContentType && responseContentType !== "application/octet-stream") {
         contentType = responseContentType;
       }
 
@@ -90,7 +101,8 @@ export async function GET(request: Request) {
     return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `inline; filename="${document.fileName}"`, // inline agar bisa di-preview di browser
+        "Content-Disposition": `${getDownloadDisposition(contentType)}; filename="${document.fileName}"`,
+        "X-Content-Type-Options": "nosniff",
       },
     });
 

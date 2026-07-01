@@ -8,6 +8,24 @@ export interface StorageProvider {
   ensureFolder(folderName: string): Promise<void>;
 }
 
+function getContentType(fileName: string) {
+  const ext = path.extname(fileName).toLowerCase();
+
+  switch (ext) {
+    case ".pdf":
+      return "application/pdf";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".png":
+      return "image/png";
+    case ".webp":
+      return "image/webp";
+    default:
+      return "application/octet-stream";
+  }
+}
+
 class LocalStorageProvider implements StorageProvider {
   private uploadDir: string;
 
@@ -63,6 +81,7 @@ class SupabaseStorageProvider implements StorageProvider {
     const { data, error } = await supabase.storage
       .from(this.bucket)
       .upload(fileName, file, {
+        contentType: getContentType(fileName),
         upsert: true,
       });
 
