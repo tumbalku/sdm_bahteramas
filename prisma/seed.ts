@@ -353,10 +353,12 @@ async function main() {
   console.log(`✅ Seeded ${allowedEmails.length} Total Users (2 ADMIN, 1 STAFF, 2 EMPLOYEE)`);
 
   // =========================================================================
-  // 8. MASTER TIPE DOKUMEN (KOSONGKAN DATA SEED SEPERTI PERMINTAAN USER)
+  // 8. MASTER TIPE DOKUMEN
   // =========================================================================
-  await prisma.documentType.deleteMany({});
-  console.log("✅ Cleared all Document Types (No seed data for Document Types)");
+  // Jangan hapus DocumentType di seed. DocumentRecord memiliki foreign key ke
+  // DocumentType, sehingga menghapus master dokumen bisa merusak data upload
+  // yang sudah ada di Supabase/production.
+  console.log("✅ Skipped Document Types seeding (managed by ADMIN in app)");
 
   // =========================================================================
   // 9. MASTER SYSTEM SETTINGS
