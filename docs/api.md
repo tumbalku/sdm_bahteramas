@@ -25,6 +25,18 @@
 
 ## 2. Authentication
 
+### `POST /api/v1/auth/verify-password`
+Verifikasi ulang password user yang sedang login, digunakan untuk aksi sensitif.
+
+- **Auth:** Required (semua role)
+- **Body:**
+```json
+{
+  "password": "plaintext-password"
+}
+```
+- **Response:** `{ "success": true, "message": "..." }` jika password cocok.
+
 ### `POST /api/v1/auth/signin`
 > Ditangani oleh NextAuth — gunakan `signIn()` dari `next-auth/react`.
 
@@ -84,7 +96,7 @@ Ambil profil user yang sedang login.
 }
 ```
 
-### `PATCH /api/v1/profile`
+### `PUT /api/v1/profile`
 Update profil mandiri.
 
 - **Auth:** Required (semua role)
@@ -97,6 +109,27 @@ Update profil mandiri.
 }
 ```
 - **Note:** `email`, `employeeId`, `role` tidak bisa diubah via endpoint ini.
+
+### `PUT /api/v1/profile/password`
+Ganti password mandiri.
+
+- **Auth:** Required (semua role)
+- **Body:** password lama + password baru sesuai schema modul profile.
+- **Log:** `logActivity()` untuk perubahan password.
+
+### `POST /api/v1/profile/avatar`
+Upload avatar user yang sedang login.
+
+- **Auth:** Required (semua role)
+- **Content-Type:** `multipart/form-data`
+- **Body:** `file` (`image/jpeg`, `image/png`, atau `image/webp`)
+- **Max size:** dari `SystemSetting.MAX_AVATAR_UPLOAD_SIZE_KB`, fallback `200`.
+
+### `GET /api/v1/profile/avatar/view`
+Ambil file avatar dari storage provider.
+
+- **Auth:** Required (semua role)
+- **Query Params:** `file`
 
 ---
 
@@ -225,22 +258,6 @@ Detail satu dokumen.
 - **Auth:** `ADMIN`, `STAFF`, atau pemilik dokumen
 - **Response:** Data lengkap dokumen + `verifications` (riwayat verifikasi).
 
-### `PATCH /api/v1/documents/[id]`
-Approve atau Reject dokumen.
-
-- **Auth:** `ADMIN`, `STAFF`
-- **Body (Zod validated):**
-```json
-{
-  "status": "APPROVED",
-  "reviewNote": "optional — wajib jika REJECTED"
-}
-```
-- **Behavior:**
-  - Update `DocumentRecord.status`
-  - Buat baris baru di `VerificationHistory`
-  - Panggil `logActivity()`
-
 ### `DELETE /api/v1/documents/[id]`
 Hapus dokumen.
 
@@ -320,20 +337,37 @@ Hapus pegawai.
 - **Auth:** `ADMIN`
 - **Note:** Cascade hapus `UserRole` dan `DocumentRecord`.
 
-### `GET /api/v1/users/export`
-Export data pegawai ke CSV.
+### `GET /api/v1/users/categories`
+Ambil master kategori kepegawaian untuk dropdown dan halaman kategori.
+
+- **Auth:** Required (semua role)
+- **Response:** employment statuses, profession groups, ranks, dan workplaces.
+
+### `POST /api/v1/users/categories`
+Buat item master kategori.
 
 - **Auth:** `ADMIN`
-- **Response:** File CSV dengan header kolom sesuai model User.
-- **Log:** `logActivity("DATA_EXPORTED", ...)`
+- **Body:**
+```json
+{
+  "type": "STATUS",
+  "name": "PNS",
+  "parentId": "optional-parent-id"
+}
+```
+- **Type:** `STATUS`, `GROUP`, `PROFESSION`, `POSITION`, `RANK`, `WORKPLACE`.
 
-### `POST /api/v1/users/import`
-Import pegawai dari CSV.
+### `PATCH /api/v1/users/categories`
+Update item master kategori.
 
 - **Auth:** `ADMIN`
-- **Content-Type:** `multipart/form-data`
-- **Body:** `file: <csv file>`
-- **Validation:** Zod validasi setiap baris CSV sebelum insert.
+- **Body:** `id`, `type`, `name`, dan optional `parentId`.
+
+### `DELETE /api/v1/users/categories`
+Hapus item master kategori.
+
+- **Auth:** `ADMIN`
+- **Query Params:** `id`, `type`
 
 ---
 
@@ -379,22 +413,73 @@ Ambil audit trail.
 
 ## 8. Master Data (Reference Endpoints)
 
-Endpoint ini untuk mengisi dropdown form — akan dibuat sesuai kebutuhan:
+Endpoint master data aktual dipusatkan di `/api/v1/users/categories`.
 
 | Endpoint | Method | Auth | Keterangan |
 |---|---|---|---|
-| `/api/v1/master/employment-statuses` | `GET` | `ADMIN` | Daftar status kepegawaian |
-| `/api/v1/master/employee-groups` | `GET` | `ADMIN` | Daftar kelompok pegawai |
-| `/api/v1/master/profession-groups` | `GET` | `ADMIN` | Daftar kelompok profesi |
-| `/api/v1/master/employee-positions` | `GET` | `ADMIN` | Daftar jabatan |
-| `/api/v1/master/employee-ranks` | `GET` | `ADMIN` | Daftar pangkat |
-| `/api/v1/master/workplaces` | `GET` | `ADMIN` | Daftar unit kerja |
+| `/api/v1/users/categories` | `GET` | Semua role | Daftar master kategori untuk dropdown |
+| `/api/v1/users/categories` | `POST` | `ADMIN` | Tambah master kategori |
+| `/api/v1/users/categories` | `PATCH` | `ADMIN` | Ubah master kategori |
+| `/api/v1/users/categories` | `DELETE` | `ADMIN` | Hapus master kategori |
 
-> **Catatan:** Endpoint master data belum didefinisikan secara detail di PRD. Implementasikan sesuai kebutuhan form.
+> **Catatan:** Rencana endpoint `/api/v1/master/*` tidak digunakan pada implementasi saat ini.
 
 ---
 
-## 9. HTTP Status Codes
+## 9. Verification
+
+### `GET /api/v1/verification`
+Ambil daftar dokumen yang perlu diverifikasi.
+
+- **Auth:** `ADMIN`, `STAFF`
+
+### `GET /api/v1/verification/document/[id]`
+Ambil detail dokumen untuk proses verifikasi.
+
+- **Auth:** `ADMIN`, `STAFF`
+
+### `POST /api/v1/verification/[id]/approve`
+Approve dokumen.
+
+- **Auth:** `ADMIN`, `STAFF`
+- **Behavior:** update `DocumentRecord.status`, buat `VerificationHistory`, panggil `logActivity()`.
+
+### `POST /api/v1/verification/[id]/reject`
+Reject dokumen.
+
+- **Auth:** `ADMIN`, `STAFF`
+- **Body:** `reviewNote` wajib berisi alasan penolakan.
+- **Behavior:** update `DocumentRecord.status`, buat `VerificationHistory`, panggil `logActivity()`.
+
+---
+
+## 10. Dashboard, Settings, Backup
+
+### `GET /api/v1/dashboard/stats`
+Ambil statistik dashboard sesuai role user login.
+
+- **Auth:** Required (semua role)
+
+### `GET /api/v1/settings`
+Ambil konfigurasi sistem dinamis.
+
+- **Auth:** `ADMIN`
+
+### `PATCH /api/v1/settings`
+Update konfigurasi sistem dinamis.
+
+- **Auth:** `ADMIN`
+- **Body:** object key-value setting yang didukung service settings.
+
+### `GET /api/v1/backup/export`
+Export database sebagai file `.sql`.
+
+- **Auth:** `ADMIN`
+- **Response:** SQL dump dengan header `Content-Disposition`.
+
+---
+
+## 11. HTTP Status Codes
 
 | Kode | Kapan Digunakan |
 |---|---|
@@ -409,7 +494,7 @@ Endpoint ini untuk mengisi dropdown form — akan dibuat sesuai kebutuhan:
 
 ---
 
-## 10. Zod Validation Pattern (per Route Handler)
+## 12. Zod Validation Pattern (per Route Handler)
 
 ```ts
 // Contoh pattern validasi di route handler

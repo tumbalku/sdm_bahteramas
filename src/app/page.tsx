@@ -165,7 +165,7 @@ export default function LandingPage() {
               <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
                 <Button className="w-full font-bold rounded-xl">
                   <LogIn className="w-4 h-4 mr-2" />
-                  Masuk ke Aplikasi
+                  Masuk
                 </Button>
               </Link>
             </div>
@@ -177,10 +177,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-16 pb-16 md:pt-24 md:pb-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-8">
           <div className="flex-1 space-y-8 text-center lg:text-left z-10">
-            <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary backdrop-blur-sm">
-              <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
-              RSUD BAHTERAMAS v1.0
-            </div>
+
 
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
               System Informasi <br className="hidden md:block" />
@@ -197,7 +194,7 @@ export default function LandingPage() {
                   size="lg"
                   className="w-full sm:w-auto h-14 px-8 text-base font-bold rounded-xl shadow-lg hover:shadow-xl transition-all group"
                 >
-                  Masuk ke Aplikasi
+                  Masuk
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
@@ -379,19 +376,9 @@ export default function LandingPage() {
             &copy; {new Date().getFullYear()} System Informasi Manajemen Dokumen Pegawai RSUD BAHTERAMAS.
           </div>
 
-          <div className="flex items-center gap-6 text-sm font-semibold text-muted-foreground">
-            <a href="#fitur" className="hover:text-foreground transition-colors">
-              Fitur
-            </a>
-            <a href="#faq" className="hover:text-foreground transition-colors">
-              FAQ
-            </a>
-            <Link href="/login" className="hover:text-foreground transition-colors">
-              Login
-            </Link>
-          </div>
         </div>
       </footer>
+
     </div>
   );
 }

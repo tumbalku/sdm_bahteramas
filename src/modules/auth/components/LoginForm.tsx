@@ -36,9 +36,12 @@ export function LoginForm() {
       {/* Header Form */}
       <div className="text-center mb-8">
         <img src="/logo.png" alt="SIMDP Logo" className="w-16 h-16 object-contain mx-auto mb-4" />
-        <h2 className="text-2xl font-bold tracking-tight">Masuk ke SIMDP</h2>
+        <h2 className="text-2xl font-bold tracking-tight">SIMDP</h2>
         <p className="text-xs text-muted-foreground mt-1 font-medium">
-          System Informasi Manajemen Dokumen Pegawai RSUD BAHTERAMAS
+          System Informasi Manajemen Dokumen
+        </p>
+        <p className="text-xs text-muted-foreground mt-1 font-medium">
+          Pegawai RSUD BAHTERAMAS
         </p>
       </div>
 

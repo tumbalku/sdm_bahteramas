@@ -7,7 +7,7 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/auth/` |
-| **Status** | 🔴 Belum dimulai |
+| **Status** | 🟢 Selesai |
 | **Role** | Semua role (public endpoint) |
 | **Dependency** | — |
 
@@ -24,7 +24,7 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/dashboard/` |
-| **Status** | 🔴 Belum dimulai |
+| **Status** | 🟢 Selesai |
 | **Role** | Semua role (konten berbeda per role) |
 | **Dependency** | F01 (Auth), F04 (Documents), F05 (Verification), F06 (Users) |
 
@@ -43,7 +43,7 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/document-types/` |
-| **Status** | 🔴 Belum dimulai |
+| **Status** | 🟢 Selesai |
 | **Role** | `ADMIN` |
 | **Dependency** | F01 (Auth) |
 
@@ -61,7 +61,7 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/documents/` |
-| **Status** | 🔴 Belum dimulai |
+| **Status** | 🟢 Selesai |
 | **Role** | `EMPLOYEE` (upload/lihat sendiri), `ADMIN` (semua) |
 | **Dependency** | F01 (Auth), F03 (Document Types) |
 
@@ -80,7 +80,7 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/verification/` |
-| **Status** | 🔴 Belum dimulai |
+| **Status** | 🟢 Selesai |
 | **Role** | `ADMIN`, `STAFF` |
 | **Dependency** | F01 (Auth), F04 (Documents) |
 
@@ -98,7 +98,7 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/users/` |
-| **Status** | 🔴 Belum dimulai |
+| **Status** | 🟢 Selesai |
 | **Role** | `ADMIN` |
 | **Dependency** | F01 (Auth) |
 
@@ -118,14 +118,14 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/profile/` |
-| **Status** | 🔴 Belum dimulai |
+| **Status** | 🟢 Selesai |
 | **Role** | Semua role |
 | **Dependency** | F01 (Auth) |
 
 **Sub-fitur:**
 - Lihat profil diri sendiri
 - Update biodata (nama, gender, tanggal lahir)
-- Ganti password (jika diperlukan — belum didefinisikan di PRD)
+- Ganti password mandiri
 
 ---
 
@@ -151,7 +151,7 @@
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/settings/` |
-| **Status** | 🟡 Sedang dikerjakan |
+| **Status** | 🟢 Selesai |
 | **Role** | `ADMIN` |
 | **Dependency** | F01 (Auth) |
 
@@ -175,7 +175,7 @@
 | F06 | Manajemen Pegawai | 🟢 Selesai |
 | F07 | Profil Mandiri | 🟢 Selesai |
 | F08 | Security Logs | 🟢 Selesai |
-| F09 | Pengaturan Sistem (Settings) | 🟡 Sedang dikerjakan |
+| F09 | Pengaturan Sistem (Settings) | 🟢 Selesai |
 
 **Legend:**
 - 🔴 Belum dimulai
@@ -196,6 +196,7 @@ graph TD
     F01 --> F06[F06 Users]
     F01 --> F07[F07 Profile]
     F01 --> F08[F08 Security Logs]
+    F01 --> F09[F09 Settings]
     F03 --> F04
     F04 --> F02
     F04 --> F05
@@ -212,6 +213,7 @@ graph TD
 6. F07 — Profile
 7. F08 — Security Logs
 8. F02 — Dashboard (terakhir, merangkum semua)
+9. F09 — Settings (konfigurasi dinamis sistem)
 
 ---
 
@@ -225,7 +227,6 @@ graph TD
 | Message broker (RabbitMQ/Kafka) menggantikan `logActivity()` langsung | ⚪ Opsional | Hanya relevan jika modul sudah dipisah jadi microservice |
 | Microservice extraction (documents + verification) | ⚪ Future | Langkah 1 migrasi microservice |
 | Dashboard analytics lanjutan (grafik tren, export laporan) | ⚪ Future | Tidak ada di PRD v1.0 |
-| Ganti password mandiri | ⚪ Belum didefinisikan | Belum ada di PRD — perlu klarifikasi |
 | Reset password via email | ⚪ Belum didefinisikan | Belum ada di PRD — perlu klarifikasi |
 | Multi-language / i18n | ⚪ Tidak ada rencana | Tidak disebutkan di PRD |
 
@@ -235,15 +236,16 @@ graph TD
 
 | Komponen | File | Status | Keterangan |
 |---|---|---|---|
-| Prisma Client | `src/lib/prisma.ts` | 🔴 Belum | Singleton connection |
-| Auth Utils | `src/lib/auth-utils.ts` | 🔴 Belum | `requireRole()`, `hasRole()` |
-| API Client | `src/lib/api-client.ts` | 🔴 Belum | Fetch wrapper |
-| Security Log Helper | `src/lib/security-log.ts` | 🔴 Belum | `logActivity()` |
-| Storage Provider | `src/lib/storage.ts` | 🔴 Belum | `getStorageProvider()` |
-| File Utilities | `src/lib/` | 🔴 Belum | `parseAllowedFormats()`, `slugifyFileName()` |
-| QueryClientProvider | `src/app/providers.tsx` | 🔴 Belum | TanStack Query setup |
-| Root Layout | `src/app/layout.tsx` | 🔴 Belum | HTML shell + Providers |
-| Dashboard Layout | `src/app/(dashboard)/layout.tsx` | 🔴 Belum | Sidebar + Navbar |
-| Middleware | `src/proxy.ts` | 🔴 Belum | Route protection |
-| Prisma Schema | `prisma/schema.prisma` | 🔴 Belum | Database schema |
-| Seed Data | `prisma/seed.ts` | 🔴 Belum | Data awal master |
+| Prisma Client | `src/lib/prisma.ts` | 🟢 Selesai | Singleton connection |
+| Auth Utils | `src/lib/auth-utils.ts` | 🟢 Selesai | `requireRole()`, `hasRole()`, `getCurrentUser()` |
+| API Client | `src/lib/api-client.ts` | 🟢 Selesai | Fetch wrapper |
+| Security Log Helper | `src/lib/security-log.ts` | 🟢 Selesai | `logActivity()` |
+| Storage Provider | `src/lib/storage.ts` | 🟢 Selesai | `getStorageProvider()` |
+| System Settings Helper | `src/lib/system-settings.ts` | 🟢 Selesai | Ambil konfigurasi dinamis + fallback |
+| File Utilities | `src/lib/utils.ts` | 🟢 Selesai | Utilitas bersama |
+| QueryClientProvider | `src/app/providers.tsx` | 🟢 Selesai | TanStack Query setup |
+| Root Layout | `src/app/layout.tsx` | 🟢 Selesai | HTML shell + Providers |
+| Dashboard Layout | `src/app/(dashboard)/layout.tsx` | 🟢 Selesai | Sidebar + Navbar |
+| Middleware | `src/middleware.ts` + `src/proxy.ts` | 🟢 Selesai | Route protection |
+| Prisma Schema | `prisma/schema.prisma` | 🟢 Selesai | Database schema |
+| Seed Data | `prisma/seed.ts` | 🟢 Selesai | Data awal master |

@@ -36,7 +36,7 @@ Tidak perlu permission granular di luar 3 role ini untuk v1.0.
 
 ### 2. Tiga Lapis Otorisasi
 
-**Lapis 1: Middleware** (`src/proxy.ts`)
+**Lapis 1: Middleware** (`src/middleware.ts`, delegasi ke `src/proxy.ts`)
 - Blokir akses halaman yang butuh login sebelum mencapai server Next.js
 - Redirect ke `/login` jika tidak ada sesi
 

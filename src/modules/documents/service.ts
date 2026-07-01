@@ -12,6 +12,14 @@ import { parseAllowedFormats, slugifyFileName } from "@/lib/utils";
 import { logActivity } from "@/lib/security-log";
 import { DocumentStatus } from "@prisma/client";
 
+function getDocumentTypeFolderName(docCode: string) {
+  return docCode
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_-]/g, "_")
+    .replace(/_+/g, "_");
+}
+
 async function generateStorageFileName(
   employeeId: string,
   category: string,
@@ -79,14 +87,16 @@ export async function uploadDocumentService(
   const storage = getStorageProvider();
   const arrayBuffer = await input.file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const filePath = await storage.uploadFile(buffer, storageFileName);
+  const storageFolder = getDocumentTypeFolderName(docType.code);
+  const storagePath = `${storageFolder}/${storageFileName}`;
+  const filePath = await storage.uploadFile(buffer, storagePath);
 
   // 6. Simpan record di database
   const document = await createDocumentRecord({
     ownerId: input.ownerId,
     documentTypeId: input.documentTypeId,
     fileName: originalName,
-    filePath: storageFileName,
+    filePath,
     status: DocumentStatus.PENDING,
     issueDate: input.issueDate ? new Date(input.issueDate) : null,
     expiryDate: docType.requiresExpiryDate && input.expiryDate ? new Date(input.expiryDate) : null,

@@ -37,7 +37,9 @@ src/modules/
 ├── verification/    # Approve/reject dokumen
 ├── profile/         # Update biodata mandiri
 ├── security-logs/   # Audit trail
-└── dashboard/       # Agregasi statistik (tidak punya tabel sendiri)
+├── dashboard/       # Agregasi statistik
+├── settings/        # Konfigurasi sistem dinamis
+└── backup/          # Export backup database
 ```
 
 ### Struktur File Dalam Satu Modul
@@ -53,7 +55,7 @@ modules/<nama-modul>/
 └── components/      # Komponen React khusus modul ini
 ```
 
-> **Catatan:** `dashboard` tidak punya `repository.ts` — ia hanya memanggil `service.ts` modul lain untuk merangkum statistik.
+> **Catatan:** Modul boleh tidak memiliki semua file standar jika memang tidak dibutuhkan. Contoh: `backup` saat ini hanya berisi `service.ts`.
 
 ---
 
@@ -114,7 +116,7 @@ ADMIN/STAFF klik Approve/Reject
   → VerificationActions (Client Component)
     → useVerifyDocument() [hooks.ts]
       → verificationApi.verify(id, decision) [api.ts]
-        → PATCH /api/v1/documents/[id] [route.ts]
+        → POST /api/v1/verification/[id]/approve atau /reject [route.ts]
           → verification/service.ts
             ├── repository.updateDocumentStatus() → DocumentRecord.status
             └── repository.createVerificationHistory() → VerificationHistory
@@ -157,6 +159,8 @@ import { getUserById } from "@/modules/users/service";
 | `api-client.ts` | Wrapper `fetch()` kecil yang dipakai semua `api.ts` modul |
 | `security-log.ts` | `logActivity(eventType, actor, resource, metadata)` |
 | `storage.ts` | `getStorageProvider()` — abstraksi lokal/cloud storage |
+| `system-settings.ts` | Helper pengambilan konfigurasi dinamis dengan fallback |
+| `utils.ts` | Utilitas umum aplikasi |
 
 ---
 
@@ -164,15 +168,16 @@ import { getUserById } from "@/modules/users/service";
 
 ```mermaid
 graph LR
-    Request --> Middleware["src/proxy.ts (Middleware)"]
-    Middleware -->|tidak login| LoginPage[/login]
-    Middleware -->|sudah login| ServerComponent[page.tsx Server Component]
+    Request --> Middleware["src/middleware.ts"]
+    Middleware --> Proxy["proxyMiddleware() di src/proxy.ts"]
+    Proxy -->|tidak login| LoginPage[/login]
+    Proxy -->|sudah login| ServerComponent[page.tsx Server Component]
     ServerComponent -->|requireRole| Content[Render Halaman]
     ServerComponent -->|role tidak cocok| Forbidden[403 / Redirect]
 ```
 
 **3 Lapis Otorisasi:**
-1. **Middleware** (`src/proxy.ts`) — blokir akses sebelum sampai Next.js server
+1. **Middleware** (`src/middleware.ts`, delegasi ke `src/proxy.ts`) — blokir akses sebelum sampai Next.js server
 2. **Server Component** `requireRole()` — cek role di setiap `page.tsx`
 3. **Client UI** `hasRole()` — sembunyikan elemen UI tidak relevan (kosmetik saja)
 

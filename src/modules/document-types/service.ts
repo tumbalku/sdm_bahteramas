@@ -1,5 +1,6 @@
 import { logActivity } from "@/lib/security-log";
 import { AuthUser } from "@/lib/auth-utils";
+import { getStorageProvider } from "@/lib/storage";
 import * as repo from "./repository";
 import {
   CreateDocumentTypeInput,
@@ -10,6 +11,14 @@ import {
 import { createDocumentTypeSchema, updateDocumentTypeSchema } from "./validation";
 
 import { prisma } from "@/lib/prisma";
+
+function getDocumentTypeFolderName(docCode: string) {
+  return docCode
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_-]/g, "_")
+    .replace(/_+/g, "_");
+}
 
 export function isDocumentTypeApplicableToUser(docType: DocumentTypeRecord, userProfile: any): boolean {
   if (!userProfile) return true;
@@ -96,6 +105,8 @@ export async function createDocumentTypeService(
     throw new Error(`Kode jenis dokumen '${validated.code}' sudah digunakan`);
   }
 
+  await getStorageProvider().ensureFolder(getDocumentTypeFolderName(validated.code));
+
   const result = await repo.createDocumentType(validated);
 
   await logActivity({
@@ -128,6 +139,8 @@ export async function updateDocumentTypeService(
     if (existingCode) {
       throw new Error(`Kode jenis dokumen '${validated.code}' sudah digunakan`);
     }
+
+    await getStorageProvider().ensureFolder(getDocumentTypeFolderName(validated.code));
   }
 
   const result = await repo.updateDocumentType(id, validated);

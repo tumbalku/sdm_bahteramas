@@ -19,6 +19,7 @@ Framework: **Next.js App Router** — routing berbasis filesystem di `src/app/`.
 | `/` | `src/app/page.tsx` | Halaman landing / redirect ke login |
 | `/login` | `src/app/login/page.tsx` | Halaman login |
 | `/api/v1/auth/*` | `src/app/api/v1/auth/[...nextauth]/route.ts` | NextAuth endpoint (login, session, signout) |
+| `/api/auth/*` | `src/app/api/auth/[...nextauth]/route.ts` | Alias NextAuth untuk kompatibilitas library |
 
 ---
 
@@ -31,12 +32,20 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 | `/dashboard` | `(dashboard)/dashboard/page.tsx` | Semua role | Ringkasan statistik sesuai role |
 | `/documents` | `(dashboard)/documents/page.tsx` | `ADMIN`, `EMPLOYEE` | Daftar dokumen (3 tab arsip) |
 | `/verification` | `(dashboard)/verification/page.tsx` | `ADMIN`, `STAFF` | Daftar dokumen PENDING |
-| `/verification/[id]` | `(dashboard)/verification/[id]/page.tsx` | `ADMIN`, `STAFF` | Detail dokumen + aksi approve/reject |
 | `/document-types` | `(dashboard)/document-types/page.tsx` | `ADMIN` | Master jenis dokumen |
-| `/users` | `(dashboard)/users/page.tsx` | `ADMIN` | CRUD pegawai + import/export CSV |
+| `/document-types/add` | `(dashboard)/document-types/add/page.tsx` | `ADMIN` | Tambah jenis dokumen |
+| `/document-types/archives` | `(dashboard)/document-types/archives/page.tsx` | `ADMIN` | Arsip seluruh pegawai berdasarkan jenis dokumen |
+| `/documents-types/add` | `(dashboard)/documents-types/add/page.tsx` | `ADMIN` | Route lama/duplikat untuk tambah jenis dokumen |
+| `/documents-types/[id]/edit` | `(dashboard)/documents-types/[id]/edit/page.tsx` | `ADMIN` | Route lama/duplikat untuk edit jenis dokumen |
+| `/users` | `(dashboard)/users/page.tsx` | `ADMIN` | Daftar pegawai |
+| `/users/new` | `(dashboard)/users/new/page.tsx` | `ADMIN` | Tambah pegawai |
+| `/users/[id]` | `(dashboard)/users/[id]/page.tsx` | `ADMIN` | Detail pegawai |
+| `/users/[id]/edit` | `(dashboard)/users/[id]/edit/page.tsx` | `ADMIN` | Edit pegawai |
+| `/users/categories` | `(dashboard)/users/categories/page.tsx` | `ADMIN` | Master kategori kepegawaian |
 | `/security-logs` | `(dashboard)/security-logs/page.tsx` | `ADMIN` | Audit trail |
 | `/settings` | `(dashboard)/settings/page.tsx` | `ADMIN` | Pengaturan & konfigurasi sistem dinamis |
 | `/profile` | `(dashboard)/profile/page.tsx` | Semua role | Update biodata mandiri |
+| `/previews` | `(dashboard)/previews/page.tsx` | Internal/dev | Preview komponen UI |
 
 ---
 
@@ -45,20 +54,32 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 | Endpoint | Method | File | Role |
 |---|---|---|---|
 | `/api/v1/auth/*` | * | `api/v1/auth/[...nextauth]/route.ts` | Public |
-| `/api/v1/profile` | `GET`, `PATCH` | *(belum ada file, rencana di `api/v1/profile/route.ts`)* | Semua role |
-| `/api/v1/document-types` | `GET` | `api/v1/document-types/route.ts` | Public |
+| `/api/v1/auth/verify-password` | `POST` | `api/v1/auth/verify-password/route.ts` | Semua role |
+| `/api/v1/dashboard/stats` | `GET` | `api/v1/dashboard/stats/route.ts` | Semua role |
+| `/api/v1/profile` | `GET`, `PUT` | `api/v1/profile/route.ts` | Semua role |
+| `/api/v1/profile/password` | `PUT` | `api/v1/profile/password/route.ts` | Semua role |
+| `/api/v1/profile/avatar` | `POST` | `api/v1/profile/avatar/route.ts` | Semua role |
+| `/api/v1/profile/avatar/view` | `GET` | `api/v1/profile/avatar/view/route.ts` | Semua role |
+| `/api/v1/document-types` | `GET` | `api/v1/document-types/route.ts` | Public, dengan konteks user opsional |
 | `/api/v1/document-types` | `POST` | `api/v1/document-types/route.ts` | `ADMIN` |
+| `/api/v1/document-types/[id]` | `GET` | `api/v1/document-types/[id]/route.ts` | `ADMIN`, `STAFF` |
+| `/api/v1/document-types/[id]` | `PATCH`, `DELETE` | `api/v1/document-types/[id]/route.ts` | `ADMIN` |
 | `/api/v1/documents` | `GET` | `api/v1/documents/route.ts` | Semua role |
 | `/api/v1/documents/upload` | `POST` | `api/v1/documents/upload/route.ts` | `EMPLOYEE` |
-| `/api/v1/documents/[id]` | `GET` | `api/v1/documents/[id]/route.ts` | `ADMIN`, `STAFF` |
-| `/api/v1/documents/[id]` | `PATCH` | `api/v1/documents/[id]/route.ts` | `ADMIN`, `STAFF` |
+| `/api/v1/documents/[id]` | `GET` | `api/v1/documents/[id]/route.ts` | `ADMIN`, `STAFF`, pemilik |
 | `/api/v1/documents/[id]` | `DELETE` | `api/v1/documents/[id]/route.ts` | `EMPLOYEE` (milik sendiri, bukan APPROVED), `ADMIN` |
-| `/api/v1/documents/download` | `GET` | *(belum ada file)* | `ADMIN`, `STAFF`, pemilik |
-| `/api/v1/users` | `GET`, `POST`, `PATCH`, `DELETE` | `api/v1/users/route.ts` | `ADMIN` |
-| `/api/v1/users/export` | `GET` | *(belum ada file)* | `ADMIN` |
-| `/api/v1/users/import` | `POST` | *(belum ada file)* | `ADMIN` |
+| `/api/v1/documents/download` | `GET` | `api/v1/documents/download/route.ts` | `ADMIN`, `STAFF`, pemilik |
+| `/api/v1/users` | `GET`, `POST` | `api/v1/users/route.ts` | `ADMIN` |
+| `/api/v1/users/[id]` | `GET`, `PATCH`, `DELETE` | `api/v1/users/[id]/route.ts` | `ADMIN` |
+| `/api/v1/users/categories` | `GET` | `api/v1/users/categories/route.ts` | Semua role |
+| `/api/v1/users/categories` | `POST`, `PATCH`, `DELETE` | `api/v1/users/categories/route.ts` | `ADMIN` |
+| `/api/v1/verification` | `GET` | `api/v1/verification/route.ts` | `ADMIN`, `STAFF` |
+| `/api/v1/verification/[id]/approve` | `POST` | `api/v1/verification/[id]/approve/route.ts` | `ADMIN`, `STAFF` |
+| `/api/v1/verification/[id]/reject` | `POST` | `api/v1/verification/[id]/reject/route.ts` | `ADMIN`, `STAFF` |
+| `/api/v1/verification/document/[id]` | `GET` | `api/v1/verification/document/[id]/route.ts` | `ADMIN`, `STAFF` |
 | `/api/v1/security-logs` | `GET` | `api/v1/security-logs/route.ts` | `ADMIN` |
 | `/api/v1/settings` | `GET`, `PATCH` | `api/v1/settings/route.ts` | `ADMIN` |
+| `/api/v1/backup/export` | `GET` | `api/v1/backup/export/route.ts` | `ADMIN` |
 
 
 ---
@@ -76,12 +97,18 @@ src/app/
     ├── documents/
     │   └── page.tsx
     ├── verification/
-    │   ├── page.tsx
-    │   └── [id]/
-    │       └── page.tsx
-    ├── document-types/
     │   └── page.tsx
+    ├── document-types/
+    │   ├── page.tsx
+    │   ├── add/page.tsx
+    │   └── archives/page.tsx
     ├── users/
+    │   ├── page.tsx
+    │   ├── new/page.tsx
+    │   ├── [id]/page.tsx
+    │   ├── [id]/edit/page.tsx
+    │   └── categories/page.tsx
+    ├── settings/
     │   └── page.tsx
     ├── security-logs/
     │   └── page.tsx
@@ -99,10 +126,11 @@ Semua URL tetap tanpa prefix `(dashboard)`:
 
 ```mermaid
 graph TD
-    Request --> M["src/proxy.ts (Next.js Middleware)"]
-    M -->|"Path = /login atau /api/v1/auth/*"| Public["Lanjutkan tanpa cek sesi"]
-    M -->|"Path = /api/v1/* lainnya"| ApiCheck["Cek sesi NextAuth"]
-    M -->|"Path = /* halaman"| PageCheck["Cek sesi NextAuth"]
+    Request --> M["src/middleware.ts"]
+    M --> P["proxyMiddleware() di src/proxy.ts"]
+    P -->|"Path = /, /login, /api/v1/auth/*, atau /api/auth/*"| Public["Lanjutkan tanpa cek sesi"]
+    P -->|"Path = /api/v1/* lainnya"| ApiCheck["Cek sesi NextAuth"]
+    P -->|"Path = /* halaman"| PageCheck["Cek sesi NextAuth"]
     ApiCheck -->|"Tidak ada sesi"| Api401["401 Unauthorized"]
     ApiCheck -->|"Ada sesi"| ApiNext["Lanjutkan ke API Route"]
     PageCheck -->|"Tidak ada sesi"| LoginRedirect["/login"]
@@ -111,9 +139,7 @@ graph TD
     ServerCheck -->|"Role sesuai"| RenderPage["Render halaman"]
 ```
 
-**File Middleware:** `src/proxy.ts`
-
-> **Catatan:** Di Next.js, middleware default berada di `middleware.ts` di root. Proyek ini menggunakan `src/proxy.ts` — pastikan dikonfigurasi di `next.config.ts` atau disesuaikan dengan konvensi yang dipilih tim.
+**File Middleware:** `src/middleware.ts` adalah entrypoint Next.js dan mendelegasikan logic ke `src/proxy.ts`.
 
 ---
 
@@ -140,7 +166,8 @@ src/app/layout.tsx                  ← Root layout: HTML shell + <Providers>
 
 | Segment | Contoh URL | Keterangan |
 |---|---|---|
-| `[id]` | `/verification/clx123abc` | ID dokumen untuk detail verifikasi |
+| `[id]` | `/users/clx123abc` | ID user untuk detail/edit pegawai |
+| `[id]` | `/api/v1/verification/document/clx123abc` | ID dokumen untuk detail verifikasi API |
 | `[...nextauth]` | `/api/v1/auth/signin`, `/api/v1/auth/session` | Catch-all NextAuth handler |
 
 ---
@@ -183,3 +210,5 @@ Semua API Routes menggunakan prefix `/api/v1/`:
 | `GET /api/v1/documents` | `status` | `DocumentStatus` | `?status=PENDING` | Filter per status |
 | `GET /api/v1/users` | `search` | string | `?search=Budi` | Cari pegawai by nama/NIP |
 | `GET /api/v1/security-logs` | `eventType` | string | `?eventType=DOCUMENT_UPLOADED` | Filter log by tipe event |
+| `DELETE /api/v1/users/categories` | `id` | string | `?id=clx...` | ID kategori master yang akan dihapus |
+| `DELETE /api/v1/users/categories` | `type` | `CategoryType` | `?type=WORKPLACE` | Tipe kategori master yang akan dihapus |

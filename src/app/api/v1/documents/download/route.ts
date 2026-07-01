@@ -1,9 +1,28 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
+import { getStorageProvider } from "@/lib/storage";
 import fs from "fs";
 import path from "path";
 import { prisma } from "@/lib/prisma";
+
+function getContentType(fileName: string) {
+  const ext = path.extname(fileName).toLowerCase();
+
+  switch (ext) {
+    case ".pdf":
+      return "application/pdf";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".png":
+      return "image/png";
+    case ".webp":
+      return "image/webp";
+    default:
+      return "application/octet-stream";
+  }
+}
 
 export async function GET(request: Request) {
   try {
@@ -33,23 +52,42 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 
-    // Karena saat ini pakai LocalStorageProvider, kita baca dari ./uploads
-    const uploadDir = path.join(process.cwd(), process.env.STORAGE_LOCAL_PATH || "./uploads");
-    const filePath = path.join(uploadDir, fileName);
+    const storageProvider = process.env.STORAGE_PROVIDER || "local";
+    let fileBuffer: Buffer;
+    let contentType = getContentType(document.fileName);
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
+    if (storageProvider.toLowerCase() === "supabase" || /^https?:\/\//i.test(fileName)) {
+      const storage = getStorageProvider();
+      const fileUrl = /^https?:\/\//i.test(fileName) ? fileName : storage.getFileUrl(fileName);
+      const response = await fetch(fileUrl);
+
+      if (!response.ok) {
+        return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
+      }
+
+      const responseContentType = response.headers.get("content-type");
+      if (responseContentType) {
+        contentType = responseContentType;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      fileBuffer = Buffer.from(arrayBuffer);
+    } else {
+      const uploadDir = path.resolve(process.cwd(), process.env.STORAGE_LOCAL_PATH || "./uploads");
+      const filePath = path.resolve(uploadDir, fileName);
+
+      if (!filePath.startsWith(uploadDir + path.sep)) {
+        return NextResponse.json({ message: "Path file tidak valid" }, { status: 403 });
+      }
+
+      if (!fs.existsSync(filePath)) {
+        return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
+      }
+
+      fileBuffer = fs.readFileSync(filePath);
     }
 
-    const fileBuffer = fs.readFileSync(filePath);
-    
-    // Tentukan Content-Type dasar, idealnya ini menggunakan package seperti mime-types
-    let contentType = "application/octet-stream";
-    if (fileName.endsWith(".pdf")) contentType = "application/pdf";
-    if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) contentType = "image/jpeg";
-    if (fileName.endsWith(".png")) contentType = "image/png";
-
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `inline; filename="${document.fileName}"`, // inline agar bisa di-preview di browser

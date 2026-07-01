@@ -70,6 +70,7 @@
    - Validasi format dan ukuran file.
    - Simpan file via `getStorageProvider()`.
    - Generate nama file standar via `generateStorageFileName()`.
+   - Simpan file di folder storage sesuai kode jenis dokumen, contoh `KK/{nama-file}`.
    - Simpan `DocumentRecord` dengan `status: PENDING`.
    - Panggil `logActivity("DOCUMENT_UPLOADED", ...)`.
 
@@ -195,7 +196,7 @@ Contoh:
 - `KATEGORI-ARSIP` diambil dari `DocumentType.archiveCategory`
 - `KODE-JENIS-DOKUMEN` diambil dari `DocumentType.code`
 - `fileName` (nama asli dari pegawai) tetap ditampilkan di UI
-- `filePath` (nama terstandarkan) disimpan di database
+- `filePath` disimpan di database dalam format `<KODE-JENIS-DOKUMEN>/<nama-file-terstandarkan>`, contoh `KK/198501012010011001_UTAMA_KK_20260115_v1.pdf`
 
 ### Aturan Nama File Umum
 

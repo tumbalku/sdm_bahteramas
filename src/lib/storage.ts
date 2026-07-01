@@ -5,6 +5,7 @@ export interface StorageProvider {
   uploadFile(file: Buffer, fileName: string): Promise<string>;
   deleteFile(filePath: string): Promise<boolean>;
   getFileUrl(filePath: string): string;
+  ensureFolder(folderName: string): Promise<void>;
 }
 
 class LocalStorageProvider implements StorageProvider {
@@ -22,6 +23,7 @@ class LocalStorageProvider implements StorageProvider {
 
   async uploadFile(file: Buffer, fileName: string): Promise<string> {
     const destination = path.join(this.uploadDir, fileName);
+    await fs.promises.mkdir(path.dirname(destination), { recursive: true });
     await fs.promises.writeFile(destination, file);
     return fileName;
   }
@@ -37,6 +39,10 @@ class LocalStorageProvider implements StorageProvider {
 
   getFileUrl(fileName: string): string {
     return `/api/v1/documents/download?file=${encodeURIComponent(fileName)}`;
+  }
+
+  async ensureFolder(folderName: string): Promise<void> {
+    await fs.promises.mkdir(path.join(this.uploadDir, folderName), { recursive: true });
   }
 }
 
@@ -86,6 +92,21 @@ class SupabaseStorageProvider implements StorageProvider {
       .from(this.bucket)
       .getPublicUrl(fileName);
     return data.publicUrl;
+  }
+
+  async ensureFolder(folderName: string): Promise<void> {
+    const supabase = this.getClient();
+    const placeholderPath = `${folderName}/.keep`;
+    const { error } = await supabase.storage
+      .from(this.bucket)
+      .upload(placeholderPath, Buffer.from(""), {
+        contentType: "text/plain",
+        upsert: true,
+      });
+
+    if (error) {
+      throw new Error(`Failed to create Supabase folder: ${error.message}`);
+    }
   }
 }
 

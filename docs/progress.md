@@ -1,14 +1,15 @@
 # Progress — SMDP Portal
 
-> **Last Updated:** 2026-06-28
+> **Last Updated:** 2026-07-01
 > **AI Agent:** Update file ini setelah menyelesaikan task besar. Tandai item sesuai statusnya.
 
 ---
 
 ## Status Keseluruhan
 
-**Proyek dimulai dari nol** — belum ada satu baris kode implementasi pun.
-Hanya tersedia PRD (`PRD-SMDP-PORTAL-v1.0-20260627.md`) dan dokumentasi awal.
+**Status saat ini:** implementasi inti aplikasi sudah tersedia. Fitur utama SMDP Portal sudah dibuat, termasuk autentikasi, dashboard, master jenis dokumen, dokumen pegawai, verifikasi, profil, security logs, settings, dan backup export.
+
+Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-07-01.
 
 ---
 
@@ -29,6 +30,10 @@ Hanya tersedia PRD (`PRD-SMDP-PORTAL-v1.0-20260627.md`) dan dokumentasi awal.
 - [x] `docs/adr/001-architecture.md` — ADR arsitektur monolit modular
 - [x] `docs/adr/002-rbac.md` — ADR keputusan RBAC
 - [x] `docs/adr/003-data-flow.md` — ADR pola alur data
+- [x] `docs/security-report.md` — laporan audit Supabase RLS
+- [x] `docs/verification-checklist.md` — checklist verifikasi Supabase RLS
+- [x] `docs/refactor-progress.md` — catatan refactor UI ringan
+- [x] `docs/README.md` — indeks dokumentasi
 - [x] `.agents/skills/project-context/SKILL.md` — skill untuk AI agent
 
 ### Infrastructure / Setup Awal
@@ -47,7 +52,7 @@ Hanya tersedia PRD (`PRD-SMDP-PORTAL-v1.0-20260627.md`) dan dokumentasi awal.
 - [x] Buat `src/lib/` utilities (`parseAllowedFormats`, `slugifyFileName`) (selesai 2026-06-28)
 - [x] Buat `src/app/providers.tsx` (QueryClientProvider) (selesai 2026-06-28)
 - [x] Buat `src/app/layout.tsx` (root layout) (selesai 2026-06-28)
-- [x] Buat `src/proxy.ts` (middleware autentikasi) (selesai 2026-06-28)
+- [x] Buat `src/middleware.ts` + `src/proxy.ts` (middleware autentikasi) (selesai 2026-06-28)
 - [x] Buat `src/app/(dashboard)/layout.tsx` (Sidebar + Navbar) (selesai 2026-06-28)
 
 ### F01 — Autentikasi
@@ -77,10 +82,10 @@ Hanya tersedia PRD (`PRD-SMDP-PORTAL-v1.0-20260627.md`) dan dokumentasi awal.
 - [x] `src/modules/users/validation.ts` (selesai 2026-06-28)
 - [x] `src/modules/users/types.ts` (selesai 2026-06-28)
 - [x] `src/modules/users/api.ts` (selesai 2026-06-28)
-- `[x]` `src/modules/users/hooks.ts` (selesai 2026-06-28)
-- `[x]` `src/modules/users/components/` (selesai 2026-06-28)
-- `[x]` `src/app/api/v1/users/route.ts` (selesai 2026-06-28)
-- `[x]` `src/app/(dashboard)/users/page.tsx` (selesai 2026-06-28)
+- [x] `src/modules/users/hooks.ts` (selesai 2026-06-28)
+- [x] `src/modules/users/components/` (selesai 2026-06-28)
+- [x] `src/app/api/v1/users/route.ts` (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/users/page.tsx` (selesai 2026-06-28)
 
 ### F04 — Manajemen Dokumen
 - [x] `src/modules/documents/service.ts` (selesai 2026-06-28)
@@ -137,27 +142,47 @@ Hanya tersedia PRD (`PRD-SMDP-PORTAL-v1.0-20260627.md`) dan dokumentasi awal.
 - [x] `src/modules/dashboard/components/` (StatsCard, dll) (selesai 2026-06-28)
 - [x] `src/app/(dashboard)/dashboard/page.tsx` (selesai 2026-06-28)
 
+### F09 — Settings
+- [x] `src/modules/settings/service.ts`
+- [x] `src/modules/settings/repository.ts`
+- [x] `src/modules/settings/types.ts`
+- [x] `src/modules/settings/api.ts`
+- [x] `src/modules/settings/hooks.ts`
+- [x] `src/modules/settings/components/SettingsFormView.tsx`
+- [x] `src/app/api/v1/settings/route.ts`
+- [x] `src/app/(dashboard)/settings/page.tsx`
+
+### Backup Export
+- [x] `src/modules/backup/service.ts`
+- [x] `src/app/api/v1/backup/export/route.ts`
+
 ---
 
 ## 🟡 Sedang Dikerjakan
 
-*(Kosong — belum ada implementasi dimulai)*
+*(Kosong — tidak ada task dokumentasi/implementasi aktif yang tercatat.)*
+
+## 🟢 Audit Security RLS (Selesai 2026-07-01)
+- **Analisis masalah:** Terdapat peringatan `rls_disabled_in_public` dari Supabase. Project menggunakan Prisma dan tidak menggunakan REST API Supabase.
+- **Langkah dilakukan:** Audit 18 tabel Prisma pada schema `public` dan menyusun script SQL untuk mengaktifkan RLS tanpa menetapkan policy (Default: DENY ALL untuk REST API).
+- **Hasil Audit & Migrasi:** Script migrasi, Security Report, dan Verification Checklist berhasil dibuat di dalam folder `docs/`. Prisma tidak akan terdampak oleh perubahan ini.
 
 ---
 
 ## 🔴 Yang Belum Dibuat
 
-
+- Endpoint import/export CSV pegawai khusus `/api/v1/users/import` dan `/api/v1/users/export` belum tersedia; export database saat ini tersedia melalui `/api/v1/backup/export`.
+- Reset password via email belum tersedia.
 
 ---
 
 ## 📋 TODO Dari Analisis PRD
 
 - [ ] **Tentukan threshold peringatan kedaluwarsa** — PRD menyebut "mendekati kedaluwarsa" tapi tidak spesifik hari. Implementor tentukan (misal: 30 hari).
-- [ ] **Tentukan behavior ganti password** — PRD tidak mendefinisikan apakah EMPLOYEE bisa ganti password sendiri.
+- [x] **Tentukan behavior ganti password** — tersedia endpoint `PUT /api/v1/profile/password`.
 - [ ] **Tentukan paginasi default** — PRD belum mendefinisikan ukuran halaman default untuk list API.
-- [ ] **Konfigurasi Middleware path** — PRD menyebut `src/proxy.ts` untuk middleware Next.js, konfirmasi apakah ini di-alias di `next.config.ts` atau rename ke `src/middleware.ts`.
-- [ ] **Seed data master** — Tentukan data awal untuk: EmploymentStatus, EmployeeGroup, ProfessionGroup, EmployeePosition, EmployeeRank, Workplace, dan DocumentType awal.
+- [x] **Konfigurasi Middleware path** — `src/middleware.ts` menjadi entrypoint Next.js dan mendelegasikan logic ke `src/proxy.ts`.
+- [x] **Seed data master** — `prisma/seed.ts` tersedia.
 - [ ] **Format CSV import pegawai** — Header dan format kolom CSV untuk import belum didefinisikan di PRD.
 - [ ] **Reset password** — Belum ada di PRD, perlu klarifikasi apakah diperlukan.
 
@@ -168,3 +193,5 @@ Hanya tersedia PRD (`PRD-SMDP-PORTAL-v1.0-20260627.md`) dan dokumentasi awal.
 | Tanggal | Diupdate oleh | Perubahan |
 |---|---|---|
 | 2026-06-28 | AI Agent (setup awal) | Inisialisasi dokumentasi dari PRD v1.0 |
+| 2026-07-01 | AI Agent | Sinkronisasi docs dengan source code aktual, route/API, status fitur, dan indeks dokumentasi |
+| 2026-07-01 | AI Agent | Update storage dokumen: folder per kode jenis dokumen di bucket dan download Supabase-aware |

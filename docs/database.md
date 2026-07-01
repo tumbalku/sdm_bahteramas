@@ -190,7 +190,7 @@ Berkas dokumen yang diunggah oleh pegawai. Menyimpan status terkini langsung (ti
 | `documentTypeId` | String FK | → DocumentType |
 | `status` | DocumentStatus | Status terkini (default: PENDING) |
 | `fileName` | String | Nama asli file dari pegawai (ditampilkan di UI) |
-| `filePath` | String | Nama file terstandarisasi di storage |
+| `filePath` | String | Path file di storage: `<KODE-JENIS-DOKUMEN>/<nama-file-terstandarisasi>` |
 | `issueDate` | DateTime? | Tanggal terbit dokumen |
 | `expiryDate` | DateTime? | Tanggal kedaluwarsa |
 | `uploadedAt` | DateTime | Auto (waktu upload) |
@@ -198,7 +198,7 @@ Berkas dokumen yang diunggah oleh pegawai. Menyimpan status terkini langsung (ti
 
 **Index:** `ownerId`, `documentTypeId`, `status`
 
-> **Penting:** `filePath` menggunakan format standar `{NIP}_{KATEGORI}_{KODE}_{YYYYMMDD}_{VERSI}.{ext}` — dibuat oleh fungsi `generateStorageFileName()` di `documents/service.ts`.
+> **Penting:** nama file menggunakan format standar `{NIP}_{KATEGORI}_{KODE}_{YYYYMMDD}_{VERSI}.{ext}` — dibuat oleh fungsi `generateStorageFileName()` di `documents/service.ts`. Nilai `filePath` menyertakan folder kode jenis dokumen, contoh `KK/198501012010011001_UTAMA_KK_20260115_v1.pdf`.
 
 ---
 
