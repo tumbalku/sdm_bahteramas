@@ -132,9 +132,15 @@ export function VerificationActionModal({
                     {format(new Date(document.uploadedAt), "dd MMMM yyyy, HH:mm", { locale: id })}
                   </span>
                 </div>
+                {document.documentNumber && (
+                  <div className="border-b border-border pb-2">
+                    <span className="block text-muted-foreground">Nomor Surat</span>
+                    <span className="font-medium break-all">{document.documentNumber}</span>
+                  </div>
+                )}
                 {document.issueDate && (
                   <div className="border-b border-border pb-2">
-                    <span className="block text-muted-foreground">Tanggal Terbit</span>
+                    <span className="block text-muted-foreground">Tanggal Terbit Surat/Dokumen</span>
                     <span className="font-medium">
                       {format(new Date(document.issueDate), "dd MMMM yyyy", { locale: id })}
                     </span>

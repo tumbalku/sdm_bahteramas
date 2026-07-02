@@ -303,9 +303,8 @@ Penamaan `SCREAMING_SNAKE_CASE`:
 | `DATABASE_URL` | `postgresql://...` | Koneksi database |
 | `AUTH_SECRET` | `random-secret` | Secret NextAuth |
 | `NEXTAUTH_URL` | `http://localhost:3000` | URL aplikasi |
-| `STORAGE_PROVIDER` | `local` / `s3` | Provider storage |
+| `STORAGE_PROVIDER` | `local` | Provider storage lokal |
 | `STORAGE_LOCAL_PATH` | `./uploads` | Path storage lokal |
-| `STORAGE_S3_BUCKET` | `smdp-files` | Bucket S3 (jika pakai cloud) |
 
 ---
 

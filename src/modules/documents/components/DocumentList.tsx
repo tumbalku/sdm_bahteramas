@@ -118,6 +118,15 @@ export function DocumentList({
                 </span>
               </div>
               
+              {doc.documentNumber && (
+                <div className="flex justify-between border-b border-border/50 pb-2 gap-4">
+                  <span className="text-muted-foreground">Nomor Surat</span>
+                  <span className="font-medium text-right break-all">
+                    {doc.documentNumber}
+                  </span>
+                </div>
+              )}
+
               {doc.issueDate && (
                 <div className="flex justify-between border-b border-border/50 pb-2">
                   <span className="text-muted-foreground">Tanggal Terbit</span>

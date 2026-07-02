@@ -1,6 +1,6 @@
 # Progress — SMDP Portal
 
-> **Last Updated:** 2026-07-01
+> **Last Updated:** 2026-07-02
 > **AI Agent:** Update file ini setelah menyelesaikan task besar. Tandai item sesuai statusnya.
 
 ---
@@ -9,7 +9,7 @@
 
 **Status saat ini:** implementasi inti aplikasi sudah tersedia. Fitur utama SMDP Portal sudah dibuat, termasuk autentikasi, dashboard, master jenis dokumen, dokumen pegawai, verifikasi, profil, security logs, settings, dan backup export.
 
-Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-07-01.
+Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-07-02.
 
 ---
 
@@ -50,6 +50,8 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] Buat `src/lib/security-log.ts` (`logActivity`) (selesai 2026-06-28)
 - [x] Buat `src/lib/storage.ts` (`getStorageProvider`) (selesai 2026-06-28)
 - [x] Buat `src/lib/` utilities (`parseAllowedFormats`, `slugifyFileName`) (selesai 2026-06-28)
+- [x] Konfigurasi environment lokal: PostgreSQL lokal + storage lokal `uploads/` tanpa Supabase (selesai 2026-07-02)
+- [x] Tambah Docker Compose PostgreSQL lokal dan script `prisma:push` (selesai 2026-07-02)
 - [x] Buat `src/app/providers.tsx` (QueryClientProvider) (selesai 2026-06-28)
 - [x] Buat `src/app/layout.tsx` (root layout) (selesai 2026-06-28)
 - [x] Buat `src/middleware.ts` + `src/proxy.ts` (middleware autentikasi) (selesai 2026-06-28)
@@ -87,6 +89,36 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `src/app/api/v1/users/route.ts` (selesai 2026-06-28)
 - [x] `src/app/(dashboard)/users/page.tsx` (selesai 2026-06-28)
 
+### Bulk Import & Export Pegawai
+- [x] `src/modules/users/service.ts`
+- [x] `src/modules/users/repository.ts`
+- [x] `src/modules/users/types.ts`
+- [x] `src/modules/users/api.ts`
+- [x] `src/modules/users/hooks.ts`
+- [x] `src/modules/users/components/UsersBulkActions.tsx`
+- [x] `src/modules/users/components/UsersView.tsx`
+- [x] `src/app/api/v1/users/import/route.ts`
+- [x] `src/app/api/v1/users/import/template/route.ts`
+- [x] `src/app/api/v1/users/export/route.ts`
+- [x] `docs/api.md`
+- [x] `docs/business-rules.md`
+
+### Data TMT / Masa Kontrak Pegawai
+- [x] `prisma/schema.prisma`
+- [x] `src/modules/users/types.ts`
+- [x] `src/modules/users/validation.ts`
+- [x] `src/modules/users/repository.ts`
+- [x] `src/modules/users/service.ts`
+- [x] `src/modules/users/components/UserFormView.tsx`
+- [x] `src/modules/users/components/UserFormModal.tsx`
+- [x] `src/modules/users/components/UserDetailView.tsx`
+- [x] `src/modules/profile/types.ts`
+- [x] `src/modules/profile/repository.ts`
+- [x] `src/modules/profile/components/ProfileView.tsx`
+- [x] `docs/database.md`
+- [x] `docs/api.md`
+- [x] `docs/business-rules.md`
+
 ### F04 — Manajemen Dokumen
 - [x] `src/modules/documents/service.ts` (selesai 2026-06-28)
 - [x] `src/modules/documents/repository.ts` (selesai 2026-06-28)
@@ -100,6 +132,25 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `src/app/api/v1/documents/[id]/route.ts` (selesai 2026-06-28)
 - [x] `src/app/api/v1/documents/download/route.ts` (selesai 2026-06-28)
 - [x] `src/app/(dashboard)/documents/page.tsx` (selesai 2026-06-28)
+
+### Upload Dokumen — Metadata Wajib
+- [x] `prisma/schema.prisma`
+- [x] `src/modules/document-types/types.ts`
+- [x] `src/modules/document-types/validation.ts`
+- [x] `src/modules/document-types/components/AddDocumentTypeView.tsx`
+- [x] `src/modules/document-types/components/EditDocumentTypeView.tsx`
+- [x] `src/modules/document-types/components/DocumentTypeTable.tsx`
+- [x] `src/modules/documents/types.ts`
+- [x] `src/modules/documents/validation.ts`
+- [x] `src/modules/documents/service.ts`
+- [x] `src/modules/documents/api.ts`
+- [x] `src/modules/documents/components/DocumentUploadModal.tsx`
+- [x] `src/modules/documents/components/DocumentList.tsx`
+- [x] `src/modules/verification/components/VerificationActionModal.tsx`
+- [x] `src/app/api/v1/documents/upload/route.ts`
+- [x] `docs/database.md`
+- [x] `docs/api.md`
+- [x] `docs/business-rules.md`
 
 ### F05 — Verifikasi Dokumen
 - [x] `src/modules/verification/service.ts` (selesai 2026-06-28)
@@ -171,10 +222,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 
 ## 🔴 Yang Belum Dibuat
 
-- Endpoint import/export CSV pegawai khusus `/api/v1/users/import` dan `/api/v1/users/export` belum tersedia; export database saat ini tersedia melalui `/api/v1/backup/export`.
 - Reset password via email belum tersedia.
-
----
 
 ## 📋 TODO Dari Analisis PRD
 
@@ -183,7 +231,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [ ] **Tentukan paginasi default** — PRD belum mendefinisikan ukuran halaman default untuk list API.
 - [x] **Konfigurasi Middleware path** — `src/middleware.ts` menjadi entrypoint Next.js dan mendelegasikan logic ke `src/proxy.ts`.
 - [x] **Seed data master** — `prisma/seed.ts` tersedia.
-- [ ] **Format CSV import pegawai** — Header dan format kolom CSV untuk import belum didefinisikan di PRD.
+- [x] **Format CSV import pegawai** — Header dan format kolom CSV untuk import sudah ditetapkan di fitur bulk import/export.
 - [ ] **Reset password** — Belum ada di PRD, perlu klarifikasi apakah diperlukan.
 
 ---
@@ -194,4 +242,8 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 |---|---|---|
 | 2026-06-28 | AI Agent (setup awal) | Inisialisasi dokumentasi dari PRD v1.0 |
 | 2026-07-01 | AI Agent | Sinkronisasi docs dengan source code aktual, route/API, status fitur, dan indeks dokumentasi |
+| 2026-07-02 | AI Agent | Implementasi data TMT/masa kontrak pegawai pada schema, API users/profile, form admin, tampilan profile, dan dokumentasi |
+| 2026-07-02 | AI Agent | Implementasi bulk import/export pegawai CSV: template, validasi all-or-nothing, export filter aktif, dan audit log |
 | 2026-07-01 | AI Agent | Update storage dokumen: folder per kode jenis dokumen di bucket dan download Supabase-aware |
+| 2026-07-02 | AI Agent | Setup environment local: `.env.local`, Docker Compose PostgreSQL lokal, storage provider lokal, dan hapus dependency Supabase dari runtime |
+| 2026-07-02 | AI Agent | Selesaikan upload dokumen: validasi metadata wajib, nomor surat, tanggal terbit, dan hapus catatan tambahan |

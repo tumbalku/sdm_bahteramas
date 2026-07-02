@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState, DragEvent } from "react";
+import { useEffect, useRef, useState, DragEvent } from "react";
 import { DocumentArchiveCategory } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { X, Loader2, UploadCloud, FileCheck } from "lucide-react";
 import { useDocumentTypes } from "@/modules/document-types/hooks";
@@ -26,18 +25,21 @@ export function DocumentUploadModal({
   activeCategory,
 }: DocumentUploadModalProps) {
   const { data: documentTypes, isLoading: isLoadingTypes } = useDocumentTypes({ forUser: true });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [documentTypeId, setDocumentTypeId] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
-  const [notes, setNotes] = useState("");
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setDocumentTypeId("");
       setFile(null);
+      setDocumentNumber("");
+      setIssueDate("");
       setExpiryDate("");
-      setNotes("");
     }
   }, [isOpen]);
 
@@ -49,6 +51,8 @@ export function DocumentUploadModal({
     onSubmit({
       ownerId: "",
       documentTypeId,
+      documentNumber: documentNumber || undefined,
+      issueDate: issueDate || undefined,
       file,
       expiryDate: expiryDate || undefined,
     });
@@ -69,18 +73,36 @@ export function DocumentUploadModal({
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
-      const validTypes = ["application/pdf", "image/jpeg", "image/png"];
-      if (validTypes.includes(droppedFile.type)) {
+      const droppedExt = droppedFile.name.split(".").pop()?.toLowerCase();
+      if (droppedExt && allowedFormats.includes(droppedExt)) {
         setFile(droppedFile);
       } else {
-        alert("File harus berformat PDF, JPG, atau PNG!");
+        alert(`File harus berformat ${allowedFormats.join(", ").toUpperCase()}!`);
       }
     }
+  };
+
+  const handleFilePickerOpen = () => {
+    fileInputRef.current?.click();
   };
 
   const currentCategoryTypes = documentTypes?.filter(
     (type) => type.archiveCategory === activeCategory
   ) || [];
+
+  const selectedType = documentTypes?.find((type) => type.id === documentTypeId);
+  const allowedFormats = selectedType?.allowedFormats
+    .split(",")
+    .map((format) => format.trim().toLowerCase())
+    .filter(Boolean) || ["pdf", "jpg", "jpeg", "png"];
+  const fileAccept = allowedFormats.map((format) => `.${format}`).join(",");
+  const isSubmitDisabled =
+    isLoading ||
+    !file ||
+    !documentTypeId ||
+    Boolean(selectedType?.requiresDocumentNumber && !documentNumber.trim()) ||
+    Boolean(selectedType?.requiresIssueDate && !issueDate) ||
+    Boolean(selectedType?.requiresExpiryDate && !expiryDate);
 
   const optionItems = currentCategoryTypes.map((type) => ({
     value: type.id,
@@ -105,7 +127,12 @@ export function DocumentUploadModal({
             <label className="block text-sm font-medium mb-1">Jenis Dokumen</label>
             <Select
               value={documentTypeId}
-              onChange={(e) => setDocumentTypeId(e.target.value)}
+              onChange={(e) => {
+                setDocumentTypeId(e.target.value);
+                setDocumentNumber("");
+                setIssueDate("");
+                setExpiryDate("");
+              }}
               disabled={isLoadingTypes}
               options={optionItems}
               placeholder="-- Pilih Jenis Dokumen --"
@@ -114,7 +141,9 @@ export function DocumentUploadModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">File Dokumen (PDF, JPG, PNG)</label>
+            <label className="block text-sm font-medium mb-1">
+              File Dokumen ({allowedFormats.join(", ").toUpperCase()})
+            </label>
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -126,13 +155,15 @@ export function DocumentUploadModal({
                   ? "border-green-500 bg-green-500/10"
                   : "border-border hover:border-primary/50"
               }`}
-              onClick={() => document.getElementById("file-upload")?.click()}
+              onClick={handleFilePickerOpen}
             >
               <input
+                ref={fileInputRef}
                 id="file-upload"
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept={fileAccept}
                 className="hidden"
+                onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
                   if (e.target.files?.[0]) setFile(e.target.files[0]);
                 }}
@@ -153,7 +184,6 @@ export function DocumentUploadModal({
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Maksimal ukuran file: {(() => {
-                      const selectedType = documentTypes?.find((dt) => dt.id === documentTypeId);
                       if (!selectedType) return "10 MB";
                       if (selectedType.maxSizeMb < 1) return `${Math.round(selectedType.maxSizeMb * 1024)} KB`;
                       if (selectedType.maxSizeMb > 50) return `${Math.round(selectedType.maxSizeMb)} KB`;
@@ -165,30 +195,53 @@ export function DocumentUploadModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Tanggal Kedaluwarsa (Opsional)</label>
-            <Input
-              type="date"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-            />
-          </div>
+          {selectedType?.requiresDocumentNumber && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Nomor Surat <span className="text-destructive">*</span>
+              </label>
+              <Input
+                value={documentNumber}
+                onChange={(e) => setDocumentNumber(e.target.value)}
+                placeholder="Contoh: 800/123/RSUD/2026"
+                required
+              />
+            </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Catatan Tambahan (Opsional)</label>
-            <Textarea
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Tambahkan keterangan jika ada..."
-            />
-          </div>
+          {selectedType?.requiresIssueDate && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Tanggal Terbit Surat/Dokumen <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="date"
+                value={issueDate}
+                onChange={(e) => setIssueDate(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          {selectedType?.requiresExpiryDate && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Tanggal Kedaluwarsa <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                required
+              />
+            </div>
+          )}
 
           <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
             <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
               Batal
             </Button>
-            <Button type="submit" disabled={isLoading || !file || !documentTypeId} className="rounded-xl px-6">
+            <Button type="submit" disabled={isSubmitDisabled} className="rounded-xl px-6">
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -63,7 +63,7 @@ export async function generateDatabaseSqlDump(actor: { id: string; name: string;
       name: "DocumentType", 
       cols: [
         "id", "code", "name", "description", "archiveCategory", "isMandatory", 
-        "requiresExpiryDate", "allowedFormats", "maxSizeMb", "icon", "createdAt", "updatedAt"
+        "requiresExpiryDate", "requiresIssueDate", "requiresDocumentNumber", "allowedFormats", "maxSizeMb", "icon", "createdAt", "updatedAt"
       ] 
     },
     { name: "DocumentTypeProfession", cols: ["id", "documentTypeId", "professionGroupId"] },
@@ -71,7 +71,7 @@ export async function generateDatabaseSqlDump(actor: { id: string; name: string;
       name: "DocumentRecord", 
       cols: [
         "id", "ownerId", "documentTypeId", "status", "fileName", "filePath", 
-        "issueDate", "expiryDate", "uploadedAt", "updatedAt"
+        "documentNumber", "issueDate", "expiryDate", "uploadedAt", "updatedAt"
       ] 
     },
     { 

@@ -73,7 +73,21 @@ export async function uploadDocumentService(
     throw new Error(`Ukuran file maksimal adalah ${formattedMax}`);
   }
 
-  // 4. Generate nama file yang terstandarisasi
+  // 4. Validasi metadata wajib sesuai konfigurasi jenis dokumen
+  const documentNumber = input.documentNumber?.trim();
+  if (docType.requiresDocumentNumber && !documentNumber) {
+    throw new Error("Nomor surat wajib diisi untuk jenis dokumen ini");
+  }
+
+  if (docType.requiresIssueDate && !input.issueDate) {
+    throw new Error("Tanggal terbit wajib diisi untuk jenis dokumen ini");
+  }
+
+  if (docType.requiresExpiryDate && !input.expiryDate) {
+    throw new Error("Tanggal kedaluwarsa wajib diisi untuk jenis dokumen ini");
+  }
+
+  // 5. Generate nama file yang terstandarisasi
   const storageFileName = await generateStorageFileName(
     actor.employeeId,
     docType.archiveCategory,
@@ -83,7 +97,7 @@ export async function uploadDocumentService(
     input.documentTypeId
   );
 
-  // 5. Simpan file fisik melalui StorageProvider
+  // 6. Simpan file fisik melalui StorageProvider
   const storage = getStorageProvider();
   const arrayBuffer = await input.file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -91,18 +105,19 @@ export async function uploadDocumentService(
   const storagePath = `${storageFolder}/${storageFileName}`;
   const filePath = await storage.uploadFile(buffer, storagePath);
 
-  // 6. Simpan record di database
+  // 7. Simpan record di database
   const document = await createDocumentRecord({
     ownerId: input.ownerId,
     documentTypeId: input.documentTypeId,
     fileName: originalName,
     filePath,
     status: DocumentStatus.PENDING,
+    documentNumber: documentNumber || null,
     issueDate: input.issueDate ? new Date(input.issueDate) : null,
-    expiryDate: docType.requiresExpiryDate && input.expiryDate ? new Date(input.expiryDate) : null,
+    expiryDate: input.expiryDate ? new Date(input.expiryDate) : null,
   });
 
-  // 7. Catat aktivitas
+  // 8. Catat aktivitas
   await logActivity(
     {
       actorId: actor.id,

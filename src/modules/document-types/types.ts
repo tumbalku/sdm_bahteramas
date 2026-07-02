@@ -13,6 +13,8 @@ export interface DocumentTypeRecord {
   archiveCategory: DocumentArchiveCategory;
   isMandatory: boolean;
   requiresExpiryDate: boolean;
+  requiresIssueDate: boolean;
+  requiresDocumentNumber: boolean;
   allowedFormats: string;
   maxSizeMb: number;
   icon?: string | null;
@@ -32,6 +34,8 @@ export interface CreateDocumentTypeInput {
   archiveCategory: DocumentArchiveCategory;
   isMandatory?: boolean;
   requiresExpiryDate?: boolean;
+  requiresIssueDate?: boolean;
+  requiresDocumentNumber?: boolean;
   allowedFormats: string;
   maxSizeMb: number;
   icon?: string;
@@ -49,6 +53,8 @@ export interface UpdateDocumentTypeInput {
   archiveCategory?: DocumentArchiveCategory;
   isMandatory?: boolean;
   requiresExpiryDate?: boolean;
+  requiresIssueDate?: boolean;
+  requiresDocumentNumber?: boolean;
   allowedFormats?: string;
   maxSizeMb?: number;
   icon?: string;

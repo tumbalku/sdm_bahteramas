@@ -107,6 +107,9 @@ model User {
   phone              String?
   address            String?
   joinDate           DateTime?
+  hasTmt             Boolean           @default(false)
+  tmtStartDate       DateTime?
+  tmtEndDate         DateTime?
   employmentStatusId String?
   employmentStatus   EmploymentStatus? @relation(fields: [employmentStatusId], references: [id])
   employeeGroupId    String?
@@ -155,6 +158,8 @@ model DocumentType {
   archiveCategory    DocumentArchiveCategory
   isMandatory        Boolean                         @default(false)
   requiresExpiryDate Boolean                         @default(false)
+  requiresIssueDate  Boolean                         @default(false)
+  requiresDocumentNumber Boolean                     @default(false)
   allowedFormats     String                          // Contoh: "pdf,jpg,png"
   maxSizeMb          Float
   icon               String?
@@ -230,6 +235,7 @@ model DocumentRecord {
   status         DocumentStatus @default(PENDING)
   fileName       String
   filePath       String
+  documentNumber String?
   issueDate      DateTime?
   expiryDate     DateTime?
   uploadedAt     DateTime       @default(now())

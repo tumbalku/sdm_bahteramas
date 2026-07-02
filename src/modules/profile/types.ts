@@ -17,6 +17,9 @@ export interface UserProfileDto {
   phone?: string | null;
   address?: string | null;
   joinDate?: Date | null;
+  hasTmt: boolean;
+  tmtStartDate?: Date | null;
+  tmtEndDate?: Date | null;
   employmentStatus?: { id: string; name: string } | null;
   employeeGroup?: { id: string; name: string } | null;
   professionGroup?: { id: string; name: string } | null;

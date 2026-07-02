@@ -75,6 +75,9 @@ export function UserFormView({ userId }: UserFormViewProps) {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [joinDate, setJoinDate] = useState("");
+  const [hasTmt, setHasTmt] = useState(false);
+  const [tmtStartDate, setTmtStartDate] = useState("");
+  const [tmtEndDate, setTmtEndDate] = useState("");
 
   const [employmentStatusId, setEmploymentStatusId] = useState("");
   const [employeeGroupId, setEmployeeGroupId] = useState("");
@@ -116,6 +119,9 @@ export function UserFormView({ userId }: UserFormViewProps) {
       setPhone(existingUser.phone || "");
       setAddress(existingUser.address || "");
       setJoinDate(existingUser.joinDate ? format(new Date(existingUser.joinDate), "yyyy-MM-dd") : "");
+      setHasTmt(Boolean(existingUser.hasTmt));
+      setTmtStartDate(existingUser.tmtStartDate ? format(new Date(existingUser.tmtStartDate), "yyyy-MM-dd") : "");
+      setTmtEndDate(existingUser.tmtEndDate ? format(new Date(existingUser.tmtEndDate), "yyyy-MM-dd") : "");
 
       setEmploymentStatusId(existingUser.employmentStatus?.id || "");
       setEmployeeGroupId(existingUser.employeeGroup?.id || "");
@@ -155,6 +161,9 @@ export function UserFormView({ userId }: UserFormViewProps) {
       phone: phone || null,
       address: address || null,
       joinDate: joinDate || null,
+      hasTmt,
+      tmtStartDate: hasTmt ? tmtStartDate || null : null,
+      tmtEndDate: hasTmt ? tmtEndDate || null : null,
       employmentStatusId: employmentStatusId || null,
       employeeGroupId: employeeGroupId || null,
       professionGroupId: professionGroupId || null,
@@ -345,6 +354,44 @@ export function UserFormView({ userId }: UserFormViewProps) {
                 onChange={(e) => setJoinDate(e.target.value)}
               />
             </FormField>
+
+            <div className="md:col-span-2 rounded-xl border border-border/60 bg-accent/20 p-4 space-y-4">
+              <label className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                <input
+                  type="checkbox"
+                  checked={hasTmt}
+                  onChange={(e) => {
+                    setHasTmt(e.target.checked);
+                    if (!e.target.checked) {
+                      setTmtStartDate("");
+                      setTmtEndDate("");
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-border accent-primary"
+                />
+                Pegawai memiliki TMT / masa kontrak
+              </label>
+
+              {hasTmt && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Mulai TMT">
+                    <Input
+                      type="date"
+                      value={tmtStartDate}
+                      onChange={(e) => setTmtStartDate(e.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Akhir TMT / Kontrak">
+                    <Input
+                      type="date"
+                      value={tmtEndDate}
+                      onChange={(e) => setTmtEndDate(e.target.value)}
+                    />
+                  </FormField>
+                </div>
+              )}
+            </div>
 
             <FormField label="Pendidikan Terakhir">
               <Select

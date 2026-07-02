@@ -86,6 +86,9 @@ Ambil profil user yang sedang login.
     "role": "EMPLOYEE",
     "gender": "L",
     "birthDate": "1985-01-01T00:00:00.000Z",
+    "hasTmt": true,
+    "tmtStartDate": "2026-01-01T00:00:00.000Z",
+    "tmtEndDate": "2026-12-31T00:00:00.000Z",
     "employmentStatus": { "id": "...", "name": "PNS" },
     "employeeGroup": { "id": "...", "name": "Kelompok A" },
     "professionGroup": { "id": "...", "name": "Dokter" },
@@ -154,6 +157,8 @@ Ambil semua jenis dokumen.
       "archiveCategory": "PROFESI",
       "isMandatory": true,
       "requiresExpiryDate": true,
+      "requiresIssueDate": true,
+      "requiresDocumentNumber": true,
       "allowedFormats": "pdf,jpg,png",
       "maxSizeMb": 5,
       "icon": "file-medical",
@@ -178,6 +183,8 @@ Buat jenis dokumen baru.
   "archiveCategory": "PROFESI",
   "isMandatory": true,
   "requiresExpiryDate": true,
+  "requiresIssueDate": true,
+  "requiresDocumentNumber": true,
   "allowedFormats": "pdf,jpg,png",
   "maxSizeMb": 5,
   "icon": "optional",
@@ -225,6 +232,7 @@ Ambil daftar dokumen.
       },
       "status": "PENDING",
       "fileName": "KTP_Budi.pdf",
+      "documentNumber": "800/123/RSUD/2026",
       "issueDate": "2026-01-15T00:00:00.000Z",
       "expiryDate": null,
       "uploadedAt": "2026-06-27T08:00:00.000Z"
@@ -242,13 +250,16 @@ Upload dokumen baru.
   ```
   file: <file binary>
   documentTypeId: "clx..."
-  issueDate: "2026-01-15" (opsional)
+  documentNumber: "800/123/RSUD/2026" (required jika requiresDocumentNumber=true)
+  issueDate: "2026-01-15" (required jika requiresIssueDate=true)
   expiryDate: "2028-01-15" (required jika requiresExpiryDate=true)
   ownerId: "clx..." (opsional — hanya ADMIN yang bisa upload untuk pegawai lain)
   ```
 - **Validation:**
   - Format file harus sesuai `DocumentType.allowedFormats`
   - Ukuran file ≤ `DocumentType.maxSizeMb`
+  - `documentNumber` wajib jika `requiresDocumentNumber = true`
+  - `issueDate` wajib jika `requiresIssueDate = true`
   - `expiryDate` wajib jika `requiresExpiryDate = true`
 - **Response:** `201 Created` dengan data `DocumentRecord`.
 
@@ -296,6 +307,9 @@ Daftar semua pegawai.
       "email": "budi@example.com",
       "name": "Budi Santoso",
       "role": "EMPLOYEE",
+      "hasTmt": true,
+      "tmtStartDate": "2026-01-01T00:00:00.000Z",
+      "tmtEndDate": "2026-12-31T00:00:00.000Z",
       "professionGroup": { "id": "...", "name": "Dokter" },
       "workplace": { "id": "...", "name": "Poli Umum" },
       "createdAt": "2026-06-01T00:00:00.000Z"
@@ -318,6 +332,9 @@ Buat pegawai baru.
   "role": "EMPLOYEE",
   "gender": "L",
   "birthDate": "1985-01-01",
+  "hasTmt": true,
+  "tmtStartDate": "2026-01-01",
+  "tmtEndDate": "2026-12-31",
   "employmentStatusId": "clx...",
   "employeeGroupId": "clx...",
   "professionGroupId": "clx...",
@@ -331,6 +348,45 @@ Buat pegawai baru.
 ### `PATCH /api/v1/users/[id]`
 Update data pegawai.
 - **Auth:** `ADMIN`
+- **Body:** Partial dari payload `POST /api/v1/users`, termasuk `hasTmt`, `tmtStartDate`, dan `tmtEndDate`.
+- **Validasi TMT:** Jika `tmtStartDate` dan `tmtEndDate` sama-sama diisi, `tmtEndDate` tidak boleh lebih awal dari `tmtStartDate`.
+
+### `GET /api/v1/users/import/template`
+Download template CSV import pegawai.
+
+- **Auth:** `ADMIN`
+- **Response:** file `text/csv`
+- **Header CSV:** `employeeId`, `nik`, `email`, `password`, `name`, `role`, `gender`, `birthDate`, `academicDegree`, `lastEducation`, `religion`, `maritalStatus`, `phone`, `address`, `joinDate`, `employmentStatusName`, `employeeGroupName`, `professionGroupName`, `employeePositionName`, `employeeRankName`, `workplaceName`, `hasTmt`, `tmtStartDate`, `tmtEndDate`.
+
+### `POST /api/v1/users/import`
+Import pegawai secara bulk dari CSV.
+
+- **Auth:** `ADMIN`
+- **Content-Type:** `multipart/form-data`
+- **Body:** `file` (`.csv`)
+- **Behavior:** all-or-nothing; jika ada satu baris invalid, tidak ada user yang dibuat.
+- **Validasi:** header CSV, duplikasi dalam file, konflik `employeeId`/`nik`/`email` dengan database, role, format tanggal, relasi master data berdasarkan nama, dan urutan TMT.
+- **Response:**
+```json
+{
+  "data": {
+    "totalRows": 10,
+    "validRows": 10,
+    "createdCount": 10,
+    "errorCount": 0,
+    "errors": []
+  }
+}
+```
+
+### `GET /api/v1/users/export`
+Export data pegawai ke CSV.
+
+- **Auth:** `ADMIN`
+- **Query Params:** mengikuti filter `GET /api/v1/users`: `search`, `professionGroupId`, `workplaceId`, `employmentStatusId`, `employeeGroupId`, `employeePositionId`.
+- **Response:** file `text/csv`
+- **Keamanan:** tidak menyertakan `passwordHash` atau plaintext password.
+- **Log:** `DATA_EXPORTED`.
 
 ### `DELETE /api/v1/users/[id]`
 Hapus pegawai.

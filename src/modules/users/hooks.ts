@@ -1,7 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUserApi, deleteUserApi, getUsersApi, updateUserApi, getUserApi } from "./api";
+import {
+  createUserApi,
+  deleteUserApi,
+  downloadUsersImportTemplateApi,
+  exportUsersApi,
+  getUsersApi,
+  importUsersApi,
+  updateUserApi,
+  getUserApi,
+} from "./api";
 import { CreateUserInput, UpdateUserInput, UserFilter } from "./types";
 
 export function useUsers(filters?: UserFilter) {
@@ -95,5 +104,36 @@ export function useDeleteUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
+  });
+}
+
+export function useImportUsers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const res = await importUsersApi(file);
+      if (!res.success && !res.data) {
+        throw new Error(res.error || "Gagal mengimport pegawai");
+      }
+      return res.data;
+    },
+    onSuccess: (data) => {
+      if (data?.createdCount) {
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
+    },
+  });
+}
+
+export function useDownloadUsersImportTemplate() {
+  return useMutation({
+    mutationFn: () => downloadUsersImportTemplateApi(),
+  });
+}
+
+export function useExportUsers(filters?: UserFilter) {
+  return useMutation({
+    mutationFn: () => exportUsersApi(filters),
   });
 }

@@ -21,6 +21,7 @@ export const documentApi = {
   uploadDocument: async (input: DocumentUploadInput): Promise<DocumentRecordDto> => {
     const formData = new FormData();
     formData.append("documentTypeId", input.documentTypeId);
+    if (input.documentNumber) formData.append("documentNumber", input.documentNumber);
     if (input.issueDate) formData.append("issueDate", input.issueDate);
     if (input.expiryDate) formData.append("expiryDate", input.expiryDate);
     formData.append("file", input.file);

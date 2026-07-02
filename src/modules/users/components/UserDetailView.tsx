@@ -154,6 +154,18 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                   {profile.joinDate ? format(new Date(profile.joinDate), "dd MMM yyyy", { locale: idLocale }) : "-"}
                 </span>
               </div>
+              {profile.hasTmt && (
+                <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
+                  <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
+                    <Calendar className="w-3.5 h-3.5 text-primary" /> Masa Kontrak
+                  </span>
+                  <span className="font-bold text-foreground text-right">
+                    {profile.tmtStartDate ? format(new Date(profile.tmtStartDate), "dd MMM yyyy", { locale: idLocale }) : "Tidak ditentukan"}
+                    {" - "}
+                    {profile.tmtEndDate ? format(new Date(profile.tmtEndDate), "dd MMM yyyy", { locale: idLocale }) : "Tidak ditentukan"}
+                  </span>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
                   <Stethoscope className="w-3.5 h-3.5 text-primary" /> Profesi
@@ -270,6 +282,28 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                   {profile.phone || "-"}
                 </div>
               </div>
+
+              {profile.hasTmt && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1">Tanggal Mulai TMT</label>
+                    <div className="px-4 py-2.5 bg-accent/20 border border-border/40 rounded-xl font-medium text-foreground text-sm">
+                      {profile.tmtStartDate
+                        ? format(new Date(profile.tmtStartDate), "dd MMMM yyyy", { locale: idLocale })
+                        : "Tidak ditentukan"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1">Tanggal Akhir TMT / Kontrak</label>
+                    <div className="px-4 py-2.5 bg-accent/20 border border-border/40 rounded-xl font-medium text-foreground text-sm">
+                      {profile.tmtEndDate
+                        ? format(new Date(profile.tmtEndDate), "dd MMMM yyyy", { locale: idLocale })
+                        : "Tidak ditentukan"}
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">Alamat Lengkap</label>

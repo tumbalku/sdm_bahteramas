@@ -4,6 +4,7 @@ import { DocumentArchiveCategory, DocumentStatus } from "@prisma/client";
 // Skema untuk input form upload (sebelum file diproses)
 export const uploadDocumentSchema = z.object({
   documentTypeId: z.string().min(1, "Jenis dokumen wajib dipilih"),
+  documentNumber: z.string().trim().max(100, "Nomor surat maksimal 100 karakter").optional().or(z.literal("")),
   issueDate: z.string().nullable().optional().or(z.literal("")),
   expiryDate: z.string().nullable().optional().or(z.literal("")),
 });

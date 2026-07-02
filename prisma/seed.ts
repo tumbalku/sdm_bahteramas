@@ -357,7 +357,7 @@ async function main() {
   // =========================================================================
   // Jangan hapus DocumentType di seed. DocumentRecord memiliki foreign key ke
   // DocumentType, sehingga menghapus master dokumen bisa merusak data upload
-  // yang sudah ada di Supabase/production.
+  // yang sudah ada di database aktif.
   console.log("✅ Skipped Document Types seeding (managed by ADMIN in app)");
 
   // =========================================================================

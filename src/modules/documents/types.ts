@@ -8,6 +8,8 @@ export interface DocumentTypeDto {
   archiveCategory: DocumentArchiveCategory;
   isMandatory: boolean;
   requiresExpiryDate: boolean;
+  requiresIssueDate: boolean;
+  requiresDocumentNumber: boolean;
   allowedFormats: string;
   maxSizeMb: number;
   icon: string | null;
@@ -20,6 +22,7 @@ export interface DocumentRecordDto {
   status: DocumentStatus;
   fileName: string;
   filePath: string;
+  documentNumber: string | null;
   issueDate: Date | null;
   expiryDate: Date | null;
   uploadedAt: Date;
@@ -47,6 +50,7 @@ export interface DocumentRecordDto {
 export interface DocumentUploadInput {
   ownerId: string;
   documentTypeId: string;
+  documentNumber?: string;
   issueDate?: string;
   expiryDate?: string;
   file: File;

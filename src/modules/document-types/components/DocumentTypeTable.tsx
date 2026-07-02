@@ -72,18 +72,38 @@ export function DocumentTypeTable({
     {
       header: "Status Wajib",
       className: "whitespace-nowrap",
-      render: (item) =>
-        item.isMandatory ? (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="w-4 h-4" />
-            Wajib
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-            <XCircle className="w-4 h-4 opacity-50" />
-            Opsional
-          </span>
-        ),
+      render: (item) => (
+        <div className="space-y-1">
+          {item.isMandatory ? (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-4 h-4" />
+              Wajib
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              <XCircle className="w-4 h-4 opacity-50" />
+              Opsional
+            </span>
+          )}
+          <div className="flex flex-wrap gap-1 max-w-[160px]">
+            {item.requiresExpiryDate && (
+              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-semibold">
+                Kedaluwarsa
+              </span>
+            )}
+            {item.requiresIssueDate && (
+              <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[10px] font-semibold">
+                Terbit
+              </span>
+            )}
+            {item.requiresDocumentNumber && (
+              <span className="px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-700 dark:text-violet-300 text-[10px] font-semibold">
+                No. Surat
+              </span>
+            )}
+          </div>
+        </div>
+      ),
     },
     {
       header: "Format & Ukuran",

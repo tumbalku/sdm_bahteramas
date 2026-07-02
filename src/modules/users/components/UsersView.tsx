@@ -10,6 +10,7 @@ import { useDeleteUser, useUsers } from "../hooks";
 import { UserRecord } from "../types";
 import { UserTable } from "./UserTable";
 import { LayeredDeleteModal } from "@/components/LayeredDeleteModal";
+import { UsersBulkActions } from "./UsersBulkActions";
 
 export function UsersView() {
   const [filterValues, setFilterValues] = useState<EmployeeFilterState>({
@@ -42,7 +43,7 @@ export function UsersView() {
         title="Manajemen Pegawai"
         description="Kelola akun pengguna, data biodata, dan hak akses seluruh pegawai."
         action={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <Link href="/users/categories">
               <Button variant="outline" className="rounded-full px-5 border-border">
                 <Layers className="w-4 h-4 mr-2 text-primary" />
@@ -68,6 +69,10 @@ export function UsersView() {
 
       {/* Shared Reusable Employee Filter Bar */}
       <EmployeeFilterBar values={filterValues} onChange={setFilterValues} />
+
+      <div className="flex items-center justify-end gap-3">
+        <UsersBulkActions filters={filterValues} />
+      </div>
 
       {/* Table Data */}
       <UserTable

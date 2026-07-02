@@ -62,6 +62,9 @@ Data utama pegawai + akun login.
 | `phone` | String? | Nomor telepon / WA |
 | `address` | String? | Alamat lengkap tempat tinggal |
 | `joinDate` | DateTime? | Tanggal masuk kerja pegawai |
+| `hasTmt` | Boolean | Menandai apakah pegawai memiliki data TMT/masa kontrak (default: false) |
+| `tmtStartDate` | DateTime? | Tanggal mulai TMT/masa kontrak, opsional |
+| `tmtEndDate` | DateTime? | Tanggal akhir TMT/masa kontrak, opsional |
 | `employmentStatusId` | String? | FK → EmploymentStatus |
 | `employeeGroupId` | String? | FK → EmployeeGroup |
 | `professionGroupId` | String? | FK → ProfessionGroup |
@@ -100,6 +103,8 @@ Master jenis dokumen. Menentukan kategori arsip dan target profesi.
 | `archiveCategory` | DocumentArchiveCategory | UTAMA / KONDISIONAL / PROFESI |
 | `isMandatory` | Boolean | Apakah wajib dimiliki (default: false) |
 | `requiresExpiryDate` | Boolean | Apakah perlu tanggal kedaluwarsa (default: false) |
+| `requiresIssueDate` | Boolean | Apakah tanggal terbit wajib diisi saat upload (default: false) |
+| `requiresDocumentNumber` | Boolean | Apakah nomor surat wajib diisi saat upload (default: false) |
 | `allowedFormats` | String | Format file diizinkan, contoh: `"pdf,jpg,png"` |
 | `maxSizeMb` | Int | Ukuran file maksimum (MB) |
 | `icon` | String? | Nama ikon opsional |
@@ -191,6 +196,7 @@ Berkas dokumen yang diunggah oleh pegawai. Menyimpan status terkini langsung (ti
 | `status` | DocumentStatus | Status terkini (default: PENDING) |
 | `fileName` | String | Nama asli file dari pegawai (ditampilkan di UI) |
 | `filePath` | String | Path file di storage: `<KODE-JENIS-DOKUMEN>/<nama-file-terstandarisasi>` |
+| `documentNumber` | String? | Nomor surat/dokumen, wajib jika `DocumentType.requiresDocumentNumber = true` |
 | `issueDate` | DateTime? | Tanggal terbit dokumen |
 | `expiryDate` | DateTime? | Tanggal kedaluwarsa |
 | `uploadedAt` | DateTime | Auto (waktu upload) |

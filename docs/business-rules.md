@@ -59,15 +59,17 @@
 | Format file | Ditentukan per jenis dokumen di `DocumentType.allowedFormats` (contoh: `"pdf,jpg,png"`) |
 | Ukuran maksimum | Ditentukan per jenis dokumen di `DocumentType.maxSizeMb` |
 | Tanggal kedaluwarsa | Wajib diisi jika `DocumentType.requiresExpiryDate = true` |
-| Tanggal terbit | Opsional — ditampilkan jika ada |
+| Tanggal terbit | Wajib diisi jika `DocumentType.requiresIssueDate = true`; disimpan di `DocumentRecord.issueDate` |
+| Nomor surat | Wajib diisi jika `DocumentType.requiresDocumentNumber = true`; disimpan di `DocumentRecord.documentNumber` |
 
 ### Workflow Upload
 
 1. Pegawai pilih jenis dokumen → sistem otomatis menunjukkan kategori arsipnya.
-2. Pegawai isi `issueDate` / `expiryDate` (jika `requiresExpiryDate = true`).
+2. Pegawai isi `documentNumber`, `issueDate`, dan/atau `expiryDate` sesuai konfigurasi jenis dokumen.
 3. Pegawai pilih file → kirim `POST /api/v1/documents/upload`.
 4. Backend:
    - Validasi format dan ukuran file.
+   - Validasi nomor surat, tanggal terbit, dan tanggal kedaluwarsa sesuai konfigurasi `DocumentType`.
    - Simpan file via `getStorageProvider()`.
    - Generate nama file standar via `generateStorageFileName()`.
    - Simpan file di folder storage sesuai kode jenis dokumen, contoh `KK/{nama-file}`.
@@ -158,6 +160,19 @@ Workplace       (Unit kerja — standalone)
 - Hapus User → CASCADE hapus `UserRole` dan `DocumentRecord` miliknya.
 - `VerificationHistory` dan `SecurityLog` **tidak ikut terhapus** — actorId/reviewedById di-set NULL.
 - Import pegawai via CSV hanya bisa dilakukan oleh `ADMIN`.
+- Import CSV pegawai memakai mode all-or-nothing: jika satu baris invalid, tidak ada user yang dibuat.
+- Template import CSV disediakan dari `/api/v1/users/import/template`.
+- Import memvalidasi header, duplikasi `employeeId`/`nik`/`email`, konflik database, role, format tanggal, relasi master data berdasarkan nama, dan urutan TMT.
+- Export CSV pegawai hanya bisa dilakukan oleh `ADMIN`, mengikuti filter aktif, dan tidak boleh menyertakan `passwordHash`.
+
+### Aturan TMT / Masa Kontrak
+
+- Data TMT disimpan pada `User.hasTmt`, `User.tmtStartDate`, dan `User.tmtEndDate`.
+- Hanya `ADMIN` yang bisa mengatur data TMT melalui halaman tambah/edit pegawai.
+- Jika `hasTmt = false`, `tmtStartDate` dan `tmtEndDate` boleh kosong dan tidak ditampilkan pada profil pegawai.
+- Jika `hasTmt = true`, `tmtStartDate` dan `tmtEndDate` tetap opsional sesuai kebutuhan data kontrak.
+- Jika `tmtStartDate` dan `tmtEndDate` sama-sama diisi, `tmtEndDate` tidak boleh lebih awal dari `tmtStartDate`.
+- Profil pegawai hanya menampilkan informasi TMT ketika `hasTmt = true`; tanggal yang kosong ditampilkan sebagai `Tidak ditentukan`.
 
 ---
 
@@ -176,6 +191,7 @@ Aksi berikut **WAJIB** dipanggil `logActivity()`:
 | `USER_CREATED` | Pegawai baru dibuat |
 | `USER_UPDATED` | Data pegawai diperbarui |
 | `USER_DELETED` | Pegawai dihapus |
+| `USERS_IMPORTED` | Pegawai diimport secara bulk dari CSV |
 | `DATA_EXPORTED` | Data diekspor (CSV, laporan) |
 
 ---

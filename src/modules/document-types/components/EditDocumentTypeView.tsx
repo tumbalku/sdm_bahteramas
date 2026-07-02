@@ -33,6 +33,8 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
   const [archiveCategory, setArchiveCategory] = useState<DocumentArchiveCategory>("UTAMA");
   const [isMandatory, setIsMandatory] = useState(false);
   const [requiresExpiryDate, setRequiresExpiryDate] = useState(false);
+  const [requiresIssueDate, setRequiresIssueDate] = useState(false);
+  const [requiresDocumentNumber, setRequiresDocumentNumber] = useState(false);
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [sizeValue, setSizeValue] = useState<number>(5);
   const [sizeUnit, setSizeUnit] = useState<"KB" | "MB">("MB");
@@ -51,6 +53,8 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
       setArchiveCategory(initialData.archiveCategory);
       setIsMandatory(initialData.isMandatory);
       setRequiresExpiryDate(initialData.requiresExpiryDate);
+      setRequiresIssueDate(initialData.requiresIssueDate);
+      setRequiresDocumentNumber(initialData.requiresDocumentNumber);
       setSelectedFormats(initialData.allowedFormats ? initialData.allowedFormats.split(",") : []);
       
       if (initialData.maxSizeMb < 1) {
@@ -93,6 +97,8 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
           archiveCategory,
           isMandatory,
           requiresExpiryDate,
+          requiresIssueDate,
+          requiresDocumentNumber,
           allowedFormats: selectedFormats.join(","),
           maxSizeMb: calculatedMb,
           employmentStatusIds: selectedStatuses,
@@ -304,6 +310,36 @@ export function EditDocumentTypeView({ id }: EditDocumentTypeViewProps) {
               <div>
                 <span className="text-sm font-semibold block text-foreground">Membutuhkan Tanggal Kedaluwarsa (Masa Berlaku)</span>
                 <span className="text-xs text-muted-foreground block">Pegawai wajib mengisikan tanggal masa berlaku saat mengunggah dokumen ini.</span>
+              </div>
+            </label>
+
+            <div className="border-t border-border/40 my-2" />
+
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={requiresIssueDate}
+                onChange={(e) => setRequiresIssueDate(e.target.checked)}
+                className="rounded-lg text-primary focus:ring-primary w-5 h-5 cursor-pointer"
+              />
+              <div>
+                <span className="text-sm font-semibold block text-foreground">Membutuhkan Tanggal Terbit Surat/Dokumen</span>
+                <span className="text-xs text-muted-foreground block">Pegawai wajib mengisikan tanggal terbit saat mengunggah dokumen ini.</span>
+              </div>
+            </label>
+
+            <div className="border-t border-border/40 my-2" />
+
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={requiresDocumentNumber}
+                onChange={(e) => setRequiresDocumentNumber(e.target.checked)}
+                className="rounded-lg text-primary focus:ring-primary w-5 h-5 cursor-pointer"
+              />
+              <div>
+                <span className="text-sm font-semibold block text-foreground">Membutuhkan Nomor Surat</span>
+                <span className="text-xs text-muted-foreground block">Pegawai wajib mengisikan nomor surat saat mengunggah dokumen ini.</span>
               </div>
             </label>
           </div>

@@ -16,9 +16,9 @@ export async function findUserProfileById(id: string) {
   if (!u) return null;
 
   // Jika Prisma Client runtime di memori belum menyertakan kolom baru pada select query, ambil via raw query
-  if (u.academicDegree === undefined || u.nik === undefined) {
+  if (u.academicDegree === undefined || u.nik === undefined || u.hasTmt === undefined) {
     const rawRows: any[] = await prisma.$queryRawUnsafe(
-      `SELECT "nik", "academicDegree", "lastEducation", "religion", "maritalStatus", "phone", "address", "joinDate" FROM "User" WHERE "id" = $1`,
+      `SELECT "nik", "academicDegree", "lastEducation", "religion", "maritalStatus", "phone", "address", "joinDate", "hasTmt", "tmtStartDate", "tmtEndDate" FROM "User" WHERE "id" = $1`,
       id
     );
     if (rawRows && rawRows.length > 0) {

@@ -18,6 +18,8 @@ export const createDocumentTypeSchema = z.object({
   }),
   isMandatory: z.boolean().default(false),
   requiresExpiryDate: z.boolean().default(false),
+  requiresIssueDate: z.boolean().default(false),
+  requiresDocumentNumber: z.boolean().default(false),
   allowedFormats: z
     .string()
     .min(1, "Format file diizinkan wajib diisi (contoh: pdf,jpg,png)"),

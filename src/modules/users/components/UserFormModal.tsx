@@ -52,6 +52,9 @@ export function UserFormModal({
   const [maritalStatus, setMaritalStatus] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [hasTmt, setHasTmt] = useState(false);
+  const [tmtStartDate, setTmtStartDate] = useState("");
+  const [tmtEndDate, setTmtEndDate] = useState("");
 
   useEffect(() => {
     if (initialData) {
@@ -68,6 +71,9 @@ export function UserFormModal({
       setMaritalStatus(initialData.maritalStatus || "");
       setPhone(initialData.phone || "");
       setAddress(initialData.address || "");
+      setHasTmt(Boolean(initialData.hasTmt));
+      setTmtStartDate(initialData.tmtStartDate ? format(new Date(initialData.tmtStartDate), "yyyy-MM-dd") : "");
+      setTmtEndDate(initialData.tmtEndDate ? format(new Date(initialData.tmtEndDate), "yyyy-MM-dd") : "");
       setPassword("");
     } else {
       setEmployeeId("");
@@ -84,6 +90,9 @@ export function UserFormModal({
       setMaritalStatus("");
       setPhone("");
       setAddress("");
+      setHasTmt(false);
+      setTmtStartDate("");
+      setTmtEndDate("");
     }
   }, [initialData, isOpen]);
 
@@ -105,6 +114,9 @@ export function UserFormModal({
       maritalStatus: maritalStatus || undefined,
       phone: phone || undefined,
       address: address || undefined,
+      hasTmt,
+      tmtStartDate: hasTmt ? tmtStartDate || null : null,
+      tmtEndDate: hasTmt ? tmtEndDate || null : null,
     };
     if (password) {
       data.password = password;
@@ -264,6 +276,43 @@ export function UserFormModal({
               placeholder="Alamat domisili lengkap..."
             />
           </FormField>
+
+          <div className="rounded-xl border border-border/60 bg-accent/20 p-4 space-y-4">
+            <label className="flex items-center gap-3 text-sm font-semibold text-foreground">
+              <input
+                type="checkbox"
+                checked={hasTmt}
+                onChange={(e) => {
+                  setHasTmt(e.target.checked);
+                  if (!e.target.checked) {
+                    setTmtStartDate("");
+                    setTmtEndDate("");
+                  }
+                }}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              Pegawai memiliki TMT / masa kontrak
+            </label>
+
+            {hasTmt && (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Mulai TMT">
+                  <Input
+                    type="date"
+                    value={tmtStartDate}
+                    onChange={(e) => setTmtStartDate(e.target.value)}
+                  />
+                </FormField>
+                <FormField label="Akhir TMT / Kontrak">
+                  <Input
+                    type="date"
+                    value={tmtEndDate}
+                    onChange={(e) => setTmtEndDate(e.target.value)}
+                  />
+                </FormField>
+              </div>
+            )}
+          </div>
 
           <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
             <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">

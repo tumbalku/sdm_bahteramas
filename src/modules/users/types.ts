@@ -22,6 +22,9 @@ export interface UserRecord {
   phone?: string | null;
   address?: string | null;
   joinDate?: Date | null;
+  hasTmt: boolean;
+  tmtStartDate?: Date | null;
+  tmtEndDate?: Date | null;
   employmentStatus?: MasterItemSummary | null;
   employeeGroup?: MasterItemSummary | null;
   professionGroup?: MasterItemSummary | null;
@@ -48,6 +51,9 @@ export interface CreateUserInput {
   phone?: string | null;
   address?: string | null;
   joinDate?: string | null;
+  hasTmt?: boolean;
+  tmtStartDate?: string | null;
+  tmtEndDate?: string | null;
   employmentStatusId?: string | null;
   employeeGroupId?: string | null;
   professionGroupId?: string | null;
@@ -72,6 +78,9 @@ export interface UpdateUserInput {
   phone?: string | null;
   address?: string | null;
   joinDate?: string | null;
+  hasTmt?: boolean;
+  tmtStartDate?: string | null;
+  tmtEndDate?: string | null;
   employmentStatusId?: string | null;
   employeeGroupId?: string | null;
   professionGroupId?: string | null;
@@ -87,4 +96,18 @@ export interface UserFilter {
   employmentStatusId?: string;
   employeeGroupId?: string;
   employeePositionId?: string;
+}
+
+export interface ImportUserError {
+  row: number;
+  field?: string;
+  message: string;
+}
+
+export interface ImportUsersResult {
+  totalRows: number;
+  validRows: number;
+  createdCount: number;
+  errorCount: number;
+  errors: ImportUserError[];
 }

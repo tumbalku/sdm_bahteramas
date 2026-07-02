@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { getStorageProvider } from "@/lib/storage";
 import fs from "fs";
 import path from "path";
 import { prisma } from "@/lib/prisma";
@@ -60,43 +59,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 
-    const storageProvider = process.env.STORAGE_PROVIDER || "local";
     let fileBuffer: Buffer;
     let contentType = getContentType(fileName);
     if (contentType === "application/octet-stream") {
       contentType = getContentType(document.fileName);
     }
 
-    if (storageProvider.toLowerCase() === "supabase" || /^https?:\/\//i.test(fileName)) {
-      const storage = getStorageProvider();
-      const fileUrl = /^https?:\/\//i.test(fileName) ? fileName : storage.getFileUrl(fileName);
-      const response = await fetch(fileUrl);
+    const uploadDir = path.resolve(process.cwd(), process.env.STORAGE_LOCAL_PATH || "./uploads");
+    const filePath = path.resolve(uploadDir, fileName);
 
-      if (!response.ok) {
-        return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
-      }
-
-      const responseContentType = response.headers.get("content-type");
-      if (responseContentType && responseContentType !== "application/octet-stream") {
-        contentType = responseContentType;
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      fileBuffer = Buffer.from(arrayBuffer);
-    } else {
-      const uploadDir = path.resolve(process.cwd(), process.env.STORAGE_LOCAL_PATH || "./uploads");
-      const filePath = path.resolve(uploadDir, fileName);
-
-      if (!filePath.startsWith(uploadDir + path.sep)) {
-        return NextResponse.json({ message: "Path file tidak valid" }, { status: 403 });
-      }
-
-      if (!fs.existsSync(filePath)) {
-        return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
-      }
-
-      fileBuffer = fs.readFileSync(filePath);
+    if (!filePath.startsWith(uploadDir + path.sep)) {
+      return NextResponse.json({ message: "Path file tidak valid" }, { status: 403 });
     }
+
+    if (!fs.existsSync(filePath)) {
+      return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
+    }
+
+    fileBuffer = fs.readFileSync(filePath);
 
     return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {

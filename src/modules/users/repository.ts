@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { Role } from "@prisma/client";
 import { CreateUserInput, UpdateUserInput, UserFilter, UserRecord } from "./types";
+
+export interface BulkCreateUserInput extends CreateUserInput {
+  passwordHash: string;
+  role: Role;
+}
 
 function mapUserRecord(u: any): UserRecord {
   return {
@@ -19,6 +25,9 @@ function mapUserRecord(u: any): UserRecord {
     phone: u.phone,
     address: u.address,
     joinDate: u.joinDate,
+    hasTmt: Boolean(u.hasTmt),
+    tmtStartDate: u.tmtStartDate,
+    tmtEndDate: u.tmtEndDate,
     employmentStatus: u.employmentStatus
       ? { id: u.employmentStatus.id, name: u.employmentStatus.name }
       : null,
@@ -44,11 +53,11 @@ function mapUserRecord(u: any): UserRecord {
 
 async function hydrateUserRawFields(users: any[]) {
   if (!users || users.length === 0) return;
-  if (users[0].academicDegree !== undefined && users[0].nik !== undefined) return;
+  if (users[0].academicDegree !== undefined && users[0].nik !== undefined && users[0].hasTmt !== undefined) return;
 
   const ids = users.map((u) => u.id);
   const rawRows: any[] = await prisma.$queryRawUnsafe(
-    `SELECT "id", "nik", "academicDegree", "lastEducation", "religion", "maritalStatus", "phone", "address", "joinDate" FROM "User" WHERE "id" = ANY($1::text[])`,
+    `SELECT "id", "nik", "academicDegree", "lastEducation", "religion", "maritalStatus", "phone", "address", "joinDate", "hasTmt", "tmtStartDate", "tmtEndDate" FROM "User" WHERE "id" = ANY($1::text[])`,
     ids
   );
 
@@ -140,10 +149,109 @@ export async function findUserByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
 }
 
+export async function findUsersByUniqueFields(input: {
+  employeeIds: string[];
+  emails: string[];
+  niks: string[];
+}) {
+  if (input.employeeIds.length === 0 && input.emails.length === 0 && input.niks.length === 0) {
+    return [];
+  }
+
+  return prisma.user.findMany({
+    where: {
+      OR: [
+        ...(input.employeeIds.length > 0 ? [{ employeeId: { in: input.employeeIds } }] : []),
+        ...(input.emails.length > 0 ? [{ email: { in: input.emails } }] : []),
+        ...(input.niks.length > 0 ? [{ nik: { in: input.niks } }] : []),
+      ],
+    },
+    select: {
+      employeeId: true,
+      email: true,
+      nik: true,
+    },
+  });
+}
+
+export async function findUserImportReferenceData() {
+  const [employmentStatuses, employeeGroups, professionGroups, employeePositions, employeeRanks, workplaces] =
+    await Promise.all([
+      prisma.employmentStatus.findMany({ select: { id: true, name: true } }),
+      prisma.employeeGroup.findMany({ select: { id: true, name: true, employmentStatusId: true } }),
+      prisma.professionGroup.findMany({ select: { id: true, name: true } }),
+      prisma.employeePosition.findMany({ select: { id: true, name: true, professionGroupId: true } }),
+      prisma.employeeRank.findMany({ select: { id: true, name: true } }),
+      prisma.workplace.findMany({ select: { id: true, name: true } }),
+    ]);
+
+  return {
+    employmentStatuses,
+    employeeGroups,
+    professionGroups,
+    employeePositions,
+    employeeRanks,
+    workplaces,
+  };
+}
+
+export async function createUsersBulk(users: BulkCreateUserInput[]): Promise<number> {
+  if (users.length === 0) return 0;
+
+  await prisma.$transaction(
+    users.map((user) => {
+      const {
+        password,
+        passwordHash,
+        birthDate,
+        joinDate,
+        tmtStartDate,
+        tmtEndDate,
+        role,
+        nik,
+        academicDegree,
+        lastEducation,
+        religion,
+        maritalStatus,
+        phone,
+        address,
+        hasTmt,
+        ...rest
+      } = user;
+
+      return prisma.user.create({
+        data: {
+          ...rest,
+          nik: nik || null,
+          passwordHash,
+          role,
+          gender: user.gender || null,
+          birthDate: birthDate ? new Date(birthDate) : null,
+          academicDegree: academicDegree || null,
+          lastEducation: lastEducation || null,
+          religion: religion || null,
+          maritalStatus: maritalStatus || null,
+          phone: phone || null,
+          address: address || null,
+          joinDate: joinDate ? new Date(joinDate) : null,
+          hasTmt: Boolean(hasTmt),
+          tmtStartDate: hasTmt && tmtStartDate ? new Date(tmtStartDate) : null,
+          tmtEndDate: hasTmt && tmtEndDate ? new Date(tmtEndDate) : null,
+          userRoles: {
+            create: { role },
+          },
+        },
+      });
+    })
+  );
+
+  return users.length;
+}
+
 export async function createUser(
   data: CreateUserInput & { passwordHash: string }
 ): Promise<UserRecord> {
-  const { password, birthDate, joinDate, nik, academicDegree, lastEducation, religion, maritalStatus, phone, address, ...rest } = data;
+  const { password, birthDate, joinDate, tmtStartDate, tmtEndDate, nik, academicDegree, lastEducation, religion, maritalStatus, phone, address, ...rest } = data;
 
   try {
     const u = await prisma.user.create({
@@ -167,9 +275,9 @@ export async function createUser(
     });
 
     // Sync new fields via Raw SQL if client engine omitted them
-    if (nik || academicDegree || lastEducation || religion || maritalStatus || phone || address || joinDate) {
+    if (nik || academicDegree || lastEducation || religion || maritalStatus || phone || address || joinDate || rest.hasTmt || tmtStartDate || tmtEndDate) {
       await prisma.$executeRawUnsafe(
-        `UPDATE "User" SET "nik" = $1, "academicDegree" = $2, "lastEducation" = $3, "religion" = $4, "maritalStatus" = $5, "phone" = $6, "address" = $7, "joinDate" = $8 WHERE "id" = $9`,
+        `UPDATE "User" SET "nik" = $1, "academicDegree" = $2, "lastEducation" = $3, "religion" = $4, "maritalStatus" = $5, "phone" = $6, "address" = $7, "joinDate" = $8, "hasTmt" = $9, "tmtStartDate" = $10, "tmtEndDate" = $11 WHERE "id" = $12`,
         nik || null,
         academicDegree || null,
         lastEducation || null,
@@ -178,6 +286,9 @@ export async function createUser(
         phone || null,
         address || null,
         joinDate ? new Date(joinDate) : null,
+        Boolean(rest.hasTmt),
+        rest.hasTmt && tmtStartDate ? new Date(tmtStartDate) : null,
+        rest.hasTmt && tmtEndDate ? new Date(tmtEndDate) : null,
         u.id
       );
     }
@@ -193,7 +304,7 @@ export async function updateUser(
   id: string,
   data: UpdateUserInput & { passwordHash?: string }
 ): Promise<UserRecord> {
-  const { password, birthDate, joinDate, nik, academicDegree, lastEducation, religion, maritalStatus, phone, address, role, passwordHash, ...rest } = data;
+  const { password, birthDate, joinDate, tmtStartDate, tmtEndDate, nik, academicDegree, lastEducation, religion, maritalStatus, phone, address, role, passwordHash, ...rest } = data;
 
   const updateData: any = {
     ...rest,
@@ -228,6 +339,14 @@ export async function updateUser(
   if (phone !== undefined) { fields.push(`"phone" = $${values.length + 1}`); values.push(phone || null); }
   if (address !== undefined) { fields.push(`"address" = $${values.length + 1}`); values.push(address || null); }
   if (joinDate !== undefined) { fields.push(`"joinDate" = $${values.length + 1}`); values.push(joinDate ? new Date(joinDate) : null); }
+  if (rest.hasTmt !== undefined) {
+    fields.push(`"hasTmt" = $${values.length + 1}`);
+    values.push(Boolean(rest.hasTmt));
+    if (!rest.hasTmt && tmtStartDate === undefined) { fields.push(`"tmtStartDate" = $${values.length + 1}`); values.push(null); }
+    if (!rest.hasTmt && tmtEndDate === undefined) { fields.push(`"tmtEndDate" = $${values.length + 1}`); values.push(null); }
+  }
+  if (tmtStartDate !== undefined) { fields.push(`"tmtStartDate" = $${values.length + 1}`); values.push(rest.hasTmt === false ? null : tmtStartDate ? new Date(tmtStartDate) : null); }
+  if (tmtEndDate !== undefined) { fields.push(`"tmtEndDate" = $${values.length + 1}`); values.push(rest.hasTmt === false ? null : tmtEndDate ? new Date(tmtEndDate) : null); }
 
   if (fields.length > 0) {
     fields.push(`"updatedAt" = NOW()`);

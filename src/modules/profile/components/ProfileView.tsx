@@ -79,8 +79,8 @@ export function ProfileView() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left Column: Compact Profile & Employment Details Card (4 cols) */}
-        <div className="lg:col-span-4 space-y-5">
+        {/* Left Column: Profile & Employment Details Card (5 cols) */}
+        <div className="lg:col-span-5 space-y-5">
           {/* User Summary Card */}
           <div className="bg-card border border-border rounded-2xl p-5 shadow-sm relative overflow-hidden text-center flex flex-col items-center">
             <div className="absolute top-0 right-0 -mr-10 -mt-10 w-32 h-32 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
@@ -168,6 +168,18 @@ export function ProfileView() {
                   {profile.joinDate ? format(new Date(profile.joinDate), "dd MMM yyyy", { locale: idLocale }) : "-"}
                 </span>
               </div>
+              {profile.hasTmt && (
+                <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
+                  <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
+                    <Calendar className="w-3.5 h-3.5 text-primary" /> Masa Kontrak
+                  </span>
+                  <span className="font-bold text-foreground text-right">
+                    {profile.tmtStartDate ? format(new Date(profile.tmtStartDate), "dd MMM yyyy", { locale: idLocale }) : "Tidak ditentukan"}
+                    {" - "}
+                    {profile.tmtEndDate ? format(new Date(profile.tmtEndDate), "dd MMM yyyy", { locale: idLocale }) : "Tidak ditentukan"}
+                  </span>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
                   <Stethoscope className="w-3.5 h-3.5 text-primary" /> Profesi
@@ -220,8 +232,8 @@ export function ProfileView() {
           </div>
         </div>
 
-        {/* Right Column: Update Biodata & Security Forms (8 cols) */}
-        <div className="lg:col-span-8 space-y-5">
+        {/* Right Column: Update Biodata & Security Forms (7 cols) */}
+        <div className="lg:col-span-7 space-y-5">
           <UpdateProfileForm profile={profile} />
           <ChangePasswordForm />
         </div>
