@@ -167,7 +167,7 @@ export function DocumentTypeTable({
       className: "text-right whitespace-nowrap",
       render: (item) => (
         <div className="flex items-center justify-end gap-1">
-          <Link href={`/documents-types/${item.id}/edit`}>
+          <Link href={`/document-types/${item.id}/edit`}>
             <Button
               variant="ghost"
               size="icon"

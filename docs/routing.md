@@ -35,9 +35,8 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 | `/verification` | `(dashboard)/verification/page.tsx` | `ADMIN`, `STAFF` | Daftar dokumen PENDING |
 | `/document-types` | `(dashboard)/document-types/page.tsx` | `ADMIN` | Master jenis dokumen |
 | `/document-types/add` | `(dashboard)/document-types/add/page.tsx` | `ADMIN` | Tambah jenis dokumen |
+| `/document-types/[id]/edit` | `(dashboard)/document-types/[id]/edit/page.tsx` | `ADMIN` | Edit jenis dokumen |
 | `/document-types/archives` | `(dashboard)/document-types/archives/page.tsx` | `ADMIN` | Arsip seluruh pegawai berdasarkan jenis dokumen |
-| `/documents-types/add` | `(dashboard)/documents-types/add/page.tsx` | `ADMIN` | Route lama/duplikat untuk tambah jenis dokumen |
-| `/documents-types/[id]/edit` | `(dashboard)/documents-types/[id]/edit/page.tsx` | `ADMIN` | Route lama/duplikat untuk edit jenis dokumen |
 | `/users` | `(dashboard)/users/page.tsx` | `ADMIN` | Daftar pegawai |
 | `/users/new` | `(dashboard)/users/new/page.tsx` | `ADMIN` | Tambah pegawai |
 | `/users/[id]` | `(dashboard)/users/[id]/page.tsx` | `ADMIN` | Detail pegawai |
@@ -106,6 +105,7 @@ src/app/
     ├── document-types/
     │   ├── page.tsx
     │   ├── add/page.tsx
+    │   ├── [id]/edit/page.tsx
     │   └── archives/page.tsx
     ├── users/
     │   ├── page.tsx
@@ -172,6 +172,7 @@ src/app/layout.tsx                  ← Root layout: HTML shell + <Providers>
 | Segment | Contoh URL | Keterangan |
 |---|---|---|
 | `[id]` | `/users/clx123abc` | ID user untuk detail/edit pegawai |
+| `[id]` | `/document-types/clx123abc/edit` | ID jenis dokumen untuk edit master jenis dokumen |
 | `[id]` | `/documents/clx123abc` | ID dokumen untuk detail dan preview dokumen |
 | `[id]` | `/api/v1/verification/document/clx123abc` | ID dokumen untuk detail verifikasi API |
 | `[...nextauth]` | `/api/v1/auth/signin`, `/api/v1/auth/session` | Catch-all NextAuth handler |

@@ -61,7 +61,7 @@ export function DocumentTypesView() {
                 Lihat Arsip
               </Button>
             </Link>
-            <Link href="/documents-types/add">
+            <Link href="/document-types/add">
               <Button
                 className="rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 px-6 shrink-0"
               >

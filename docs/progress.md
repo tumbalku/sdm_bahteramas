@@ -77,6 +77,9 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `src/modules/document-types/components/` (selesai 2026-06-28)
 - [x] `src/app/api/v1/document-types/route.ts` (selesai 2026-06-28)
 - [x] `src/app/(dashboard)/document-types/page.tsx` (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/document-types/add/page.tsx` (selesai 2026-06-28)
+- [x] `src/app/(dashboard)/document-types/[id]/edit/page.tsx` (route canonical, selesai 2026-07-03)
+- [x] Refactor route master jenis dokumen: semua link tambah/edit distandarkan ke `/document-types`, route typo lama dihapus, dan dokumentasi routing diperbarui (selesai 2026-07-03)
 
 ### F06 — Manajemen Pegawai (Users)
 - [x] `src/modules/users/service.ts` (selesai 2026-06-28)
@@ -374,3 +377,5 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 | 2026-07-03 | AI Agent | Tambah rencana detail backlog Dashboard Analytics Charts dengan Recharts, query agregat ringan, endpoint chart, dan acceptance criteria |
 | 2026-07-03 | AI Agent | Selesaikan Dashboard Analytics Charts Admin dengan Recharts: endpoint chart agregat, query ringan, chart pegawai/dokumen, dan dokumentasi |
 | 2026-07-03 | AI Agent | Padatkan layout chart dashboard admin agar lebih hemat ruang dengan card, grid, dan tinggi chart yang lebih compact |
+| 2026-07-03 | AI Agent | Tambah rencana refactor route master jenis dokumen untuk menghapus route typo/duplikat dan menstandarkan `/document-types` |
+| 2026-07-03 | AI Agent | Selesaikan refactor route master jenis dokumen: tambah route edit canonical, update link tambah/edit, hapus route typo lama, dan update routing |
