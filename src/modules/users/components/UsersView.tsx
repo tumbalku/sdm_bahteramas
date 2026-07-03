@@ -36,7 +36,7 @@ export function UsersView() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="page-container space-y-6 animate-fade-in">
       {/* Header View */}
       <PageHeader
         icon={UsersIcon}

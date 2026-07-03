@@ -10,9 +10,5 @@ export const metadata: Metadata = {
 export default async function UserCategoriesPage() {
   await requireRole(["ADMIN"]);
 
-  return (
-    <div className="page-container">
-      <CategoriesView />
-    </div>
-  );
+  return <CategoriesView />;
 }

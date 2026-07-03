@@ -19,11 +19,15 @@
 | Upload dokumen (milik sendiri) | ✅ | ❌ | ✅ |
 | Lihat dokumen milik sendiri | ✅ | ❌ | ✅ |
 | Lihat semua dokumen | ✅ | ✅ | ❌ |
+| Lihat dokumen pada preview profil pegawai | ✅ | ❌ | ❌ |
+| Export CSV dokumen pada preview profil pegawai | ✅ | ❌ | ❌ |
+| Lihat detail dokumen | ✅ | ✅ (milik sendiri) | ✅ (milik sendiri) |
 | Hapus dokumen (milik sendiri, bukan APPROVED) | ✅ | ❌ | ✅ |
 | Hapus dokumen siapapun | ✅ | ❌ | ❌ |
 | Approve/Reject dokumen | ✅ | ✅ | ❌ |
-| Download dokumen | ✅ | ✅ | ✅ (milik sendiri) |
+| Download dokumen | ✅ | ✅ (milik sendiri) | ✅ (milik sendiri) |
 | Kelola jenis dokumen (master) | ✅ | ❌ | ❌ |
+| Lihat/export rekap arsip dokumen pegawai | ✅ | ❌ | ❌ |
 | CRUD pegawai | ✅ | ❌ | ❌ |
 | Import/Export CSV pegawai | ✅ | ❌ | ❌ |
 | Kelola profil (mandiri) | ✅ | ✅ | ✅ |
@@ -48,6 +52,19 @@
 3. Di halaman dokumen pegawai, tampilkan dalam **3 tab**: Arsip Utama | Arsip Kondisional | Arsip Profesi.
 4. Dokumen `PROFESI` hanya relevan untuk pegawai dengan `ProfessionGroup` tertentu.
 
+### Aturan Preview Profil Pegawai
+
+1. Page Preview Profil Pegawai hanya dapat diakses `ADMIN`.
+2. `ADMIN` dapat melihat daftar dokumen yang berelasi dengan pegawai tersebut.
+3. Tabel dokumen pada Preview Profil Pegawai menggunakan komponen reusable yang juga dapat dipakai oleh dashboard.
+4. Klik row dokumen membuka Page Detail Dokumen (`/documents/[id]`) agar detail dapat dibuka ulang melalui URL.
+5. Page Detail Dokumen menampilkan preview file jika format didukung browser (`pdf`, `jpg`, `jpeg`, `png`, `webp`) dan menyediakan tombol unduh sebagai fallback.
+6. Properti detail dokumen mencakup pemilik, NIP, jenis dokumen, kode, kategori, nomor surat, tanggal terbit, tanggal kedaluwarsa, tanggal upload, status, dan verifikasi terakhir.
+7. `ADMIN` dapat export CSV dokumen pegawai dari table `Dokumen Pegawai`.
+8. Export CSV dokumen pegawai mencakup semua jenis dokumen yang relevan dengan pegawai, termasuk jenis yang belum diupload.
+9. Kolom export dokumen pegawai: `Jenis Dokumen`, `Kode Dokumen`, `Kategori Arsip`, `Status Upload`, `Status Verifikasi`, `Nomor Surat`, `Tanggal Terbit`, `Tanggal Kedaluwarsa`, `Tanggal Upload`, `Nama File`, dan `Catatan Terakhir`.
+10. Export CSV dokumen pegawai wajib mencatat `DATA_EXPORTED` dengan scope `EMPLOYEE_DOCUMENTS`.
+
 ---
 
 ## 3. Aturan Upload Dokumen
@@ -70,11 +87,28 @@
 4. Backend:
    - Validasi format dan ukuran file.
    - Validasi nomor surat, tanggal terbit, dan tanggal kedaluwarsa sesuai konfigurasi `DocumentType`.
-   - Simpan file via `getStorageProvider()`.
+   - Simpan file via `getStorageProvider().uploadFile()`.
    - Generate nama file standar via `generateStorageFileName()`.
    - Simpan file di folder storage sesuai kode jenis dokumen, contoh `KK/{nama-file}`.
    - Simpan `DocumentRecord` dengan `status: PENDING`.
    - Panggil `logActivity("DOCUMENT_UPLOADED", ...)`.
+
+### Workflow Upload Ulang Dokumen Ditolak
+
+1. Jika dokumen berstatus `REJECTED`, Page Dokumen Saya menampilkan aksi utama `Upload Ulang` / `Ganti File`, bukan `Unduh`.
+2. Pegawai klik `Upload Ulang` dari dokumen yang ditolak.
+3. Form upload dikunci pada `DocumentType` yang sama dan metadata lama diisi ulang sebagai nilai awal.
+4. Backend menerima `replaceDocumentId` pada `POST /api/v1/documents/upload`.
+5. Backend wajib memvalidasi bahwa dokumen lama:
+   - Ada di database.
+   - Milik user yang sedang login.
+   - Berstatus `REJECTED`.
+   - Memiliki `documentTypeId` yang sama dengan upload baru.
+6. Upload ulang membuat `DocumentRecord` baru dengan `status: PENDING`.
+7. Sebelum dokumen lama dihapus, sistem menyalin snapshot audit ke `SecurityLog.metadata`, mencakup identitas dokumen lama, pemilik dokumen, jenis dokumen, file lama, metadata dokumen, dan catatan verifikasi terakhir.
+8. Setelah snapshot audit tersimpan, file lama dihapus dari storage dan `DocumentRecord` lama dihapus dari database agar tidak tampil lagi di Page Dokumen Saya.
+9. `VerificationHistory` yang berelasi ke `DocumentRecord` lama ikut terhapus oleh cascade, tetapi informasi audit penting tetap tersedia di `SecurityLog.metadata`.
+10. Aktivitas tetap dicatat melalui `logActivity("DOCUMENT_UPLOADED", ...)` dengan metadata `uploadMode: "REUPLOAD_REPLACED_REJECTED"`, `replacedDocumentId`, dan `replacementSnapshot`.
 
 ### Status Awal
 
@@ -101,11 +135,12 @@ PENDING → REJECTED   (oleh ADMIN/STAFF)
 REJECTED → PENDING   (pegawai re-upload — create DocumentRecord baru)
 ```
 
-> **Catatan:** Tidak ada transisi `APPROVED → REJECTED` langsung. Untuk merevisi dokumen yang sudah approved, pegawai harus upload ulang (DocumentRecord baru), dan yang lama tetap tersimpan di riwayat.
+> **Catatan:** Tidak ada transisi `APPROVED → REJECTED` langsung. Upload ulang hanya berlaku untuk dokumen `REJECTED`. Dokumen lama yang ditolak digantikan oleh `DocumentRecord` baru dan snapshot auditnya disimpan di `SecurityLog`.
 
 ### Integritas Verifikasi
 
-- `VerificationHistory` tidak boleh dihapus.
+- `VerificationHistory` tidak boleh dihapus langsung dari fitur verifikasi.
+- Pada flow upload ulang dokumen `REJECTED`, `VerificationHistory` lama boleh ikut terhapus karena `DocumentRecord` lama diganti; ringkasan auditnya wajib sudah disalin ke `SecurityLog.metadata` sebelum penghapusan.
 - Jika reviewer (user) dihapus, `reviewedById` di-set NULL tapi catatan tetap ada.
 
 ---
@@ -127,6 +162,11 @@ REJECTED → PENDING   (pegawai re-upload — create DocumentRecord baru)
 - Jenis dokumen dengan `isMandatory = true` **wajib dimiliki** oleh pegawai yang masuk dalam target profesinya.
 - Sistem harus menampilkan peringatan jika pegawai belum memiliki dokumen wajib yang terkait profesinya.
 - Dokumen dengan `requiresExpiryDate = true` wajib dimonitor masa berlakunya.
+- Page Rekapitulasi Arsip Dokumen Pegawai menghitung denominator progress dari pasangan pegawai `EMPLOYEE` dan jenis dokumen `isMandatory=true` yang berlaku untuk pegawai tersebut.
+- Kecocokan jenis dokumen terhadap pegawai mengikuti kriteria target `DocumentType`: status kepegawaian, kelompok pegawai, kelompok profesi, pangkat/golongan, dan unit kerja. Kriteria yang kosong berarti berlaku umum pada dimensi tersebut.
+- Numerator `Sudah Upload` menghitung seluruh kewajiban yang sudah memiliki `DocumentRecord` terbaru, terlepas dari status `PENDING`, `APPROVED`, atau `REJECTED`.
+- Metrik `Terverifikasi`, `Menunggu`, `Ditolak`, dan `Belum Upload` ditampilkan terpisah agar progress bar tidak ambigu.
+- Export rekap arsip hanya dapat dilakukan `ADMIN`, mengikuti filter aktif, dibuat server-side, dan wajib mencatat `DATA_EXPORTED`.
 
 ---
 
@@ -194,6 +234,14 @@ Aksi berikut **WAJIB** dipanggil `logActivity()`:
 | `USERS_IMPORTED` | Pegawai diimport secara bulk dari CSV |
 | `DATA_EXPORTED` | Data diekspor (CSV, laporan) |
 
+### Status Audit
+
+1. Nilai status audit resmi hanya `success` dan `failed`.
+2. Semua aksi yang berhasil secara fungsional wajib dicatat dengan `status: "success"`.
+3. Aksi yang benar-benar gagal, seperti login gagal, wajib dicatat dengan `status: "failed"`.
+4. `logActivity()` menormalisasi variasi status lama seperti `SUCCESS`, `sukses`, `FAILED`, atau `gagal` sebelum menyimpan data.
+5. API Security Logs juga menormalisasi status sebelum mengirim response agar UI selalu menampilkan label konsisten: `Sukses` untuk `success` dan `Gagal` untuk `failed`.
+
 ---
 
 ## 10. Aturan File Storage
@@ -221,6 +269,15 @@ Contoh:
 3. Ekstensi huruf kecil
 4. Maksimal 150 karakter
 5. Dibuat via fungsi `slugifyFileName()` di `src/lib/`
+
+### Aturan Storage Bridge
+
+1. Semua upload, baca/preview/download, hapus file, URL file, dan pembuatan folder wajib melalui `getStorageProvider()`.
+2. Provider aktif ditentukan dari `STORAGE_PROVIDER`, saat ini mendukung `local` dan `supabase`.
+3. `DocumentRecord.filePath` tetap menyimpan path relatif provider-agnostic, bukan URL public permanen.
+4. Endpoint download dokumen dan view avatar tidak boleh membaca filesystem langsung; keduanya wajib memakai `getStorageProvider().getFile()`.
+5. Secret Supabase Storage hanya boleh dipakai server-side melalui `SUPABASE_SERVICE_ROLE_KEY`, tidak boleh memakai prefix `NEXT_PUBLIC_`.
+6. Jika berpindah dari local ke Supabase, file lama harus dimigrasikan ke bucket dengan object path yang sama seperti `filePath` database.
 
 ---
 

@@ -5,9 +5,9 @@ import { DocumentArchiveCategory } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { X, Loader2, UploadCloud, FileCheck } from "lucide-react";
+import { X, Loader2, UploadCloud, FileCheck, RefreshCcw } from "lucide-react";
 import { useDocumentTypes } from "@/modules/document-types/hooks";
-import { DocumentUploadInput } from "../types";
+import { DocumentRecordDto, DocumentUploadInput } from "../types";
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
@@ -15,6 +15,19 @@ interface DocumentUploadModalProps {
   onSubmit: (data: DocumentUploadInput) => void;
   isLoading: boolean;
   activeCategory: DocumentArchiveCategory;
+  replacementDocument?: DocumentRecordDto | null;
+}
+
+function formatDateInputValue(date?: Date | string | null) {
+  if (!date) return "";
+  return new Date(date).toISOString().slice(0, 10);
+}
+
+function getUploadModalCopy(isReplacementMode: boolean) {
+  return {
+    title: isReplacementMode ? "Upload Ulang Dokumen" : "Unggah Dokumen",
+    submitLabel: isReplacementMode ? "Upload Ulang" : "Unggah",
+  };
 }
 
 export function DocumentUploadModal({
@@ -23,6 +36,7 @@ export function DocumentUploadModal({
   onSubmit,
   isLoading,
   activeCategory,
+  replacementDocument,
 }: DocumentUploadModalProps) {
   const { data: documentTypes, isLoading: isLoadingTypes } = useDocumentTypes({ forUser: true });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +46,8 @@ export function DocumentUploadModal({
   const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const isReplacementMode = Boolean(replacementDocument);
+  const modalCopy = getUploadModalCopy(isReplacementMode);
 
   useEffect(() => {
     if (!isOpen) {
@@ -40,8 +56,16 @@ export function DocumentUploadModal({
       setDocumentNumber("");
       setIssueDate("");
       setExpiryDate("");
+      return;
     }
-  }, [isOpen]);
+
+    if (replacementDocument) {
+      setDocumentTypeId(replacementDocument.documentTypeId);
+      setDocumentNumber(replacementDocument.documentNumber || "");
+      setIssueDate(formatDateInputValue(replacementDocument.issueDate));
+      setExpiryDate(formatDateInputValue(replacementDocument.expiryDate));
+    }
+  }, [isOpen, replacementDocument]);
 
   if (!isOpen) return null;
 
@@ -51,6 +75,7 @@ export function DocumentUploadModal({
     onSubmit({
       ownerId: "",
       documentTypeId,
+      replaceDocumentId: replacementDocument?.id,
       documentNumber: documentNumber || undefined,
       issueDate: issueDate || undefined,
       file,
@@ -114,8 +139,12 @@ export function DocumentUploadModal({
       <div className="w-full max-w-lg rounded-3xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-border flex items-center justify-between bg-muted/30">
           <h3 className="text-xl font-bold flex items-center gap-2">
-            <UploadCloud className="w-5 h-5 text-primary" />
-            Unggah Dokumen
+            {isReplacementMode ? (
+              <RefreshCcw className="w-5 h-5 text-primary" />
+            ) : (
+              <UploadCloud className="w-5 h-5 text-primary" />
+            )}
+            <span>{modalCopy.title}</span>
           </h3>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8">
             <X className="w-4 h-4" />
@@ -133,11 +162,16 @@ export function DocumentUploadModal({
                 setIssueDate("");
                 setExpiryDate("");
               }}
-              disabled={isLoadingTypes}
+              disabled={isLoadingTypes || isReplacementMode}
               options={optionItems}
               placeholder="-- Pilih Jenis Dokumen --"
               required
             />
+            {isReplacementMode && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Jenis dokumen dikunci agar upload ulang tetap mengganti dokumen yang sama.
+              </p>
+            )}
           </div>
 
           <div>
@@ -248,7 +282,7 @@ export function DocumentUploadModal({
                   Mengunggah...
                 </>
               ) : (
-                "Unggah"
+                <span>{modalCopy.submitLabel}</span>
               )}
             </Button>
           </div>

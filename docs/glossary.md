@@ -83,7 +83,7 @@
 | **`requireRole()`** | Fungsi server-side untuk memverifikasi role user — dipanggil di `page.tsx` |
 | **`hasRole()`** | Fungsi client-side untuk menyembunyikan/menampilkan elemen UI berdasarkan role |
 | **`logActivity()`** | Fungsi helper untuk mencatat aktivitas sensitif ke tabel `SecurityLog` |
-| **`getStorageProvider()`** | Fungsi abstraksi storage — mengembalikan provider lokal atau cloud berdasarkan config |
+| **`getStorageProvider()`** | Fungsi storage bridge — mengembalikan adapter lokal atau Supabase berdasarkan config |
 | **`generateStorageFileName()`** | Fungsi di `documents/service.ts` untuk membuat nama file terstandarisasi |
 | **`slugifyFileName()`** | Fungsi di `src/lib/` untuk sanitasi nama file (hapus spasi, karakter tidak valid) |
 | **`parseAllowedFormats()`** | Fungsi di `src/lib/` untuk parsing string `"pdf,jpg,png"` menjadi array |

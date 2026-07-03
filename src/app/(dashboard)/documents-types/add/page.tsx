@@ -10,9 +10,5 @@ export const metadata: Metadata = {
 export default async function AddDocumentTypePagePlural() {
   await requireRole(["ADMIN"]);
 
-  return (
-    <div className="page-container">
-      <AddDocumentTypeView />
-    </div>
-  );
+  return <AddDocumentTypeView />;
 }

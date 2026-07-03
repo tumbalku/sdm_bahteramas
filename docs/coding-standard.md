@@ -303,8 +303,12 @@ Penamaan `SCREAMING_SNAKE_CASE`:
 | `DATABASE_URL` | `postgresql://...` | Koneksi database |
 | `AUTH_SECRET` | `random-secret` | Secret NextAuth |
 | `NEXTAUTH_URL` | `http://localhost:3000` | URL aplikasi |
-| `STORAGE_PROVIDER` | `local` | Provider storage lokal |
+| `STORAGE_PROVIDER` | `local` / `supabase` | Provider storage dokumen aktif |
 | `STORAGE_LOCAL_PATH` | `./uploads` | Path storage lokal |
+| `SUPABASE_URL` | `https://xxx.supabase.co` | URL project Supabase untuk server-side storage |
+| `SUPABASE_SERVICE_ROLE_KEY` | `...` | Secret server-side untuk Supabase Storage; jangan pakai `NEXT_PUBLIC_` |
+| `SUPABASE_STORAGE_BUCKET` | `documents` | Bucket Supabase Storage untuk dokumen/avatar |
+| `SUPABASE_STORAGE_SIGNED_URL_TTL_SECONDS` | `300` | TTL default jika nanti memakai signed URL |
 
 ---
 

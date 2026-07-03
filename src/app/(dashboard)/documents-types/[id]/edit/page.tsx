@@ -15,9 +15,5 @@ export default async function EditDocumentTypePage({
   await requireRole(["ADMIN"]);
   const { id } = await params;
 
-  return (
-    <div className="page-container">
-      <EditDocumentTypeView id={id} />
-    </div>
-  );
+  return <EditDocumentTypeView id={id} />;
 }

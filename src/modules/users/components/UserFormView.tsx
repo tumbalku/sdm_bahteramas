@@ -201,14 +201,14 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
   if (isEditMode && isLoadingUser) {
     return (
-      <div className="space-y-6 animate-fade-in max-w-5xl pb-8">
+      <div className="page-container space-y-6 animate-fade-in max-w-5xl pb-8">
         <CardSkeleton count={3} gridClassName="grid grid-cols-1 gap-6" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in pb-8">
+    <div className="page-container space-y-6 animate-fade-in pb-8">
       <PageHeader
         icon={UserPlus}
         title={isEditMode ? "Edit Pegawai" : "Tambah Pegawai"}

@@ -4,6 +4,7 @@ import { ReactNode, useState, useEffect, Fragment } from "react";
 import { cn } from "@/lib/utils";
 import { FileCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { TableSkeleton } from "@/components/ui/skeleton";
 
 export interface Column<T> {
@@ -28,9 +29,15 @@ export interface DataTableProps<T> {
   tableClassName?: string;
   enablePagination?: boolean;
   defaultPageSize?: number;
-  pageSizeOptions?: number[];
+  minPageSize?: number;
+  maxPageSize?: number;
   onRowClick?: (item: T, index: number) => void;
   renderSubRow?: (item: T, index: number) => ReactNode;
+}
+
+function clampPageSize(value: number, min: number, max: number) {
+  const normalized = Number.isFinite(value) ? Math.trunc(value) : min;
+  return Math.min(Math.max(normalized, min), max);
 }
 
 export function DataTable<T>({
@@ -47,16 +54,31 @@ export function DataTable<T>({
   tableClassName,
   enablePagination = true,
   defaultPageSize = 10,
-  pageSizeOptions = [10, 25, 50, 100],
+  minPageSize = 1,
+  maxPageSize = 500,
   onRowClick,
   renderSubRow,
 }: DataTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const initialPageSize = clampPageSize(defaultPageSize, minPageSize, maxPageSize);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [pageSizeInput, setPageSizeInput] = useState(String(initialPageSize));
 
   useEffect(() => {
     setCurrentPage(1);
   }, [data.length, pageSize]);
+
+  useEffect(() => {
+    const nextPageSize = clampPageSize(defaultPageSize, minPageSize, maxPageSize);
+    setPageSize(nextPageSize);
+    setPageSizeInput(String(nextPageSize));
+  }, [defaultPageSize, minPageSize, maxPageSize]);
+
+  const applyPageSizeInput = () => {
+    const nextPageSize = clampPageSize(Number(pageSizeInput), minPageSize, maxPageSize);
+    setPageSize(nextPageSize);
+    setPageSizeInput(String(nextPageSize));
+  };
 
   if (isLoading) {
     return <TableSkeleton rows={5} cols={columns.length} className={className} />;
@@ -146,19 +168,26 @@ export function DataTable<T>({
           </div>
 
           <div className="flex items-center gap-4 flex-wrap justify-center">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-medium">Tampilkan:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                className="px-2.5 py-1 rounded-xl border border-input bg-background font-bold text-xs focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
-              >
-                {pageSizeOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt} / hal
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              <span className="text-muted-foreground font-medium">Tampilkan</span>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={minPageSize}
+                max={maxPageSize}
+                step={1}
+                value={pageSizeInput}
+                onChange={(e) => setPageSizeInput(e.target.value)}
+                onBlur={applyPageSizeInput}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.currentTarget.blur();
+                  }
+                }}
+                aria-label="Jumlah data per halaman"
+                className="h-8 w-20 rounded-xl px-2.5 py-1 text-center text-xs font-bold"
+              />
+              <span className="text-muted-foreground font-medium">data per halaman</span>
             </div>
 
             <div className="flex items-center gap-1">

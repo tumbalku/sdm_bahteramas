@@ -133,6 +133,7 @@ Ambil file avatar dari storage provider.
 
 - **Auth:** Required (semua role)
 - **Query Params:** `file`
+- **Behavior:** membaca file melalui storage bridge aktif (`local` atau `supabase`), bukan akses filesystem langsung.
 
 ---
 
@@ -202,6 +203,22 @@ Hapus jenis dokumen.
 - **Auth:** `ADMIN` only
 - **Note:** Cascade delete `DocumentTypeProfession`.
 
+### `GET /api/v1/document-types/archives`
+Ambil rekapitulasi arsip dokumen wajib seluruh pegawai.
+
+- **Auth:** `ADMIN`
+- **Query Params:** `search`, `archiveCategory`, `documentTypeId`, `status`, `uploadStatus`, `employmentStatusId`, `employeeGroupId`, `professionGroupId`, `employeePositionId`, `employeeRankId`, `workplaceId`, `issueDateFrom`, `issueDateTo`, `expiryDateFrom`, `expiryDateTo`, `uploadedAtFrom`, `uploadedAtTo`.
+- **Behavior:** denominator progress dihitung dari pasangan pegawai `EMPLOYEE` dan `DocumentType.isMandatory=true` yang berlaku sesuai target status/golongan/profesi/pangkat/unit kerja; dokumen yang sudah ada dihitung sebagai `Sudah Upload`, dan pasangan tanpa dokumen dihitung `Belum Upload`.
+- **Response:** `{ data: { rows, stats, generatedAt, filters } }`.
+
+### `GET /api/v1/document-types/archives/export`
+Export rekapitulasi arsip dokumen wajib ke file CSV.
+
+- **Auth:** `ADMIN`
+- **Query Params:** sama dengan `GET /api/v1/document-types/archives`.
+- **Response:** file `text/csv`.
+- **Log:** `DATA_EXPORTED` dengan metadata filter, format, jumlah baris, dan statistik rekap.
+
 ---
 
 ## 5. Documents
@@ -250,6 +267,7 @@ Upload dokumen baru.
   ```
   file: <file binary>
   documentTypeId: "clx..."
+  replaceDocumentId: "clx..." (opsional — hanya untuk upload ulang dokumen REJECTED milik sendiri)
   documentNumber: "800/123/RSUD/2026" (required jika requiresDocumentNumber=true)
   issueDate: "2026-01-15" (required jika requiresIssueDate=true)
   expiryDate: "2028-01-15" (required jika requiresExpiryDate=true)
@@ -261,13 +279,52 @@ Upload dokumen baru.
   - `documentNumber` wajib jika `requiresDocumentNumber = true`
   - `issueDate` wajib jika `requiresIssueDate = true`
   - `expiryDate` wajib jika `requiresExpiryDate = true`
+  - `replaceDocumentId` jika diisi wajib merujuk ke dokumen milik user yang login, status `REJECTED`, dan jenis dokumennya sama.
+- **Upload ulang dokumen ditolak:** membuat `DocumentRecord` baru dengan status `PENDING`, menyalin snapshot audit dokumen lama ke `SecurityLog.metadata`, lalu menghapus file dan record dokumen lama agar tidak tampil lagi.
 - **Response:** `201 Created` dengan data `DocumentRecord`.
 
 ### `GET /api/v1/documents/[id]`
 Detail satu dokumen.
 
-- **Auth:** `ADMIN`, `STAFF`, atau pemilik dokumen
-- **Response:** Data lengkap dokumen + `verifications` (riwayat verifikasi).
+- **Auth:** `ADMIN` atau pemilik dokumen
+- **Behavior:**
+  - `ADMIN` dapat melihat detail dokumen siapapun.
+  - Role selain `ADMIN` hanya dapat melihat detail dokumen milik sendiri.
+- **Response:** Data lengkap dokumen, pemilik, jenis dokumen, dan `verificationHistories` terakhir.
+
+```json
+{
+  "id": "clx...",
+  "ownerId": "clx...",
+  "documentTypeId": "clx...",
+  "status": "PENDING",
+  "fileName": "KTP_Budi.pdf",
+  "filePath": "KTP/198501012010011001_UTAMA_KTP_20260702_v1.pdf",
+  "documentNumber": "800/123/RSUD/2026",
+  "issueDate": "2026-01-15T00:00:00.000Z",
+  "expiryDate": null,
+  "uploadedAt": "2026-07-02T08:00:00.000Z",
+  "owner": {
+    "id": "clx...",
+    "name": "Budi Santoso",
+    "employeeId": "198501012010011001"
+  },
+  "documentType": {
+    "id": "clx...",
+    "code": "KTP",
+    "name": "Kartu Tanda Penduduk",
+    "archiveCategory": "UTAMA"
+  },
+  "verificationHistories": [
+    {
+      "status": "REJECTED",
+      "reviewNote": "File tidak terbaca",
+      "reviewedAt": "2026-07-02T09:00:00.000Z",
+      "reviewedBy": { "name": "Verifikator" }
+    }
+  ]
+}
+```
 
 ### `DELETE /api/v1/documents/[id]`
 Hapus dokumen.
@@ -280,10 +337,11 @@ Hapus dokumen.
 ### `GET /api/v1/documents/download`
 Unduh file dokumen.
 
-- **Auth:** `ADMIN`, `STAFF`, atau pemilik dokumen
+- **Auth:** `ADMIN` atau pemilik dokumen
 - **Query Params:**
-  - `id`: Document Record ID
+  - `file`: path relatif file di storage, sesuai `DocumentRecord.filePath`
 - **Response:** File stream (Content-Type sesuai format file)
+- **Behavior:** hanya `ADMIN` yang dapat mengunduh file milik pegawai lain; role lain hanya dapat mengunduh file milik sendiri. File dibaca melalui storage bridge aktif (`local` atau `supabase`).
 
 ---
 
@@ -388,6 +446,16 @@ Export data pegawai ke CSV.
 - **Keamanan:** tidak menyertakan `passwordHash` atau plaintext password.
 - **Log:** `DATA_EXPORTED`.
 
+### `GET /api/v1/users/[id]/documents/export`
+Export dokumen relevan milik satu pegawai dari Page Preview Profil Pegawai ke CSV.
+
+- **Auth:** `ADMIN`
+- **Response:** file `text/csv`
+- **CSV columns:** `Jenis Dokumen`, `Kode Dokumen`, `Kategori Arsip`, `Status Upload`, `Status Verifikasi`, `Nomor Surat`, `Tanggal Terbit`, `Tanggal Kedaluwarsa`, `Tanggal Upload`, `Nama File`, `Catatan Terakhir`.
+- **Behavior:** mencakup seluruh jenis dokumen yang relevan dengan pegawai berdasarkan target jenis dokumen; jenis yang belum diupload tetap muncul dengan `Status Upload = Belum Upload`.
+- **Query strategy:** batch query pegawai, jenis dokumen, dan dokumen pegawai; tidak N+1 per jenis dokumen.
+- **Log:** `DATA_EXPORTED` dengan metadata `scope: EMPLOYEE_DOCUMENTS`.
+
 ### `DELETE /api/v1/users/[id]`
 Hapus pegawai.
 - **Auth:** `ADMIN`
@@ -433,6 +501,7 @@ Hapus item master kategori.
 Ambil audit trail.
 
 - **Auth:** `ADMIN`
+- **Status audit:** response memakai nilai ternormalisasi `success` atau `failed`; UI menampilkan `Sukses` untuk `success` dan `Gagal` untuk `failed`.
 - **Query Params:**
   - `eventType`: filter by tipe event
   - `actorId`: filter by aktor
@@ -515,6 +584,34 @@ Reject dokumen.
 Ambil statistik dashboard sesuai role user login.
 
 - **Auth:** Required (semua role)
+
+### `GET /api/v1/dashboard/charts`
+Ambil analytics chart dashboard admin.
+
+- **Auth:** `ADMIN`
+- **Dependency UI:** data response dirender di frontend menggunakan `recharts`.
+- **Behavior:** response berisi data agregat siap-render, bukan data mentah seluruh pegawai/dokumen.
+- **Query strategy:** agregasi pegawai dan status dokumen memakai `groupBy`; upload dokumen 6 bulan terakhir memakai select minimal lalu agregasi service-side; chart ranking dibatasi top 8/top 10 dan sisanya digabung sebagai `Lainnya`.
+- **Response:**
+```json
+{
+  "data": {
+    "employeeByEmploymentStatus": [{ "label": "PNS", "value": 120 }],
+    "employeeByEmployeeGroup": [{ "label": "PPPK", "value": 45 }],
+    "employeeByGender": [{ "label": "Laki-laki", "value": 80 }],
+    "employeeByWorkplace": [{ "label": "Poli Umum", "value": 22 }],
+    "documentUploadsByTypeLastSixMonths": [
+      { "month": "Feb 2026", "KTP": 12, "STR": 5, "Lainnya": 3 }
+    ],
+    "documentUploadTypeKeys": ["KTP", "STR", "Lainnya"],
+    "monthlyUploadTrend": [{ "month": "Feb 2026", "total": 20 }],
+    "verificationStatusSummary": [{ "label": "Disetujui", "value": 100 }],
+    "missingMandatoryDocumentsTop": [{ "label": "KTP", "value": 14 }],
+    "expiringDocumentsSummary": [{ "label": "30 hari", "days": 30, "value": 8 }],
+    "generatedAt": "2026-07-03T00:00:00.000Z"
+  }
+}
+```
 
 ### `GET /api/v1/settings`
 Ambil konfigurasi sistem dinamis.

@@ -30,7 +30,9 @@ async function downloadCsv(endpoint: string, fallbackFileName: string) {
   anchor.download = fileName;
   document.body.appendChild(anchor);
   anchor.click();
-  anchor.remove();
+  if (anchor.parentNode) {
+    anchor.parentNode.removeChild(anchor);
+  }
   URL.revokeObjectURL(url);
 }
 
@@ -83,4 +85,11 @@ export async function exportUsersApi(filters?: UserFilter) {
   const params = buildUserFilterParams(filters);
   const url = `/api/v1/users/export${params.toString() ? `?${params.toString()}` : ""}`;
   return downloadCsv(url, "smdp-users.csv");
+}
+
+export async function exportUserDocumentsCsvApi(userId: string) {
+  return downloadCsv(
+    `/api/v1/users/${userId}/documents/export`,
+    `dokumen-pegawai-${userId}.csv`
+  );
 }

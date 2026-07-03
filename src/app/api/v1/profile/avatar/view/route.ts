@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import fs from "fs";
 import path from "path";
+import { getContentTypeFromPath, getStorageProvider } from "@/lib/storage";
 
 export async function GET(request: Request) {
   try {
@@ -23,25 +23,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "File tidak valid" }, { status: 403 });
     }
 
-    const uploadDir = path.join(process.cwd(), process.env.STORAGE_LOCAL_PATH || "./uploads");
-    const filePath = path.join(uploadDir, fileName);
+    const storage = getStorageProvider();
+    let storageFile;
 
-    // Pastikan path tetap berada dalam uploadDir
-    if (!filePath.startsWith(uploadDir)) {
-       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
+    try {
+      storageFile = await storage.getFile(fileName);
+    } catch (error: any) {
+      if (error?.message?.includes("tidak ditemukan")) {
+        return NextResponse.json({ message: "Foto profil tidak ditemukan" }, { status: 404 });
+      }
+
+      throw error;
     }
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ message: "Foto profil tidak ditemukan" }, { status: 404 });
-    }
-
-    const fileBuffer = fs.readFileSync(filePath);
+    const contentType = storageFile.contentType === "application/octet-stream"
+      ? getContentTypeFromPath(fileName)
+      : storageFile.contentType;
     
-    let contentType = "image/jpeg";
-    if (fileName.endsWith(".png")) contentType = "image/png";
-    if (fileName.endsWith(".webp")) contentType = "image/webp";
-    
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(storageFile.buffer), {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=86400, stale-while-revalidate=43200"

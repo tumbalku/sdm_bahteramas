@@ -10,9 +10,5 @@ export const metadata: Metadata = {
 export default async function NewUserPage() {
   await requireRole(["ADMIN"]);
 
-  return (
-    <div className="page-container">
-      <UserFormView />
-    </div>
-  );
+  return <UserFormView />;
 }

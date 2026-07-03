@@ -7,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function VerificationPage() {
-  return (
-    <div className="page-container">
-      <VerificationView />
-    </div>
-  );
+  return <VerificationView />;
 }

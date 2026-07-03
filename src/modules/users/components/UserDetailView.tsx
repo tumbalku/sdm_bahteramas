@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useUser } from "../hooks";
+import { toast } from "sonner";
+import { useExportUserDocumentsCsv, useUser } from "../hooks";
+import { useDocuments } from "@/modules/documents/hooks";
+import { DocumentSummaryTable } from "@/modules/documents/components/DocumentSummaryTable";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton, CardSkeleton } from "@/components/ui/skeleton";
@@ -24,6 +27,7 @@ import {
   Heart,
   Home,
   User,
+  FileDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -34,10 +38,19 @@ interface UserDetailViewProps {
 
 export function UserDetailView({ userId }: UserDetailViewProps) {
   const { data: profile, isLoading } = useUser(userId);
+  const { data: documents = [], isLoading: isLoadingDocuments } = useDocuments({ ownerId: userId });
+  const exportDocumentsMutation = useExportUserDocumentsCsv(userId);
+
+  const handleExportDocuments = () => {
+    exportDocumentsMutation.mutate(undefined, {
+      onSuccess: () => toast.success("Dokumen pegawai berhasil diekspor"),
+      onError: (error: any) => toast.error(error.message || "Gagal mengekspor dokumen pegawai"),
+    });
+  };
 
   if (isLoading) {
     return (
-      <div className="space-y-5 animate-fade-in max-w-7xl mx-auto pb-8">
+      <div className="page-container space-y-5 animate-fade-in pb-8">
         <CardSkeleton count={3} gridClassName="grid grid-cols-1 md:grid-cols-3 gap-5" />
       </div>
     );
@@ -45,7 +58,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
 
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground space-y-4">
+      <div className="page-container flex flex-col items-center justify-center py-20 text-muted-foreground space-y-4">
         <UserCircle2 className="w-16 h-16 text-muted-foreground/40" />
         <p className="text-base font-semibold">Data Pegawai Tidak Ditemukan</p>
         <Link href="/users">
@@ -67,7 +80,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
   const currentRole = roleConfig[profile.role] || roleConfig.EMPLOYEE;
 
   return (
-    <div className="space-y-5 animate-fade-in max-w-7xl mx-auto pb-8">
+    <div className="page-container space-y-5 animate-fade-in pb-8">
       {/* Page Header */}
       <PageHeader
         icon={UserCircle2}
@@ -315,6 +328,33 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
           </div>
         </div>
       </div>
+
+      <DocumentSummaryTable
+        documents={documents}
+        context="employee-profile"
+        title="Dokumen Pegawai"
+        headerAction={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportDocuments}
+            disabled={exportDocumentsMutation.isPending}
+            className="rounded-full border-border px-3 text-xs font-semibold"
+          >
+            {exportDocumentsMutation.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+            ) : (
+              <FileDown className="w-3.5 h-3.5 text-primary" />
+            )}
+            Export CSV
+          </Button>
+        }
+        emptyText="Pegawai ini belum memiliki dokumen yang diunggah."
+        showOwner={false}
+        showViewAllLink={false}
+        isLoading={isLoadingDocuments}
+      />
     </div>
   );
 }

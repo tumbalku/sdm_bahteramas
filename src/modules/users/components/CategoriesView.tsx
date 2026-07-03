@@ -139,7 +139,7 @@ export function CategoriesView() {
 
   if (fetchLoading) {
     return (
-      <div className="space-y-6 animate-fade-in pb-8">
+      <div className="page-container space-y-6 animate-fade-in pb-8">
         <div className="flex items-center gap-4 pb-4 border-b border-border/60">
           <Skeleton className="w-12 h-12 rounded-2xl" />
           <div className="space-y-2 flex-1">
@@ -154,7 +154,7 @@ export function CategoriesView() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="page-container space-y-6 animate-fade-in">
       <PageHeader
         icon={Layers}
         title="Master Kategori Pegawai"

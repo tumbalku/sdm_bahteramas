@@ -21,8 +21,8 @@ export async function GET(
       return NextResponse.json({ message: "Dokumen tidak ditemukan" }, { status: 404 });
     }
 
-    // RBAC: EMPLOYEE hanya bisa melihat dokumennya sendiri
-    if (session.user.role === "EMPLOYEE" && document.ownerId !== session.user.id) {
+    // RBAC: hanya ADMIN yang bisa melihat dokumen milik pegawai lain.
+    if (session.user.role !== "ADMIN" && document.ownerId !== session.user.id) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 

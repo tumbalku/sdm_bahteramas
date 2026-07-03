@@ -42,7 +42,9 @@ export interface DocumentRecordDto {
     reviewNote: string | null;
     reviewedAt: Date;
     reviewedBy?: {
+      id?: string;
       name: string;
+      employeeId?: string;
     } | null;
   }[];
 }
@@ -50,6 +52,7 @@ export interface DocumentRecordDto {
 export interface DocumentUploadInput {
   ownerId: string;
   documentTypeId: string;
+  replaceDocumentId?: string;
   documentNumber?: string;
   issueDate?: string;
   expiryDate?: string;

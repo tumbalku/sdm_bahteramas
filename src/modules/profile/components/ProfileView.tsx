@@ -46,7 +46,7 @@ export function ProfileView() {
 
   if (isLoading) {
     return (
-      <div className="space-y-5 animate-fade-in max-w-7xl mx-auto pb-8">
+      <div className="page-container space-y-5 animate-fade-in pb-8">
         <CardSkeleton count={3} gridClassName="grid grid-cols-1 md:grid-cols-3 gap-5" />
       </div>
     );
@@ -54,7 +54,7 @@ export function ProfileView() {
 
   if (error || !profile) {
     return (
-      <div className="p-8 text-center bg-red-500/10 border border-red-500/20 rounded-3xl text-red-600 max-w-lg mx-auto mt-10">
+      <div className="page-container p-8 text-center bg-red-500/10 border border-red-500/20 rounded-3xl text-red-600 max-w-lg mx-auto mt-10">
         <p className="font-semibold">Gagal memuat profil</p>
         <p className="text-sm mt-1 opacity-80">Silakan muat ulang halaman ini.</p>
       </div>
@@ -70,7 +70,7 @@ export function ProfileView() {
   const currentRole = roleConfig[profile.role] || roleConfig.EMPLOYEE;
 
   return (
-    <div className="space-y-5 animate-fade-in max-w-7xl mx-auto pb-8">
+    <div className="page-container space-y-5 animate-fade-in pb-8">
       {/* Page Header */}
       <PageHeader
         icon={UserCircle2}

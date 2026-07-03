@@ -7,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function SecurityLogsPage() {
-  return (
-    <div className="page-container">
-      <SecurityLogsView />
-    </div>
-  );
+  return <SecurityLogsView />;
 }

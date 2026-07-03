@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getStorageProvider } from "@/lib/storage";
+import { Prisma } from "@prisma/client";
 import {
+  DocumentArchiveFilter,
   CreateDocumentTypeInput,
   DocumentTypeFilter,
   DocumentTypeRecord,
@@ -237,4 +239,86 @@ export async function deleteDocumentType(id: string): Promise<boolean> {
   // 3. Delete DocumentType safely
   await prisma.documentType.deleteMany({ where: { id } });
   return true;
+}
+
+export async function findArchiveEmployees(filters: DocumentArchiveFilter) {
+  const where: Prisma.UserWhereInput = {
+    role: "EMPLOYEE",
+  };
+
+  if (filters.search) {
+    where.OR = [
+      { name: { contains: filters.search, mode: "insensitive" } },
+      { employeeId: { contains: filters.search, mode: "insensitive" } },
+    ];
+  }
+  if (filters.employmentStatusId) where.employmentStatusId = filters.employmentStatusId;
+  if (filters.employeeGroupId) where.employeeGroupId = filters.employeeGroupId;
+  if (filters.professionGroupId) where.professionGroupId = filters.professionGroupId;
+  if (filters.employeePositionId) where.employeePositionId = filters.employeePositionId;
+  if (filters.employeeRankId) where.employeeRankId = filters.employeeRankId;
+  if (filters.workplaceId) where.workplaceId = filters.workplaceId;
+
+  return prisma.user.findMany({
+    where,
+    select: {
+      id: true,
+      employeeId: true,
+      name: true,
+      avatarUrl: true,
+      employmentStatusId: true,
+      employeeGroupId: true,
+      professionGroupId: true,
+      employeePositionId: true,
+      employeeRankId: true,
+      workplaceId: true,
+      employmentStatus: { select: { name: true } },
+      employeeGroup: { select: { name: true } },
+      professionGroup: { select: { name: true } },
+      employeePosition: { select: { name: true } },
+      employeeRank: { select: { name: true } },
+      workplace: { select: { name: true } },
+    },
+    orderBy: [{ name: "asc" }, { employeeId: "asc" }],
+  });
+}
+
+export async function findMandatoryArchiveDocumentTypes(filters: DocumentArchiveFilter) {
+  const where: Prisma.DocumentTypeWhereInput = {
+    isMandatory: true,
+  };
+
+  if (filters.archiveCategory) where.archiveCategory = filters.archiveCategory;
+  if (filters.documentTypeId) where.id = filters.documentTypeId;
+
+  const items = await prisma.documentType.findMany({
+    where,
+    include: defaultInclude,
+    orderBy: [{ archiveCategory: "asc" }, { name: "asc" }],
+  });
+
+  return items.map(formatDocumentType);
+}
+
+export async function findArchiveDocuments(ownerIds: string[], documentTypeIds: string[]) {
+  if (ownerIds.length === 0 || documentTypeIds.length === 0) return [];
+
+  return prisma.documentRecord.findMany({
+    where: {
+      ownerId: { in: ownerIds },
+      documentTypeId: { in: documentTypeIds },
+    },
+    include: {
+      verificationHistories: {
+        take: 1,
+        orderBy: { reviewedAt: "desc" },
+        select: {
+          reviewNote: true,
+          reviewedAt: true,
+          status: true,
+        },
+      },
+    },
+    orderBy: [{ uploadedAt: "desc" }, { updatedAt: "desc" }],
+  });
 }

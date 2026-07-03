@@ -15,9 +15,5 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
   await requireRole(["ADMIN"]);
   const { id } = await params;
 
-  return (
-    <div className="page-container">
-      <UserFormView userId={id} />
-    </div>
-  );
+  return <UserFormView userId={id} />;
 }

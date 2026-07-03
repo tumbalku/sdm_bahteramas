@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
+import { DocumentStatus, Role } from "@prisma/client";
 import { logActivity } from "@/lib/security-log";
 import { AuthUser } from "@/lib/auth-utils";
+import { isDocumentTypeApplicableToUser } from "@/modules/document-types/service";
 import * as repo from "./repository";
 import { CreateUserInput, ImportUserError, ImportUsersResult, UpdateUserInput, UserFilter, UserRecord } from "./types";
 import { createUserSchema, updateUserSchema } from "./validation";
@@ -113,10 +114,13 @@ function parseCsv(text: string): Record<string, string>[] {
 
 function escapeCsvValue(value: unknown) {
   const stringValue = value === null || value === undefined ? "" : String(value);
-  if (/[",\n\r]/.test(stringValue)) {
-    return `"${stringValue.replace(/"/g, '""')}"`;
+  const safeValue = /^[=+@]/.test(stringValue) || /^-.+/.test(stringValue)
+    ? `\t${stringValue}`
+    : stringValue;
+  if (/[",\n\r]/.test(safeValue)) {
+    return `"${safeValue.replace(/"/g, '""')}"`;
   }
-  return stringValue;
+  return safeValue;
 }
 
 function toDateOnly(value?: Date | string | null) {
@@ -127,6 +131,13 @@ function toDateOnly(value?: Date | string | null) {
 function formatDateTimeForFileName(date = new Date()) {
   const pad = (value: number) => String(value).padStart(2, "0");
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
+}
+
+function formatDocumentStatusLabel(status?: DocumentStatus | null) {
+  if (status === DocumentStatus.APPROVED) return "Disetujui";
+  if (status === DocumentStatus.REJECTED) return "Ditolak";
+  if (status === DocumentStatus.PENDING) return "Menunggu";
+  return "-";
 }
 
 function createNameLookup<T extends { id: string; name: string }>(items: T[]) {
@@ -455,6 +466,100 @@ export async function exportUsersCsvService(
     csv: lines.join("\n"),
     fileName: `smdp-users-${formatDateTimeForFileName()}.csv`,
     rowCount: users.length,
+  };
+}
+
+const EMPLOYEE_DOCUMENT_EXPORT_HEADERS = [
+  "Jenis Dokumen",
+  "Kode Dokumen",
+  "Kategori Arsip",
+  "Status Upload",
+  "Status Verifikasi",
+  "Nomor Surat",
+  "Tanggal Terbit",
+  "Tanggal Kedaluwarsa",
+  "Tanggal Upload",
+  "Nama File",
+  "Catatan Terakhir",
+] as const;
+
+export async function exportUserDocumentsCsvService(
+  userId: string,
+  actor: AuthUser,
+  ipAddress?: string
+) {
+  const source = await repo.findUserDocumentExportSource(userId);
+
+  if (!source.user) {
+    throw new Error("Pegawai tidak ditemukan");
+  }
+
+  const userProfile = {
+    employmentStatusId: source.user.employmentStatusId,
+    employeeGroupId: source.user.employeeGroupId,
+    professionGroupId: source.user.professionGroupId,
+    employeeRankId: source.user.employeeRankId,
+    workplaceId: source.user.workplaceId,
+  };
+
+  const relevantDocumentTypes = source.documentTypes.filter((documentType) =>
+    isDocumentTypeApplicableToUser(documentType, userProfile)
+  );
+
+  const latestDocumentByType = new Map<string, (typeof source.documents)[number]>();
+  source.documents.forEach((document) => {
+    if (!latestDocumentByType.has(document.documentTypeId)) {
+      latestDocumentByType.set(document.documentTypeId, document);
+    }
+  });
+
+  const rows = relevantDocumentTypes.map((documentType) => {
+    const document = latestDocumentByType.get(documentType.id);
+    const latestVerification = document?.verificationHistories?.[0];
+
+    return [
+      documentType.name,
+      documentType.code,
+      documentType.archiveCategory,
+      document ? "Sudah Upload" : "Belum Upload",
+      formatDocumentStatusLabel(document?.status),
+      document?.documentNumber || "-",
+      toDateOnly(document?.issueDate) || "-",
+      toDateOnly(document?.expiryDate) || "-",
+      toDateOnly(document?.uploadedAt) || "-",
+      document?.fileName || "-",
+      latestVerification?.reviewNote || "-",
+    ].map(escapeCsvValue).join(",");
+  });
+
+  const csv = `\uFEFF${[
+    EMPLOYEE_DOCUMENT_EXPORT_HEADERS.map(escapeCsvValue).join(","),
+    ...rows,
+  ].join("\n")}`;
+
+  await logActivity({
+    actorId: actor.id,
+    actorName: actor.name,
+    actorRole: actor.role,
+    eventType: "DATA_EXPORTED",
+    resource: `/api/v1/users/${userId}/documents/export`,
+    ipAddress,
+    status: "success",
+    metadata: {
+      entity: "employee-documents",
+      scope: "EMPLOYEE_DOCUMENTS",
+      format: "csv",
+      ownerId: source.user.id,
+      employeeId: source.user.employeeId,
+      employeeName: source.user.name,
+      rowCount: rows.length,
+    },
+  });
+
+  return {
+    csv,
+    fileName: `dokumen-pegawai-${source.user.employeeId}-${formatDateTimeForFileName()}.csv`,
+    rowCount: rows.length,
   };
 }
 

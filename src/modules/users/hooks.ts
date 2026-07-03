@@ -5,6 +5,7 @@ import {
   createUserApi,
   deleteUserApi,
   downloadUsersImportTemplateApi,
+  exportUserDocumentsCsvApi,
   exportUsersApi,
   getUsersApi,
   importUsersApi,
@@ -135,5 +136,11 @@ export function useDownloadUsersImportTemplate() {
 export function useExportUsers(filters?: UserFilter) {
   return useMutation({
     mutationFn: () => exportUsersApi(filters),
+  });
+}
+
+export function useExportUserDocumentsCsv(userId: string) {
+  return useMutation({
+    mutationFn: () => exportUserDocumentsCsvApi(userId),
   });
 }

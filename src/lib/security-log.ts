@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { normalizeSecurityLogStatus, SecurityLogStatus } from "@/modules/security-logs/status";
 
 export interface LogActivityParams {
   actorId?: string;
@@ -7,7 +8,7 @@ export interface LogActivityParams {
   eventType: string;
   resource: string;
   ipAddress?: string;
-  status: "success" | "failed";
+  status?: SecurityLogStatus | string;
   metadata?: Record<string, any>;
 }
 
@@ -26,6 +27,8 @@ export async function logActivity(params: LogActivityParams) {
       return;
     }
 
+    const status = normalizeSecurityLogStatus(params.status);
+
     await prisma.securityLog.create({
       data: {
         actorId: params.actorId || null,
@@ -34,7 +37,7 @@ export async function logActivity(params: LogActivityParams) {
         eventType: params.eventType || "SYSTEM_EVENT",
         resource: params.resource || "/api/v1/system",
         ipAddress: params.ipAddress || null,
-        status: params.status || "success",
+        status,
         metadata: params.metadata || undefined,
       },
     });

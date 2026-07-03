@@ -13,6 +13,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import { DataTable, Column } from "@/components/DataTable";
+import { getSecurityLogStatusLabel, normalizeSecurityLogStatus } from "../status";
 
 interface SecurityLogListProps {
   logs: SecurityLogDto[];
@@ -73,16 +74,20 @@ export function SecurityLogList({ logs, isLoading }: SecurityLogListProps) {
     },
     {
       header: "Status",
-      render: (log) =>
-        log.status === "SUCCESS" ? (
+      render: (log) => {
+        const status = normalizeSecurityLogStatus(log.status);
+        const label = getSecurityLogStatusLabel(status);
+
+        return status === "success" ? (
           <span className="inline-flex items-center text-green-600 bg-green-500/10 px-2 py-0.5 rounded text-[11px] font-semibold">
-            <CheckCircle2 className="w-3 h-3 mr-1" /> Sukses
+            <CheckCircle2 className="w-3 h-3 mr-1" /> {label}
           </span>
         ) : (
           <span className="inline-flex items-center text-red-600 bg-red-500/10 px-2 py-0.5 rounded text-[11px] font-semibold">
-            <XCircle className="w-3 h-3 mr-1" /> Gagal
+            <XCircle className="w-3 h-3 mr-1" /> {label}
           </span>
-        ),
+        );
+      },
     },
     {
       header: <span className="sr-only">Aksi</span>,
@@ -117,7 +122,6 @@ export function SecurityLogList({ logs, isLoading }: SecurityLogListProps) {
       emptyIcon={ShieldAlert}
       keyExtractor={(log) => log.id}
       defaultPageSize={10}
-      pageSizeOptions={[10, 25, 50]}
       onRowClick={(log) => toggleExpand(log.id)}
       renderSubRow={(log) => {
         if (expandedId !== log.id) return null;

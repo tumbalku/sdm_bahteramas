@@ -62,7 +62,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const savedFileName = await storage.uploadFile(buffer, safeFileName);
+    const uploadResult = await storage.uploadFile(buffer, safeFileName, {
+      contentType: file.type,
+    });
+    const savedFileName = uploadResult.storagePath;
     const fileUrl = `/api/v1/profile/avatar/view?file=${savedFileName}`;
 
     // Simpan ke DB

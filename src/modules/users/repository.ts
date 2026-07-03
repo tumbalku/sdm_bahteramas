@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { CreateUserInput, UpdateUserInput, UserFilter, UserRecord } from "./types";
+import type { DocumentTypeRecord } from "@/modules/document-types/types";
 
 export interface BulkCreateUserInput extends CreateUserInput {
   passwordHash: string;
@@ -149,6 +150,32 @@ export async function findUserByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
 }
 
+function mapDocumentTypeRecord(item: any): DocumentTypeRecord {
+  return {
+    ...item,
+    targetProfessions: item.documentProfessions?.map((dp: any) => ({
+      id: dp.professionGroup.id,
+      name: dp.professionGroup.name,
+    })) || [],
+    targetStatuses: item.documentStatuses?.map((ds: any) => ({
+      id: ds.employmentStatus.id,
+      name: ds.employmentStatus.name,
+    })) || [],
+    targetGroups: item.documentGroups?.map((dg: any) => ({
+      id: dg.employeeGroup.id,
+      name: dg.employeeGroup.name,
+    })) || [],
+    targetRanks: item.documentRanks?.map((dr: any) => ({
+      id: dr.employeeRank.id,
+      name: dr.employeeRank.name,
+    })) || [],
+    targetWorkplaces: item.documentWorkplaces?.map((dw: any) => ({
+      id: dw.workplace.id,
+      name: dw.workplace.name,
+    })) || [],
+  };
+}
+
 export async function findUsersByUniqueFields(input: {
   employeeIds: string[];
   emails: string[];
@@ -192,6 +219,66 @@ export async function findUserImportReferenceData() {
     employeePositions,
     employeeRanks,
     workplaces,
+  };
+}
+
+export async function findUserDocumentExportSource(userId: string) {
+  const [user, documentTypes, documents] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        employeeId: true,
+        name: true,
+        employmentStatusId: true,
+        employeeGroupId: true,
+        professionGroupId: true,
+        employeePositionId: true,
+        employeeRankId: true,
+        workplaceId: true,
+      },
+    }),
+    prisma.documentType.findMany({
+      include: {
+        documentProfessions: {
+          include: { professionGroup: true },
+        },
+        documentStatuses: {
+          include: { employmentStatus: true },
+        },
+        documentGroups: {
+          include: { employeeGroup: true },
+        },
+        documentRanks: {
+          include: { employeeRank: true },
+        },
+        documentWorkplaces: {
+          include: { workplace: true },
+        },
+      },
+      orderBy: [{ archiveCategory: "asc" }, { name: "asc" }],
+    }),
+    prisma.documentRecord.findMany({
+      where: { ownerId: userId },
+      include: {
+        verificationHistories: {
+          take: 1,
+          orderBy: { reviewedAt: "desc" },
+          select: {
+            reviewNote: true,
+            reviewedAt: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: [{ uploadedAt: "desc" }, { updatedAt: "desc" }],
+    }),
+  ]);
+
+  return {
+    user,
+    documentTypes: documentTypes.map(mapDocumentTypeRecord),
+    documents,
   };
 }
 

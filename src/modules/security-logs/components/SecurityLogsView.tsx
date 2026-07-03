@@ -17,7 +17,7 @@ export function SecurityLogsView() {
   const retentionDays = data?.retentionDays || process.env.NEXT_PUBLIC_SECURITY_LOG_RETENTION_DAYS || "30";
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="page-container space-y-6 animate-fade-in">
       <PageHeader
         icon={ShieldAlert}
         title="Security Logs"

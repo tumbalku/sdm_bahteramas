@@ -7,7 +7,16 @@ export const documentKeys = {
   all: ["documents"] as const,
   lists: () => [...documentKeys.all, "list"] as const,
   list: (filters: DocumentFilterDto) => [...documentKeys.lists(), filters] as const,
+  detail: (id: string) => [...documentKeys.all, "detail", id] as const,
 };
+
+export function useDocument(id: string) {
+  return useQuery({
+    queryKey: documentKeys.detail(id),
+    queryFn: () => documentApi.getDocument(id),
+    enabled: Boolean(id),
+  });
+}
 
 export function useDocuments(filters: DocumentFilterDto) {
   return useQuery({

@@ -31,6 +31,13 @@
 **Sub-fitur:**
 - Statistik jumlah dokumen per status (PENDING/APPROVED/REJECTED)
 - Statistik dokumen mendekati kedaluwarsa
+- Analytics chart admin berbasis `recharts`:
+  - pegawai berdasarkan status kepegawaian, jenis kepegawaian, jenis kelamin, dan unit kerja
+  - upload dokumen berdasarkan jenis dokumen dalam 6 bulan terakhir
+  - tren upload bulanan
+  - ringkasan status verifikasi
+  - top dokumen wajib yang belum diupload
+  - ringkasan dokumen hampir kedaluwarsa
 - Ringkasan berdasarkan role:
   - `ADMIN`: semua statistik
   - `STAFF`: statistik verifikasi
@@ -226,7 +233,7 @@ graph TD
 | `eslint-plugin-boundaries` untuk enforce aturan antar modul via CI | ⚪ Opsional | Pasang setelah tim sudah nyaman dengan aturan manual |
 | Message broker (RabbitMQ/Kafka) menggantikan `logActivity()` langsung | ⚪ Opsional | Hanya relevan jika modul sudah dipisah jadi microservice |
 | Microservice extraction (documents + verification) | ⚪ Future | Langkah 1 migrasi microservice |
-| Dashboard analytics lanjutan (grafik tren, export laporan) | ⚪ Future | Tidak ada di PRD v1.0 |
+| Export laporan analytics dashboard | ⚪ Future | Chart analytics sudah tersedia; export laporan analytics belum diimplementasi |
 | Reset password via email | ⚪ Belum didefinisikan | Belum ada di PRD — perlu klarifikasi |
 | Multi-language / i18n | ⚪ Tidak ada rencana | Tidak disebutkan di PRD |
 
@@ -240,7 +247,7 @@ graph TD
 | Auth Utils | `src/lib/auth-utils.ts` | 🟢 Selesai | `requireRole()`, `hasRole()`, `getCurrentUser()` |
 | API Client | `src/lib/api-client.ts` | 🟢 Selesai | Fetch wrapper |
 | Security Log Helper | `src/lib/security-log.ts` | 🟢 Selesai | `logActivity()` |
-| Storage Provider | `src/lib/storage.ts` | 🟢 Selesai | `getStorageProvider()` |
+| Storage Provider | `src/lib/storage/` | 🟢 Selesai | Bridge adapter `getStorageProvider()` untuk local/Supabase |
 | System Settings Helper | `src/lib/system-settings.ts` | 🟢 Selesai | Ambil konfigurasi dinamis + fallback |
 | File Utilities | `src/lib/utils.ts` | 🟢 Selesai | Utilitas bersama |
 | QueryClientProvider | `src/app/providers.tsx` | 🟢 Selesai | TanStack Query setup |

@@ -105,7 +105,7 @@ Pegawai pilih file
         → POST /api/v1/documents/upload [route.ts]
           → documents/service.ts
             ├── validateFileFormat()
-            ├── getStorageProvider().save()
+            ├── getStorageProvider().uploadFile()
             └── repository.createDocument() → PostgreSQL
           → logActivity("DOCUMENT_UPLOADED")
 ```
@@ -158,7 +158,7 @@ import { getUserById } from "@/modules/users/service";
 | `auth-utils.ts` | `requireRole(roles[])` (server), `hasRole(session, role)` (client) |
 | `api-client.ts` | Wrapper `fetch()` kecil yang dipakai semua `api.ts` modul |
 | `security-log.ts` | `logActivity(eventType, actor, resource, metadata)` |
-| `storage.ts` | `getStorageProvider()` — abstraksi lokal/cloud storage |
+| `storage/` | `getStorageProvider()` — bridge adapter storage lokal/Supabase untuk upload, baca, hapus, URL, dan folder |
 | `system-settings.ts` | Helper pengambilan konfigurasi dinamis dengan fallback |
 | `utils.ts` | Utilitas umum aplikasi |
 

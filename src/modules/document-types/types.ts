@@ -1,4 +1,4 @@
-import { DocumentArchiveCategory } from "@prisma/client";
+import { DocumentArchiveCategory, DocumentStatus } from "@prisma/client";
 
 export interface TargetSummary {
   id: string;
@@ -69,4 +69,86 @@ export interface DocumentTypeFilter {
   category?: DocumentArchiveCategory;
   professionGroupId?: string;
   forUser?: boolean;
+}
+
+export type ArchiveUploadStatus = "UPLOADED" | "MISSING";
+
+export interface DocumentArchiveFilter {
+  search?: string;
+  archiveCategory?: DocumentArchiveCategory;
+  documentTypeId?: string;
+  status?: DocumentStatus;
+  uploadStatus?: ArchiveUploadStatus;
+  employmentStatusId?: string;
+  employeeGroupId?: string;
+  professionGroupId?: string;
+  employeePositionId?: string;
+  employeeRankId?: string;
+  workplaceId?: string;
+  issueDateFrom?: string;
+  issueDateTo?: string;
+  expiryDateFrom?: string;
+  expiryDateTo?: string;
+  uploadedAtFrom?: string;
+  uploadedAtTo?: string;
+}
+
+export interface DocumentArchiveRow {
+  key: string;
+  uploadStatus: ArchiveUploadStatus;
+  employee: {
+    id: string;
+    employeeId: string;
+    name: string;
+    avatarUrl?: string | null;
+    employmentStatusName?: string | null;
+    employeeGroupName?: string | null;
+    professionGroupName?: string | null;
+    employeePositionName?: string | null;
+    employeeRankName?: string | null;
+    workplaceName?: string | null;
+  };
+  documentType: {
+    id: string;
+    code: string;
+    name: string;
+    archiveCategory: DocumentArchiveCategory;
+  };
+  document: {
+    id: string;
+    fileName: string;
+    filePath: string;
+    documentNumber: string | null;
+    issueDate: Date | null;
+    expiryDate: Date | null;
+    uploadedAt: Date;
+    status: DocumentStatus;
+    latestReviewNote?: string | null;
+  } | null;
+  status: DocumentStatus | null;
+}
+
+export interface DocumentArchiveStats {
+  totalRequired: number;
+  uploaded: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+  missing: number;
+  percentage: number;
+  employeeCount: number;
+  documentTypeCount: number;
+}
+
+export interface DocumentArchiveRecap {
+  rows: DocumentArchiveRow[];
+  stats: DocumentArchiveStats;
+  generatedAt: string;
+  filters: DocumentArchiveFilter;
+}
+
+export interface DocumentArchiveExportResult {
+  content: string;
+  fileName: string;
+  rowCount: number;
 }

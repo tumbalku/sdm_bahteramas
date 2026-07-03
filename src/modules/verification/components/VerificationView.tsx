@@ -40,7 +40,7 @@ export function VerificationView() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="page-container space-y-6 animate-fade-in">
       <PageHeader
         icon={ShieldCheck}
         title="Verifikasi Dokumen"

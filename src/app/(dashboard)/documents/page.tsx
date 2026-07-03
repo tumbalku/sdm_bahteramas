@@ -7,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function DocumentsPage() {
-  return (
-    <div className="page-container">
-      <DocumentsView />
-    </div>
-  );
+  return <DocumentsView />;
 }

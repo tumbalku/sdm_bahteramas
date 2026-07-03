@@ -76,7 +76,9 @@ export function SettingsFormView() {
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      a.remove();
+      if (a.parentNode) {
+        a.parentNode.removeChild(a);
+      }
       window.URL.revokeObjectURL(url);
 
       toast.success("File backup database (.sql) berhasil diunduh!");
@@ -89,14 +91,14 @@ export function SettingsFormView() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-fade-in max-w-6xl mx-auto pb-8">
+      <div className="page-container space-y-6 animate-fade-in max-w-6xl mx-auto pb-8">
         <CardSkeleton count={3} gridClassName="grid grid-cols-1 lg:grid-cols-2 gap-6" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto pb-8">
+    <div className="page-container space-y-6 animate-fade-in max-w-6xl mx-auto pb-8">
       <PageHeader
         icon={Settings}
         title="Pengaturan Sistem"

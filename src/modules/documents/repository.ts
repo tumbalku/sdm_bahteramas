@@ -94,6 +94,21 @@ export async function findDocumentById(id: string) {
           avatarUrl: true,
         },
       },
+      verificationHistories: {
+        take: 1,
+        orderBy: {
+          reviewedAt: "desc",
+        },
+        include: {
+          reviewedBy: {
+            select: {
+              id: true,
+              name: true,
+              employeeId: true,
+            },
+          },
+        },
+      },
     },
   });
 }

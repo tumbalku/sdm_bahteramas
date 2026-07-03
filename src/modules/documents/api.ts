@@ -2,6 +2,12 @@ import { apiClient } from "@/lib/api-client";
 import { DocumentRecordDto, DocumentUploadInput, DocumentFilterDto } from "./types";
 
 export const documentApi = {
+  getDocument: async (id: string): Promise<DocumentRecordDto> => {
+    const response = await apiClient<DocumentRecordDto>(`/api/v1/documents/${id}`);
+    if (!response.success) throw new Error(response.error);
+    return response.data as DocumentRecordDto;
+  },
+
   getDocuments: async (filters: DocumentFilterDto): Promise<DocumentRecordDto[]> => {
     const params = new URLSearchParams();
     if (filters.ownerId) params.append("ownerId", filters.ownerId);
@@ -21,6 +27,7 @@ export const documentApi = {
   uploadDocument: async (input: DocumentUploadInput): Promise<DocumentRecordDto> => {
     const formData = new FormData();
     formData.append("documentTypeId", input.documentTypeId);
+    if (input.replaceDocumentId) formData.append("replaceDocumentId", input.replaceDocumentId);
     if (input.documentNumber) formData.append("documentNumber", input.documentNumber);
     if (input.issueDate) formData.append("issueDate", input.issueDate);
     if (input.expiryDate) formData.append("expiryDate", input.expiryDate);

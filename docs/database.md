@@ -222,7 +222,7 @@ Log riwayat verifikasi dokumen. Berfungsi sebagai **audit log** — bukan sumber
 
 **Index:** `documentRecordId`
 
-> **Tidak boleh dihapus** — jika user reviewer dihapus, `reviewedById` di-set NULL (SetNull).
+> **Catatan audit:** `VerificationHistory` tidak dihapus langsung dari fitur verifikasi. Namun jika `DocumentRecord` lama diganti melalui upload ulang dokumen `REJECTED`, row `VerificationHistory` terkait ikut terhapus oleh cascade setelah snapshot auditnya disalin ke `SecurityLog.metadata`.
 
 ---
 
@@ -405,7 +405,7 @@ Data penting seperti **Akun Pegawai** dan **Log Audit** **TIDAK PERNAH DI-CASCAD
 | **Hapus `User` (Reviewer/Verifikator)** | `VerificationHistory.reviewedById` → `NULL` | Histori verifikasi dokumen tetap tersimpan utuh untuk kebutuhan audit pertanggungjawaban. |
 | **Hapus `User` (Aktor Kegiatan)** | `SecurityLog.actorId` → `NULL` | Log aktivitas keamanan tetap tersimpan utuh. Nama aktor (`actorName`) dan role (`actorRole`) tetap tercatat permanen dalam teks snapshot log. |
 
-> **⚠️ Aturan Hukum Audit Sistem:** Tabel `VerificationHistory` dan `SecurityLog` **TIDAK BOLEH DIHAPUS** secara langsung dari sistem untuk menjamin integritas hukum dan pelacakan audit (*audit trail*).
+> **⚠️ Aturan Hukum Audit Sistem:** Tabel `SecurityLog` **TIDAK BOLEH DIHAPUS** secara langsung dari sistem untuk menjamin integritas hukum dan pelacakan audit (*audit trail*). Pada kasus upload ulang dokumen `REJECTED`, `VerificationHistory` lama dapat hilang karena cascade `DocumentRecord`, tetapi snapshot aksi dan properti penting wajib tersimpan lebih dulu di `SecurityLog.metadata`.
 
 ---
 

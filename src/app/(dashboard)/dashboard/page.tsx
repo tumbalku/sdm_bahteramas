@@ -9,9 +9,5 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-  return (
-    <div className="page-container">
-      <DashboardView userRole={user?.role} />
-    </div>
-  );
+  return <DashboardView userRole={user?.role} />;
 }

@@ -44,7 +44,7 @@ export function DocumentTypesView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="page-container space-y-6">
       {/* Header View */}
       <PageHeader
         icon={FileSpreadsheet}

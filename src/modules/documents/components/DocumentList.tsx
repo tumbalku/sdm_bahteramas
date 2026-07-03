@@ -3,13 +3,15 @@
 import { DocumentRecordDto } from "../types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Download, Trash2, FileText, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
+import { Download, Trash2, FileText, CheckCircle2, XCircle, Clock, AlertCircle, RefreshCcw, Eye } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 interface DocumentListProps {
   documents: DocumentRecordDto[];
   isLoading: boolean;
   onDelete: (doc: DocumentRecordDto) => void;
+  onReplace: (doc: DocumentRecordDto) => void;
   currentUserRole: string;
   currentUserId: string;
 }
@@ -24,6 +26,7 @@ export function DocumentList({
   documents,
   isLoading,
   onDelete,
+  onReplace,
   currentUserRole,
   currentUserId,
 }: DocumentListProps) {
@@ -56,6 +59,14 @@ export function DocumentList({
       return doc.ownerId === currentUserId && doc.status !== "APPROVED";
     }
     return false;
+  };
+
+  const canReplace = (doc: DocumentRecordDto) => {
+    return (
+      doc.status === "REJECTED" &&
+      doc.ownerId === currentUserId &&
+      (currentUserRole === "EMPLOYEE" || currentUserRole === "ADMIN")
+    );
   };
 
   const handleDownload = (filePath: string) => {
@@ -148,13 +159,46 @@ export function DocumentList({
 
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
               <Button
-                variant="default"
-                className="flex-1 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                onClick={() => handleDownload(doc.filePath)}
+                asChild
+                variant="outline"
+                className="flex-1 rounded-xl"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Unduh
+                <Link href={`/documents/${doc.id}`}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  <span>Preview</span>
+                </Link>
               </Button>
+
+              {canReplace(doc) ? (
+                <>
+                  <Button
+                    variant="default"
+                    className="flex-1 rounded-xl"
+                    onClick={() => onReplace(doc)}
+                  >
+                    <RefreshCcw className="w-4 h-4 mr-2" />
+                    <span>Upload Ulang</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-xl"
+                    onClick={() => handleDownload(doc.filePath)}
+                    title="Unduh file lama"
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="default"
+                  className="flex-1 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => handleDownload(doc.filePath)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  <span>Unduh</span>
+                </Button>
+              )}
               
               {canDelete(doc) && (
                 <Button

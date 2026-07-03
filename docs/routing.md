@@ -31,6 +31,7 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 |---|---|---|---|
 | `/dashboard` | `(dashboard)/dashboard/page.tsx` | Semua role | Ringkasan statistik sesuai role |
 | `/documents` | `(dashboard)/documents/page.tsx` | `ADMIN`, `EMPLOYEE` | Daftar dokumen (3 tab arsip) |
+| `/documents/[id]` | `(dashboard)/documents/[id]/page.tsx` | `ADMIN`, pemilik dokumen | Detail dokumen, preview file, dan properti arsip |
 | `/verification` | `(dashboard)/verification/page.tsx` | `ADMIN`, `STAFF` | Daftar dokumen PENDING |
 | `/document-types` | `(dashboard)/document-types/page.tsx` | `ADMIN` | Master jenis dokumen |
 | `/document-types/add` | `(dashboard)/document-types/add/page.tsx` | `ADMIN` | Tambah jenis dokumen |
@@ -64,13 +65,16 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 | `/api/v1/document-types` | `POST` | `api/v1/document-types/route.ts` | `ADMIN` |
 | `/api/v1/document-types/[id]` | `GET` | `api/v1/document-types/[id]/route.ts` | `ADMIN`, `STAFF` |
 | `/api/v1/document-types/[id]` | `PATCH`, `DELETE` | `api/v1/document-types/[id]/route.ts` | `ADMIN` |
+| `/api/v1/document-types/archives` | `GET` | `api/v1/document-types/archives/route.ts` | `ADMIN` |
+| `/api/v1/document-types/archives/export` | `GET` | `api/v1/document-types/archives/export/route.ts` | `ADMIN` |
 | `/api/v1/documents` | `GET` | `api/v1/documents/route.ts` | Semua role |
 | `/api/v1/documents/upload` | `POST` | `api/v1/documents/upload/route.ts` | `EMPLOYEE` |
-| `/api/v1/documents/[id]` | `GET` | `api/v1/documents/[id]/route.ts` | `ADMIN`, `STAFF`, pemilik |
+| `/api/v1/documents/[id]` | `GET` | `api/v1/documents/[id]/route.ts` | `ADMIN`, pemilik |
 | `/api/v1/documents/[id]` | `DELETE` | `api/v1/documents/[id]/route.ts` | `EMPLOYEE` (milik sendiri, bukan APPROVED), `ADMIN` |
-| `/api/v1/documents/download` | `GET` | `api/v1/documents/download/route.ts` | `ADMIN`, `STAFF`, pemilik |
+| `/api/v1/documents/download` | `GET` | `api/v1/documents/download/route.ts` | `ADMIN`, pemilik |
 | `/api/v1/users` | `GET`, `POST` | `api/v1/users/route.ts` | `ADMIN` |
 | `/api/v1/users/[id]` | `GET`, `PATCH`, `DELETE` | `api/v1/users/[id]/route.ts` | `ADMIN` |
+| `/api/v1/users/[id]/documents/export` | `GET` | `api/v1/users/[id]/documents/export/route.ts` | `ADMIN` |
 | `/api/v1/users/categories` | `GET` | `api/v1/users/categories/route.ts` | Semua role |
 | `/api/v1/users/categories` | `POST`, `PATCH`, `DELETE` | `api/v1/users/categories/route.ts` | `ADMIN` |
 | `/api/v1/verification` | `GET` | `api/v1/verification/route.ts` | `ADMIN`, `STAFF` |
@@ -95,7 +99,8 @@ src/app/
     ├── dashboard/
     │   └── page.tsx
     ├── documents/
-    │   └── page.tsx
+    │   ├── page.tsx
+    │   └── [id]/page.tsx
     ├── verification/
     │   └── page.tsx
     ├── document-types/
@@ -167,6 +172,7 @@ src/app/layout.tsx                  ← Root layout: HTML shell + <Providers>
 | Segment | Contoh URL | Keterangan |
 |---|---|---|
 | `[id]` | `/users/clx123abc` | ID user untuk detail/edit pegawai |
+| `[id]` | `/documents/clx123abc` | ID dokumen untuk detail dan preview dokumen |
 | `[id]` | `/api/v1/verification/document/clx123abc` | ID dokumen untuk detail verifikasi API |
 | `[...nextauth]` | `/api/v1/auth/signin`, `/api/v1/auth/session` | Catch-all NextAuth handler |
 

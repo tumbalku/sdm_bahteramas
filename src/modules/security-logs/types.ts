@@ -1,12 +1,14 @@
+import { SecurityLogStatus } from "./status";
+
 export interface SecurityLogDto {
   id: string;
-  actorId: string;
+  actorId: string | null;
   actorName: string;
   actorRole: string;
   eventType: string;
   resource: string;
   ipAddress: string | null;
-  status: string;
+  status: SecurityLogStatus;
   metadata: any | null;
   timestamp: Date;
   createdAt?: Date;

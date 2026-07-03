@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     // Convert formData to simple object for Zod validation (non-file fields)
     const formFields = {
       documentTypeId: getStringOrUndefined(formData.get("documentTypeId")) || "",
+      replaceDocumentId: getStringOrUndefined(formData.get("replaceDocumentId")),
       documentNumber: getStringOrUndefined(formData.get("documentNumber")),
       issueDate: getStringOrUndefined(formData.get("issueDate")),
       expiryDate: getStringOrUndefined(formData.get("expiryDate")),
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
       {
         ownerId,
         documentTypeId: parseResult.data.documentTypeId,
+        replaceDocumentId: parseResult.data.replaceDocumentId,
         documentNumber: parseResult.data.documentNumber ?? undefined,
         issueDate: parseResult.data.issueDate ?? undefined,
         expiryDate: parseResult.data.expiryDate ?? undefined,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DocumentArchiveCategory } from "@prisma/client";
+import { DocumentArchiveCategory, DocumentStatus } from "@prisma/client";
 
 export const createDocumentTypeSchema = z.object({
   code: z
@@ -36,3 +36,28 @@ export const createDocumentTypeSchema = z.object({
 });
 
 export const updateDocumentTypeSchema = createDocumentTypeSchema.partial();
+
+const optionalDateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD")
+  .optional();
+
+export const documentArchiveFilterSchema = z.object({
+  search: z.string().trim().optional(),
+  archiveCategory: z.nativeEnum(DocumentArchiveCategory).optional(),
+  documentTypeId: z.string().optional(),
+  status: z.nativeEnum(DocumentStatus).optional(),
+  uploadStatus: z.enum(["UPLOADED", "MISSING"]).optional(),
+  employmentStatusId: z.string().optional(),
+  employeeGroupId: z.string().optional(),
+  professionGroupId: z.string().optional(),
+  employeePositionId: z.string().optional(),
+  employeeRankId: z.string().optional(),
+  workplaceId: z.string().optional(),
+  issueDateFrom: optionalDateString,
+  issueDateTo: optionalDateString,
+  expiryDateFrom: optionalDateString,
+  expiryDateTo: optionalDateString,
+  uploadedAtFrom: optionalDateString,
+  uploadedAtTo: optionalDateString,
+});

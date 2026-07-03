@@ -20,6 +20,7 @@ export function DocumentsView() {
   const [activeTab, setActiveTab] = useState<DocumentArchiveCategory>("UTAMA");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<DocumentRecordDto | null>(null);
+  const [docToReplace, setDocToReplace] = useState<DocumentRecordDto | null>(null);
 
   const currentUserRole = (session?.user as any)?.role || "EMPLOYEE";
   const currentUserId = (session?.user as any)?.id || "";
@@ -71,6 +72,7 @@ export function DocumentsView() {
     uploadMutation.mutate(input, {
       onSuccess: () => {
         setIsUploadModalOpen(false);
+        setDocToReplace(null);
       },
     });
   };
@@ -85,7 +87,7 @@ export function DocumentsView() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="page-container space-y-6 animate-fade-in">
       <PageHeader
         icon={FileText}
         title="Manajemen Dokumen"
@@ -95,7 +97,10 @@ export function DocumentsView() {
             currentUserRole === "ADMIN" ||
             currentUserRole === "STAFF") && (
             <Button
-              onClick={() => setIsUploadModalOpen(true)}
+              onClick={() => {
+                setDocToReplace(null);
+                setIsUploadModalOpen(true);
+              }}
               className="rounded-xl px-6"
             >
               <UploadCloud className="w-4 h-4 mr-2" />
@@ -119,16 +124,27 @@ export function DocumentsView() {
         documents={currentTabDocuments}
         isLoading={isLoadingDocs}
         onDelete={(doc) => setDocToDelete(doc)}
+        onReplace={(doc) => {
+          if (doc.documentType?.archiveCategory) {
+            setActiveTab(doc.documentType.archiveCategory);
+          }
+          setDocToReplace(doc);
+          setIsUploadModalOpen(true);
+        }}
         currentUserRole={currentUserRole}
         currentUserId={currentUserId}
       />
 
       <DocumentUploadModal
         isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        onClose={() => {
+          setIsUploadModalOpen(false);
+          setDocToReplace(null);
+        }}
         onSubmit={handleUploadSubmit}
         isLoading={uploadMutation.isPending}
         activeCategory={activeTab}
+        replacementDocument={docToReplace}
       />
 
       <LayeredDeleteModal

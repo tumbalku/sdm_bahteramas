@@ -4,6 +4,7 @@ import { useDashboardStats } from "../hooks";
 import { StatsCard } from "./StatsCard";
 import { RecentDocumentsTable } from "./RecentDocumentsTable";
 import { ExpiringDocumentsList } from "./ExpiringDocumentsList";
+import { DashboardChartsSection } from "./DashboardChartsSection";
 import { Skeleton, CardSkeleton, TableSkeleton } from "@/components/ui/skeleton";
 import { 
   FileText, 
@@ -23,10 +24,11 @@ export function DashboardView({ userRole }: DashboardViewProps) {
   const { data: stats, isLoading, error } = useDashboardStats();
 
   const isEmployee = userRole === "EMPLOYEE";
+  const isAdmin = userRole === "ADMIN";
 
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-fade-in pb-8">
+      <div className="page-container space-y-6 animate-fade-in pb-8">
         <div className="flex items-center gap-4 pb-4 border-b border-border/60">
           <Skeleton className="w-12 h-12 rounded-2xl" />
           <div className="space-y-2 flex-1">
@@ -51,7 +53,7 @@ export function DashboardView({ userRole }: DashboardViewProps) {
 
   if (error || !stats) {
     return (
-      <div className="p-8 text-center bg-red-500/10 border border-red-500/20 rounded-3xl text-red-600 max-w-lg mx-auto mt-10">
+      <div className="page-container p-8 text-center bg-red-500/10 border border-red-500/20 rounded-3xl text-red-600 max-w-lg mx-auto mt-10">
         <p className="font-semibold">Gagal memuat statistik</p>
         <p className="text-sm mt-1 opacity-80">Silakan muat ulang halaman ini.</p>
       </div>
@@ -59,7 +61,7 @@ export function DashboardView({ userRole }: DashboardViewProps) {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in pb-8">
+    <div className="page-container space-y-6 animate-fade-in pb-8">
       <PageHeader
         icon={LayoutDashboard}
         title="Dashboard"
@@ -96,6 +98,8 @@ export function DashboardView({ userRole }: DashboardViewProps) {
           iconClassName="bg-red-100 text-red-600"
         />
       </div>
+
+      <DashboardChartsSection isAdmin={isAdmin} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <div className="lg:col-span-2 h-[380px]">

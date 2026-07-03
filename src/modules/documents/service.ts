@@ -20,13 +20,26 @@ function getDocumentTypeFolderName(docCode: string) {
     .replace(/_+/g, "_");
 }
 
+function formatAuditDate(date?: Date | null) {
+  return date ? date.toISOString() : null;
+}
+
+function getNextVersionFromFilePath(filePath?: string | null) {
+  const match = filePath?.match(/_v(\d+)\.[^.]+$/i);
+  if (!match) return undefined;
+
+  const version = Number(match[1]);
+  return Number.isFinite(version) ? version + 1 : undefined;
+}
+
 async function generateStorageFileName(
   employeeId: string,
   category: string,
   docCode: string,
   originalExt: string,
   userId: string,
-  documentTypeId: string
+  documentTypeId: string,
+  minimumVersion?: number
 ) {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
@@ -38,7 +51,8 @@ async function generateStorageFileName(
     },
   });
   
-  const version = `v${existingCount + 1}`;
+  const nextVersion = Math.max(existingCount + 1, minimumVersion ?? 1);
+  const version = `v${nextVersion}`;
   
   const rawFileName = `${employeeId}_${category}_${docCode}_${dateStr}_${version}${originalExt}`;
   return slugifyFileName(rawFileName);
@@ -53,6 +67,61 @@ export async function uploadDocumentService(
   const docType = await findDocumentTypeById(input.documentTypeId);
   if (!docType) {
     throw new Error("Jenis dokumen tidak ditemukan");
+  }
+
+  let replacementAuditSnapshot: Record<string, unknown> | undefined;
+  let oldFilePathToDelete: string | undefined;
+  let minimumStorageVersion: number | undefined;
+
+  if (input.replaceDocumentId) {
+    const rejectedDocument = await findDocumentById(input.replaceDocumentId);
+    if (!rejectedDocument) {
+      throw new Error("Dokumen yang akan diganti tidak ditemukan");
+    }
+    if (rejectedDocument.ownerId !== input.ownerId) {
+      throw new Error("Tidak memiliki akses untuk mengganti dokumen ini");
+    }
+    if (rejectedDocument.status !== DocumentStatus.REJECTED) {
+      throw new Error("Hanya dokumen yang ditolak yang dapat diupload ulang");
+    }
+    if (rejectedDocument.documentTypeId !== input.documentTypeId) {
+      throw new Error("Upload ulang harus menggunakan jenis dokumen yang sama");
+    }
+
+    const latestVerification = rejectedDocument.verificationHistories?.[0];
+    oldFilePathToDelete = rejectedDocument.filePath;
+    minimumStorageVersion = getNextVersionFromFilePath(rejectedDocument.filePath);
+    replacementAuditSnapshot = {
+      action: "REUPLOAD_REPLACED_REJECTED_DOCUMENT",
+      oldDocument: {
+        id: rejectedDocument.id,
+        ownerId: rejectedDocument.ownerId,
+        ownerName: rejectedDocument.owner?.name ?? null,
+        employeeId: rejectedDocument.owner?.employeeId ?? null,
+        documentTypeId: rejectedDocument.documentTypeId,
+        documentTypeCode: rejectedDocument.documentType?.code ?? null,
+        documentTypeName: rejectedDocument.documentType?.name ?? null,
+        archiveCategory: rejectedDocument.documentType?.archiveCategory ?? null,
+        status: rejectedDocument.status,
+        fileName: rejectedDocument.fileName,
+        filePath: rejectedDocument.filePath,
+        documentNumber: rejectedDocument.documentNumber,
+        issueDate: formatAuditDate(rejectedDocument.issueDate),
+        expiryDate: formatAuditDate(rejectedDocument.expiryDate),
+        uploadedAt: formatAuditDate(rejectedDocument.uploadedAt),
+      },
+      latestVerification: latestVerification
+        ? {
+            id: latestVerification.id,
+            status: latestVerification.status,
+            reviewNote: latestVerification.reviewNote,
+            reviewedAt: formatAuditDate(latestVerification.reviewedAt),
+            reviewedById: latestVerification.reviewedBy?.id ?? null,
+            reviewedByName: latestVerification.reviewedBy?.name ?? null,
+            reviewedByEmployeeId: latestVerification.reviewedBy?.employeeId ?? null,
+          }
+        : null,
+    };
   }
 
   // 2. Validasi file format
@@ -94,7 +163,8 @@ export async function uploadDocumentService(
     docType.code,
     ext,
     input.ownerId,
-    input.documentTypeId
+    input.documentTypeId,
+    minimumStorageVersion
   );
 
   // 6. Simpan file fisik melalui StorageProvider
@@ -103,7 +173,10 @@ export async function uploadDocumentService(
   const buffer = Buffer.from(arrayBuffer);
   const storageFolder = getDocumentTypeFolderName(docType.code);
   const storagePath = `${storageFolder}/${storageFileName}`;
-  const filePath = await storage.uploadFile(buffer, storagePath);
+  const uploadResult = await storage.uploadFile(buffer, storagePath, {
+    contentType: input.file.type || undefined,
+  });
+  const filePath = uploadResult.storagePath;
 
   // 7. Simpan record di database
   const document = await createDocumentRecord({
@@ -127,9 +200,35 @@ export async function uploadDocumentService(
       resource: `DocumentRecord:${document.id}`,
       ipAddress,
       status: "success",
-      metadata: { fileName: document.fileName, docType: docType.code },
+      metadata: {
+        fileName: document.fileName,
+        docType: docType.code,
+        replacedDocumentId: input.replaceDocumentId ?? null,
+        replacementDeleted: Boolean(input.replaceDocumentId),
+        uploadMode: input.replaceDocumentId ? "REUPLOAD_REPLACED_REJECTED" : "NEW_UPLOAD",
+        newDocument: {
+          id: document.id,
+          fileName: document.fileName,
+          filePath: document.filePath,
+          status: document.status,
+          uploadedAt: formatAuditDate(document.uploadedAt),
+        },
+        replacementSnapshot: replacementAuditSnapshot ?? null,
+      },
     }
   );
+
+  if (input.replaceDocumentId) {
+    if (oldFilePathToDelete && oldFilePathToDelete !== filePath) {
+      try {
+        await storage.deleteFile(oldFilePathToDelete);
+      } catch (error) {
+        console.warn("Gagal menghapus file dokumen lama setelah upload ulang:", error);
+      }
+    }
+
+    await deleteDocumentRecord(input.replaceDocumentId);
+  }
 
   return document;
 }

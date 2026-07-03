@@ -1,27 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import fs from "fs";
-import path from "path";
 import { prisma } from "@/lib/prisma";
-
-function getContentType(fileName: string) {
-  const ext = path.extname(fileName).toLowerCase();
-
-  switch (ext) {
-    case ".pdf":
-      return "application/pdf";
-    case ".jpg":
-    case ".jpeg":
-      return "image/jpeg";
-    case ".png":
-      return "image/png";
-    case ".webp":
-      return "image/webp";
-    default:
-      return "application/octet-stream";
-  }
-}
+import { getContentTypeFromPath, getStorageProvider } from "@/lib/storage";
 
 function getDownloadDisposition(contentType: string) {
   if (contentType === "application/pdf" || contentType.startsWith("image/")) {
@@ -54,31 +35,30 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Dokumen tidak ditemukan" }, { status: 404 });
     }
 
-    // RBAC: EMPLOYEE hanya bisa mengunduh dokumennya sendiri
-    if (session.user.role === "EMPLOYEE" && document.ownerId !== session.user.id) {
+    // RBAC: hanya ADMIN yang bisa mengunduh dokumen milik pegawai lain.
+    if (session.user.role !== "ADMIN" && document.ownerId !== session.user.id) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 
-    let fileBuffer: Buffer;
-    let contentType = getContentType(fileName);
+    const storage = getStorageProvider();
+    let storageFile;
+
+    try {
+      storageFile = await storage.getFile(fileName);
+    } catch (error: any) {
+      if (error?.message?.includes("tidak ditemukan")) {
+        return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
+      }
+
+      throw error;
+    }
+
+    let contentType = storageFile.contentType;
     if (contentType === "application/octet-stream") {
-      contentType = getContentType(document.fileName);
+      contentType = getContentTypeFromPath(document.fileName);
     }
 
-    const uploadDir = path.resolve(process.cwd(), process.env.STORAGE_LOCAL_PATH || "./uploads");
-    const filePath = path.resolve(uploadDir, fileName);
-
-    if (!filePath.startsWith(uploadDir + path.sep)) {
-      return NextResponse.json({ message: "Path file tidak valid" }, { status: 403 });
-    }
-
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
-    }
-
-    fileBuffer = fs.readFileSync(filePath);
-
-    return new NextResponse(new Uint8Array(fileBuffer), {
+    return new NextResponse(new Uint8Array(storageFile.buffer), {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `${getDownloadDisposition(contentType)}; filename="${document.fileName}"`,
