@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
+import { canVerifyDocuments } from "@/lib/rbac";
 import { getDocumentVerificationHistoryService } from "@/modules/verification/service";
 import { findDocumentById } from "@/modules/documents/repository";
 
@@ -21,8 +22,7 @@ export async function GET(
       return NextResponse.json({ message: "Dokumen tidak ditemukan" }, { status: 404 });
     }
 
-    // RBAC: EMPLOYEE hanya bisa melihat history dokumen miliknya sendiri
-    if (session.user.role === "EMPLOYEE" && document.ownerId !== session.user.id) {
+    if (!canVerifyDocuments(session.user.role) && document.ownerId !== session.user.id) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 

@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/security-log";
 import { LoginCredentials, LoginResult } from "./types";
+import { buildLoginLookupWhere, INVALID_LOGIN_MESSAGE, toAuthUserSession } from "./utils";
 import { loginSchema } from "./validation";
 
 export async function authenticateUser(
@@ -21,9 +22,7 @@ export async function authenticateUser(
 
   // Cari user berdasarkan employeeId (NIP) atau email
   const user = await prisma.user.findFirst({
-    where: {
-      OR: [{ employeeId: identifier }, { email: identifier }],
-    },
+    where: buildLoginLookupWhere(identifier),
   });
 
   if (!user) {
@@ -39,7 +38,7 @@ export async function authenticateUser(
 
     return {
       success: false,
-      error: "NIP/Email atau password salah",
+      error: INVALID_LOGIN_MESSAGE,
     };
   }
 
@@ -59,7 +58,7 @@ export async function authenticateUser(
 
     return {
       success: false,
-      error: "NIP/Email atau password salah",
+      error: INVALID_LOGIN_MESSAGE,
     };
   }
 
@@ -76,12 +75,6 @@ export async function authenticateUser(
 
   return {
     success: true,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      employeeId: user.employeeId,
-      role: user.role,
-    },
+    user: toAuthUserSession(user),
   };
 }

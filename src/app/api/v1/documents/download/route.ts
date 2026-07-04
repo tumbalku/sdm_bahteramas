@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
+import { canManageAllDocuments } from "@/lib/rbac";
 import { getContentTypeFromPath, getStorageProvider } from "@/lib/storage";
 
 function getDownloadDisposition(contentType: string) {
@@ -35,8 +36,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Dokumen tidak ditemukan" }, { status: 404 });
     }
 
-    // RBAC: hanya ADMIN yang bisa mengunduh dokumen milik pegawai lain.
-    if (session.user.role !== "ADMIN" && document.ownerId !== session.user.id) {
+    if (!canManageAllDocuments(session.user.role) && document.ownerId !== session.user.id) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 

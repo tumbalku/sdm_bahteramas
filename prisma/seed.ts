@@ -226,11 +226,12 @@ async function main() {
 
   // 7A. SEED 2 ADMIN USERS
   for (const a of adminDefs) {
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { email: a.email },
       update: {
         passwordHash: adminHash,
         nik: a.nik,
+        role: Role.ADMIN,
         employmentStatusId: asnId,
         employeeGroupId: groupMap.get("PNS").id,
         professionGroupId: profMap.get("Teknologi Informasi (IT)").id,
@@ -255,20 +256,16 @@ async function main() {
       },
     });
 
-    await prisma.userRole.upsert({
-      where: { userId_role: { userId: user.id, role: Role.ADMIN } },
-      update: {},
-      create: { userId: user.id, role: Role.ADMIN },
-    });
   }
 
   // 7B. SEED 1 STAFF USER
   for (const s of staffDefs) {
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { email: s.email },
       update: {
         passwordHash: staffHash,
         nik: s.nik,
+        role: Role.STAFF,
         employmentStatusId: asnId,
         employeeGroupId: groupMap.get("PNS").id,
         professionGroupId: profMap.get("Administrasi & Manajemen").id,
@@ -293,20 +290,16 @@ async function main() {
       },
     });
 
-    await prisma.userRole.upsert({
-      where: { userId_role: { userId: user.id, role: Role.STAFF } },
-      update: {},
-      create: { userId: user.id, role: Role.STAFF },
-    });
   }
 
   // 7C. SEED 2 EMPLOYEE USERS
   for (const e of employeeDefs) {
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { email: e.email },
       update: {
         passwordHash: employeeHash,
         nik: e.nik,
+        role: Role.EMPLOYEE,
         academicDegree: e.degree,
         lastEducation: e.edu,
         religion: e.rel,
@@ -343,11 +336,6 @@ async function main() {
       },
     });
 
-    await prisma.userRole.upsert({
-      where: { userId_role: { userId: user.id, role: Role.EMPLOYEE } },
-      update: {},
-      create: { userId: user.id, role: Role.EMPLOYEE },
-    });
   }
 
   console.log(`✅ Seeded ${allowedEmails.length} Total Users (2 ADMIN, 1 STAFF, 2 EMPLOYEE)`);

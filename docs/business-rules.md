@@ -10,19 +10,25 @@
 | `STAFF` | Staf — fokus pada verifikasi dokumen dan melihat data |
 | `EMPLOYEE` | Pegawai — mengelola dokumen dan profil milik sendiri saja |
 
+Permission bersifat bertingkat/capability-based:
+- `ADMIN` mewarisi kemampuan `STAFF` dan `EMPLOYEE`.
+- `STAFF` mewarisi kemampuan personal `EMPLOYEE`.
+- `EMPLOYEE` hanya memiliki kemampuan personal milik sendiri.
+- Database tetap menyimpan satu role utama di `User.role`.
+
 ### Permission Matrix
 
 | Fitur / Aksi | ADMIN | STAFF | EMPLOYEE |
 |---|:---:|:---:|:---:|
 | Login | ✅ | ✅ | ✅ |
 | Lihat dashboard | ✅ | ✅ | ✅ (ringkasan personal) |
-| Upload dokumen (milik sendiri) | ✅ | ❌ | ✅ |
-| Lihat dokumen milik sendiri | ✅ | ❌ | ✅ |
-| Lihat semua dokumen | ✅ | ✅ | ❌ |
+| Upload dokumen (milik sendiri) | ✅ | ✅ | ✅ |
+| Lihat dokumen milik sendiri | ✅ | ✅ | ✅ |
+| Lihat semua dokumen | ✅ | ✅ (verifikasi) | ❌ |
 | Lihat dokumen pada preview profil pegawai | ✅ | ❌ | ❌ |
 | Export CSV dokumen pada preview profil pegawai | ✅ | ❌ | ❌ |
 | Lihat detail dokumen | ✅ | ✅ (milik sendiri) | ✅ (milik sendiri) |
-| Hapus dokumen (milik sendiri, bukan APPROVED) | ✅ | ❌ | ✅ |
+| Hapus dokumen (milik sendiri, bukan APPROVED) | ✅ | ✅ | ✅ |
 | Hapus dokumen siapapun | ✅ | ❌ | ❌ |
 | Approve/Reject dokumen | ✅ | ✅ | ❌ |
 | Download dokumen | ✅ | ✅ (milik sendiri) | ✅ (milik sendiri) |
@@ -81,10 +87,11 @@
 
 ### Workflow Upload
 
-1. Pegawai pilih jenis dokumen → sistem otomatis menunjukkan kategori arsipnya.
-2. Pegawai isi `documentNumber`, `issueDate`, dan/atau `expiryDate` sesuai konfigurasi jenis dokumen.
-3. Pegawai pilih file → kirim `POST /api/v1/documents/upload`.
+1. User internal dengan kemampuan `EMPLOYEE` (`ADMIN`, `STAFF`, `EMPLOYEE`) pilih jenis dokumen → sistem otomatis menunjukkan kategori arsipnya.
+2. User mengisi `documentNumber`, `issueDate`, dan/atau `expiryDate` sesuai konfigurasi jenis dokumen.
+3. User pilih file → kirim `POST /api/v1/documents/upload`.
 4. Backend:
+   - Menolak upload normal jika user sudah memiliki dokumen dengan jenis/kode dokumen yang sama.
    - Validasi format dan ukuran file.
    - Validasi nomor surat, tanggal terbit, dan tanggal kedaluwarsa sesuai konfigurasi `DocumentType`.
    - Simpan file via `getStorageProvider().uploadFile()`.
@@ -109,6 +116,13 @@
 8. Setelah snapshot audit tersimpan, file lama dihapus dari storage dan `DocumentRecord` lama dihapus dari database agar tidak tampil lagi di Page Dokumen Saya.
 9. `VerificationHistory` yang berelasi ke `DocumentRecord` lama ikut terhapus oleh cascade, tetapi informasi audit penting tetap tersedia di `SecurityLog.metadata`.
 10. Aktivitas tetap dicatat melalui `logActivity("DOCUMENT_UPLOADED", ...)` dengan metadata `uploadMode: "REUPLOAD_REPLACED_REJECTED"`, `replacedDocumentId`, dan `replacementSnapshot`.
+
+### Aturan Anti-Duplikasi Upload
+
+1. Satu user hanya boleh memiliki satu dokumen aktif per jenis/kode dokumen.
+2. Jika dokumen dengan jenis/kode yang sama sudah pernah diupload, jenis dokumen tersebut tidak ditampilkan lagi pada select input upload normal.
+3. Upload normal ke API ditolak jika user sudah memiliki `DocumentRecord` dengan `documentTypeId` yang sama.
+4. Dokumen `REJECTED` harus diperbaiki melalui flow `Upload Ulang`, bukan membuat upload normal kedua untuk jenis dokumen yang sama.
 
 ### Status Awal
 
@@ -147,13 +161,13 @@ REJECTED → PENDING   (pegawai re-upload — create DocumentRecord baru)
 
 ## 5. Aturan Hapus Dokumen
 
-| Kondisi | EMPLOYEE (milik sendiri) | ADMIN |
+| Kondisi | STAFF/EMPLOYEE (milik sendiri) | ADMIN |
 |---|---|---|
 | Status PENDING | ✅ Boleh hapus | ✅ Boleh hapus |
 | Status REJECTED | ✅ Boleh hapus | ✅ Boleh hapus |
 | Status APPROVED | ❌ Tidak boleh hapus | ✅ Boleh hapus |
 
-> **Aturan:** EMPLOYEE tidak bisa menghapus dokumen yang sudah `APPROVED` — hanya ADMIN yang bisa.
+> **Aturan:** STAFF/EMPLOYEE tidak bisa menghapus dokumen personal yang sudah `APPROVED` — hanya ADMIN yang bisa menghapus dokumen `APPROVED`.
 
 ---
 
@@ -162,7 +176,7 @@ REJECTED → PENDING   (pegawai re-upload — create DocumentRecord baru)
 - Jenis dokumen dengan `isMandatory = true` **wajib dimiliki** oleh pegawai yang masuk dalam target profesinya.
 - Sistem harus menampilkan peringatan jika pegawai belum memiliki dokumen wajib yang terkait profesinya.
 - Dokumen dengan `requiresExpiryDate = true` wajib dimonitor masa berlakunya.
-- Page Rekapitulasi Arsip Dokumen Pegawai menghitung denominator progress dari pasangan pegawai `EMPLOYEE` dan jenis dokumen `isMandatory=true` yang berlaku untuk pegawai tersebut.
+- Page Rekapitulasi Arsip Dokumen Pegawai menghitung denominator progress dari pasangan user internal dengan kemampuan `EMPLOYEE` (`ADMIN`, `STAFF`, `EMPLOYEE`) dan jenis dokumen `isMandatory=true` yang berlaku untuk user tersebut.
 - Kecocokan jenis dokumen terhadap pegawai mengikuti kriteria target `DocumentType`: status kepegawaian, kelompok pegawai, kelompok profesi, pangkat/golongan, dan unit kerja. Kriteria yang kosong berarti berlaku umum pada dimensi tersebut.
 - Numerator `Sudah Upload` menghitung seluruh kewajiban yang sudah memiliki `DocumentRecord` terbaru, terlepas dari status `PENDING`, `APPROVED`, atau `REJECTED`.
 - Metrik `Terverifikasi`, `Menunggu`, `Ditolak`, dan `Belum Upload` ditampilkan terpisah agar progress bar tidak ambigu.
@@ -197,7 +211,9 @@ Workplace       (Unit kerja — standalone)
 ### Aturan CRUD Pegawai
 
 - Hanya `ADMIN` yang bisa membuat, mengedit, dan menghapus data pegawai.
-- Hapus User → CASCADE hapus `UserRole` dan `DocumentRecord` miliknya.
+- Setiap user hanya boleh memiliki satu role: `ADMIN`, `STAFF`, atau `EMPLOYEE`.
+- Role disimpan langsung di `User.role` sebagai source of truth penyimpanan. Permission runtime dihitung secara bertingkat melalui helper capability RBAC.
+- Hapus User → CASCADE hapus `DocumentRecord` miliknya.
 - `VerificationHistory` dan `SecurityLog` **tidak ikut terhapus** — actorId/reviewedById di-set NULL.
 - Import pegawai via CSV hanya bisa dilakukan oleh `ADMIN`.
 - Import CSV pegawai memakai mode all-or-nothing: jika satu baris invalid, tidak ada user yang dibuat.
@@ -210,9 +226,11 @@ Workplace       (Unit kerja — standalone)
 - Data TMT disimpan pada `User.hasTmt`, `User.tmtStartDate`, dan `User.tmtEndDate`.
 - Hanya `ADMIN` yang bisa mengatur data TMT melalui halaman tambah/edit pegawai.
 - Jika `hasTmt = false`, `tmtStartDate` dan `tmtEndDate` boleh kosong dan tidak ditampilkan pada profil pegawai.
-- Jika `hasTmt = true`, `tmtStartDate` dan `tmtEndDate` tetap opsional sesuai kebutuhan data kontrak.
+- Jika `hasTmt = true`, `tmtStartDate` menandai awal TMT/kontrak dan `tmtEndDate` bersifat opsional.
+- Jika `tmtStartDate` diisi dan `tmtEndDate` kosong, profil menampilkan label `TMT Awal CPNS` untuk pegawai tetap/ASN.
+- Jika `tmtStartDate` dan `tmtEndDate` sama-sama diisi, profil menampilkan label `Masa Kontrak` untuk pegawai kontrak seperti BLUD, PPPK, dan sejenisnya.
 - Jika `tmtStartDate` dan `tmtEndDate` sama-sama diisi, `tmtEndDate` tidak boleh lebih awal dari `tmtStartDate`.
-- Profil pegawai hanya menampilkan informasi TMT ketika `hasTmt = true`; tanggal yang kosong ditampilkan sebagai `Tidak ditentukan`.
+- Profil pegawai hanya menampilkan informasi TMT ketika `hasTmt = true`.
 
 ---
 

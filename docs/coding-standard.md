@@ -314,6 +314,7 @@ Penamaan `SCREAMING_SNAKE_CASE`:
 
 ## 11. Checklist Sebelum Commit
 
+- [ ] `npm test -- --run` lulus tanpa error
 - [ ] Tidak ada `fetch()` langsung di komponen — semua lewat `hooks.ts`
 - [ ] `hooks.ts` hanya memanggil `api.ts` modul yang sama
 - [ ] Route handler hanya memanggil `service.ts` modul yang sama
@@ -325,6 +326,8 @@ Penamaan `SCREAMING_SNAKE_CASE`:
 - [ ] Path alias `@/` digunakan (bukan relative path `../../`)
 - [ ] `tsc --noEmit` lulus tanpa error
 - [ ] Linter lulus tanpa error
+
+**Aturan verifikasi:** setiap perubahan kode atau dokumentasi wajib diverifikasi dengan test yang relevan. Untuk perubahan logic/service/repository/API/helper/validation/component, default verifikasi adalah `npm test -- --run` dan `npx tsc --noEmit`. Sebelum commit, kedua command tersebut wajib lulus kecuali ada blocker yang dijelaskan eksplisit.
 
 ---
 

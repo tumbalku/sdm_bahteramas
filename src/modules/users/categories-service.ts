@@ -1,4 +1,4 @@
-import { AuthUser } from "@/lib/auth-utils";
+import type { AuthUser } from "@/lib/auth-utils";
 import { logActivity } from "@/lib/security-log";
 import * as repo from "./categories-repository";
 

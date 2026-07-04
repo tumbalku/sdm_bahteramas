@@ -20,9 +20,11 @@
 ### `Role`
 | Nilai | Deskripsi |
 |---|---|
-| `ADMIN` | Administrator — akses penuh |
-| `STAFF` | Staf — verifikasi dokumen, lihat data |
-| `EMPLOYEE` | Pegawai biasa — upload dokumen milik sendiri |
+| `ADMIN` | Administrator — akses penuh, mewarisi kemampuan STAFF dan EMPLOYEE |
+| `STAFF` | Staf — verifikasi dokumen, lihat data, dan mengelola dokumen personal |
+| `EMPLOYEE` | Pegawai biasa — upload/lihat/hapus dokumen milik sendiri sesuai aturan personal |
+
+`User.role` tetap single-role sebagai source of truth penyimpanan. Permission aplikasi dihitung secara hierarchical/capability-based di kode aplikasi, sehingga `ADMIN` dan `STAFF` tetap ikut dihitung sebagai user internal yang memiliki kemampuan personal `EMPLOYEE`.
 
 ### `DocumentArchiveCategory`
 | Nilai | Deskripsi | Untuk |
@@ -74,20 +76,7 @@ Data utama pegawai + akun login.
 | `createdAt` | DateTime | Auto |
 | `updatedAt` | DateTime | Auto update |
 
-**Index:** `professionGroupId`
-
----
-
-### `UserRole`
-Mendukung multi-role per user (satu user bisa punya lebih dari satu role).
-
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| `id` | String (cuid) PK | |
-| `userId` | String FK | → User (onDelete: Cascade) |
-| `role` | Role | |
-
-**Constraint:** `@@unique([userId, role])` — kombinasi user+role unik
+**Index:** `role`, `professionGroupId`, `employmentStatusId`, `employeeGroupId`, `employeePositionId`, `workplaceId`
 
 ---
 
@@ -335,7 +324,6 @@ Tabel penyimpan konfigurasi dan preferensi sistem dinas yang dapat diatur oleh A
 
 ```mermaid
 erDiagram
-    USER ||--o{ USER_ROLE : has
     USER ||--o{ DOCUMENT_RECORD : owns
     USER ||--o{ VERIFICATION_HISTORY : reviews
     USER ||--o{ SECURITY_LOG : acts
@@ -359,7 +347,6 @@ erDiagram
 
 | Dari | Ke | Tipe | Keterangan |
 |---|---|---|---|
-| User → UserRole | 1:N | Has many | Multi-role per user |
 | User → DocumentRecord | 1:N | Has many | Dokumen milik pegawai |
 | User → VerificationHistory | 1:N | Has many | Sebagai reviewer |
 | User → SecurityLog | 1:N | Has many | Sebagai aktor |
@@ -382,7 +369,7 @@ Data anak atau data relasi langsung yang tidak memiliki arti tanpa entitas utama
 
 | Penghapusan Entitas Utama | Data yang Di-CASCADE (Terhapus Otomatis) | Alasan & Dampak |
 |---|---|---|
-| **Hapus Akun `User`** | `UserRole`, `DocumentRecord` milik pegawai tersebut | Seluruh hak akses role dan berkas dokumen milik akun tersebut dibersihkan dari database. |
+| **Hapus Akun `User`** | `DocumentRecord` milik pegawai tersebut | Seluruh berkas dokumen milik akun tersebut dibersihkan dari database. Role user tersimpan langsung di `User.role`, sehingga tidak ada tabel role anak yang perlu dihapus. |
 | **Hapus `DocumentRecord`** | `VerificationHistory` terkait berkas tersebut | Seluruh histori catatan verifikasi dokumen tersebut ikut terhapus. |
 | **Hapus `DocumentType`** | `DocumentTypeProfession`, `DocumentTypeEmploymentStatus`, `DocumentTypeEmployeeGroup`, `DocumentTypeEmployeeRank`, `DocumentTypeWorkplace` | Seluruh kriteria pemetaan target kualifikasi dokumen tersebut dibersihkan. |
 | **Hapus Master `EmploymentStatus`** | `EmployeeGroup` (Jenis Kepegawaian di bawahnya) & `DocumentTypeEmploymentStatus` | Sub-kategori jenis kepegawaian induk tersebut ikut dibersihkan. |
@@ -416,3 +403,4 @@ Data penting seperti **Akun Pegawai** dan **Log Audit** **TIDAK PERNAH DI-CASCAD
 | `parseAllowedFormats(str)` | `src/lib/` | Parsing `"pdf,jpg,png"` → `["pdf", "jpg", "png"]` |
 | `generateStorageFileName()` | `src/modules/documents/service.ts` | Generate nama file standar |
 | `slugifyFileName()` | `src/lib/` | Sanitasi nama file (no spasi, hanya `[A-Za-z0-9._-]`) |
+

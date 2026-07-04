@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Role } from "@prisma/client";
@@ -20,8 +20,8 @@ import {
   Briefcase,
   GraduationCap,
 } from "lucide-react";
-import { useCreateUser, useUpdateUser, useUser } from "../hooks";
-import { CreateUserInput } from "../types";
+import { useCreateUser, useUpdateUser, useUser, useMasterCategories } from "../hooks";
+import { CreateUserInput, UserFormState } from "../types";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -37,15 +37,68 @@ const ROLE_OPTIONS = [
   { value: "ADMIN", label: "ADMIN (Administrator Akses Penuh)" },
 ];
 
-interface UserFormViewProps {
-  userId?: string;
+const USER_FORM_INITIAL_STATE: UserFormState = {
+  employeeId: "",
+  nik: "",
+  name: "",
+  email: "",
+  password: "",
+  role: "EMPLOYEE",
+  gender: "L",
+  birthDate: "",
+  academicDegree: "",
+  lastEducation: "",
+  religion: "",
+  maritalStatus: "",
+  phone: "",
+  address: "",
+  joinDate: "",
+  hasTmt: false,
+  tmtStartDate: "",
+  tmtEndDate: "",
+  employmentStatusId: "",
+  employeeGroupId: "",
+  professionGroupId: "",
+  employeePositionId: "",
+  employeeRankId: "",
+  workplaceId: "",
+};
+
+function formReducer(state: UserFormState, patch: Partial<UserFormState>): UserFormState {
+  return { ...state, ...patch };
 }
 
-interface MasterCategories {
-  employmentStatuses: { id: string; name: string; employeeGroups: { id: string; name: string }[] }[];
-  professionGroups: { id: string; name: string; employeePositions: { id: string; name: string }[] }[];
-  employeeRanks: { id: string; name: string }[];
-  workplaces: { id: string; name: string }[];
+function mapUserToFormState(user: NonNullable<ReturnType<typeof useUser>["data"]>): UserFormState {
+  return {
+    employeeId: user.employeeId || "",
+    nik: user.nik || "",
+    name: user.name || "",
+    email: user.email || "",
+    password: "",
+    role: user.role || "EMPLOYEE",
+    gender: user.gender || "L",
+    birthDate: user.birthDate ? format(new Date(user.birthDate), "yyyy-MM-dd") : "",
+    academicDegree: user.academicDegree || "",
+    lastEducation: user.lastEducation || "",
+    religion: user.religion || "",
+    maritalStatus: user.maritalStatus || "",
+    phone: user.phone || "",
+    address: user.address || "",
+    joinDate: user.joinDate ? format(new Date(user.joinDate), "yyyy-MM-dd") : "",
+    hasTmt: Boolean(user.hasTmt),
+    tmtStartDate: user.tmtStartDate ? format(new Date(user.tmtStartDate), "yyyy-MM-dd") : "",
+    tmtEndDate: user.tmtEndDate ? format(new Date(user.tmtEndDate), "yyyy-MM-dd") : "",
+    employmentStatusId: user.employmentStatus?.id || "",
+    employeeGroupId: user.employeeGroup?.id || "",
+    professionGroupId: user.professionGroup?.id || "",
+    employeePositionId: user.employeePosition?.id || "",
+    employeeRankId: user.employeeRank?.id || "",
+    workplaceId: user.workplace?.id || "",
+  };
+}
+
+interface UserFormViewProps {
+  userId?: string;
 }
 
 export function UserFormView({ userId }: UserFormViewProps) {
@@ -53,127 +106,62 @@ export function UserFormView({ userId }: UserFormViewProps) {
   const isEditMode = Boolean(userId);
 
   const { data: existingUser, isLoading: isLoadingUser } = useUser(userId || "");
-
-  const [categories, setCategories] = useState<MasterCategories | null>(null);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const { data: categories, isLoading: isLoadingCategories } = useMasterCategories();
 
   const createMutation = useCreateUser();
   const updateMutation = useUpdateUser();
 
-  const [employeeId, setEmployeeId] = useState("");
-  const [nik, setNik] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState<Role>("EMPLOYEE");
-  const [gender, setGender] = useState("L");
-  const [birthDate, setBirthDate] = useState("");
-  const [academicDegree, setAcademicDegree] = useState("");
-  const [lastEducation, setLastEducation] = useState("");
-  const [religion, setReligion] = useState("");
-  const [maritalStatus, setMaritalStatus] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [joinDate, setJoinDate] = useState("");
-  const [hasTmt, setHasTmt] = useState(false);
-  const [tmtStartDate, setTmtStartDate] = useState("");
-  const [tmtEndDate, setTmtEndDate] = useState("");
+  const [form, dispatch] = useReducer(formReducer, USER_FORM_INITIAL_STATE);
 
-  const [employmentStatusId, setEmploymentStatusId] = useState("");
-  const [employeeGroupId, setEmployeeGroupId] = useState("");
-  const [professionGroupId, setProfessionGroupId] = useState("");
-  const [employeePositionId, setEmployeePositionId] = useState("");
-  const [employeeRankId, setEmployeeRankId] = useState("");
-  const [workplaceId, setWorkplaceId] = useState("");
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const res = await fetch("/api/v1/users/categories");
-        const json = await res.json();
-        if (res.ok && json.success && json.data) {
-          setCategories(json.data);
-        }
-      } catch (err) {
-        toast.error("Gagal memuat master data kategori");
-      } finally {
-        setIsLoadingCategories(false);
-      }
-    }
-    fetchCategories();
-  }, []);
-
+  // Isi form dari data server saat mode edit
   useEffect(() => {
     if (isEditMode && existingUser) {
-      setEmployeeId(existingUser.employeeId || "");
-      setNik(existingUser.nik || "");
-      setName(existingUser.name || "");
-      setEmail(existingUser.email || "");
-      setRole(existingUser.role || "EMPLOYEE");
-      setGender(existingUser.gender || "L");
-      setBirthDate(existingUser.birthDate ? format(new Date(existingUser.birthDate), "yyyy-MM-dd") : "");
-      setAcademicDegree(existingUser.academicDegree || "");
-      setLastEducation(existingUser.lastEducation || "");
-      setReligion(existingUser.religion || "");
-      setMaritalStatus(existingUser.maritalStatus || "");
-      setPhone(existingUser.phone || "");
-      setAddress(existingUser.address || "");
-      setJoinDate(existingUser.joinDate ? format(new Date(existingUser.joinDate), "yyyy-MM-dd") : "");
-      setHasTmt(Boolean(existingUser.hasTmt));
-      setTmtStartDate(existingUser.tmtStartDate ? format(new Date(existingUser.tmtStartDate), "yyyy-MM-dd") : "");
-      setTmtEndDate(existingUser.tmtEndDate ? format(new Date(existingUser.tmtEndDate), "yyyy-MM-dd") : "");
-
-      setEmploymentStatusId(existingUser.employmentStatus?.id || "");
-      setEmployeeGroupId(existingUser.employeeGroup?.id || "");
-      setProfessionGroupId(existingUser.professionGroup?.id || "");
-      setEmployeePositionId(existingUser.employeePosition?.id || "");
-      setEmployeeRankId(existingUser.employeeRank?.id || "");
-      setWorkplaceId(existingUser.workplace?.id || "");
+      dispatch(mapUserToFormState(existingUser));
     }
   }, [isEditMode, existingUser]);
 
   const availableGroups =
-    categories?.employmentStatuses.find((s) => s.id === employmentStatusId)?.employeeGroups || [];
+    categories?.employmentStatuses.find((s) => s.id === form.employmentStatusId)?.employeeGroups || [];
 
   const availablePositions =
-    categories?.professionGroups.find((p) => p.id === professionGroupId)?.employeePositions || [];
+    categories?.professionGroups.find((p) => p.id === form.professionGroupId)?.employeePositions || [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!employeeId || !name || !email) {
+    if (!form.employeeId || !form.name || !form.email) {
       toast.error("NIP, Nama, dan Email wajib diisi!");
       return;
     }
 
     const payload: any = {
-      employeeId,
-      nik: nik || null,
-      name,
-      email,
-      role,
-      gender,
-      birthDate: birthDate || null,
-      academicDegree: academicDegree || null,
-      lastEducation: lastEducation || null,
-      religion: religion || null,
-      maritalStatus: maritalStatus || null,
-      phone: phone || null,
-      address: address || null,
-      joinDate: joinDate || null,
-      hasTmt,
-      tmtStartDate: hasTmt ? tmtStartDate || null : null,
-      tmtEndDate: hasTmt ? tmtEndDate || null : null,
-      employmentStatusId: employmentStatusId || null,
-      employeeGroupId: employeeGroupId || null,
-      professionGroupId: professionGroupId || null,
-      employeePositionId: employeePositionId || null,
-      employeeRankId: employeeRankId || null,
-      workplaceId: workplaceId || null,
+      employeeId: form.employeeId,
+      nik: form.nik || null,
+      name: form.name,
+      email: form.email,
+      role: form.role,
+      gender: form.gender,
+      birthDate: form.birthDate || null,
+      academicDegree: form.academicDegree || null,
+      lastEducation: form.lastEducation || null,
+      religion: form.religion || null,
+      maritalStatus: form.maritalStatus || null,
+      phone: form.phone || null,
+      address: form.address || null,
+      joinDate: form.joinDate || null,
+      hasTmt: form.hasTmt,
+      tmtStartDate: form.hasTmt ? form.tmtStartDate || null : null,
+      tmtEndDate: form.hasTmt ? form.tmtEndDate || null : null,
+      employmentStatusId: form.employmentStatusId || null,
+      employeeGroupId: form.employeeGroupId || null,
+      professionGroupId: form.professionGroupId || null,
+      employeePositionId: form.employeePositionId || null,
+      employeeRankId: form.employeeRankId || null,
+      workplaceId: form.workplaceId || null,
     };
 
-    if (password) {
-      payload.password = password;
+    if (form.password) {
+      payload.password = form.password;
     }
 
     if (isEditMode && userId) {
@@ -186,7 +174,7 @@ export function UserFormView({ userId }: UserFormViewProps) {
         }
       );
     } else {
-      if (!password) {
+      if (!form.password) {
         payload.password = "Pegawai123!";
       }
       createMutation.mutate(payload as CreateUserInput, {
@@ -239,8 +227,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="NIP / NRK (Nomor Induk Pegawai)" required>
               <Input
                 type="text"
-                value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
+                value={form.employeeId}
+                onChange={(e) => dispatch({ employeeId: e.target.value })}
                 placeholder="Contoh: 199001012015011001"
                 className="font-mono"
                 required
@@ -250,8 +238,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="NIK (Nomor Induk Kependudukan / KTP)">
               <Input
                 type="text"
-                value={nik}
-                onChange={(e) => setNik(e.target.value)}
+                value={form.nik}
+                onChange={(e) => dispatch({ nik: e.target.value })}
                 placeholder="16 Digit NIK KTP..."
                 className="font-mono"
               />
@@ -260,8 +248,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="Nama Lengkap (Tanpa Gelar)" required>
               <Input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={form.name}
+                onChange={(e) => dispatch({ name: e.target.value })}
                 placeholder="Nama sesuai KTP / Dokumen Resmi"
                 required
               />
@@ -270,8 +258,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="Alamat Email Aktif" required>
               <Input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={form.email}
+                onChange={(e) => dispatch({ email: e.target.value })}
                 placeholder="pegawai@rsudbahteramas.go.id"
                 required
               />
@@ -279,8 +267,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
             <FormField label="Role Hak Akses" required>
               <Select
-                value={role}
-                onChange={(e) => setRole(e.target.value as Role)}
+                value={form.role}
+                onChange={(e) => dispatch({ role: e.target.value as Role })}
                 options={ROLE_OPTIONS}
               />
             </FormField>
@@ -288,8 +276,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label={isEditMode ? "Kata Sandi Baru (Kosongkan jika tidak diganti)" : "Kata Sandi (Default: Pegawai123!)"}>
               <Input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={form.password}
+                onChange={(e) => dispatch({ password: e.target.value })}
                 placeholder={isEditMode ? "Isi hanya jika ingin mengubah kata sandi..." : "Kosongkan untuk menggunakan sandi default (Pegawai123!)"}
               />
             </FormField>
@@ -307,16 +295,16 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="Gelar Akademik">
               <Input
                 type="text"
-                value={academicDegree}
-                onChange={(e) => setAcademicDegree(e.target.value)}
+                value={form.academicDegree}
+                onChange={(e) => dispatch({ academicDegree: e.target.value })}
                 placeholder="Contoh: S.Kep., Ns. / Sp.B"
               />
             </FormField>
 
             <FormField label="Jenis Kelamin">
               <Select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
+                value={form.gender}
+                onChange={(e) => dispatch({ gender: e.target.value })}
                 options={GENDER_OPTIONS}
               />
             </FormField>
@@ -324,15 +312,15 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="Tanggal Lahir">
               <Input
                 type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                value={form.birthDate}
+                onChange={(e) => dispatch({ birthDate: e.target.value })}
               />
             </FormField>
 
             <FormField label="Agama">
               <Select
-                value={religion}
-                onChange={(e) => setReligion(e.target.value)}
+                value={form.religion}
+                onChange={(e) => dispatch({ religion: e.target.value })}
                 options={RELIGION_OPTIONS}
                 placeholder="-- Pilih Agama --"
               />
@@ -340,8 +328,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
             <FormField label="Status Pernikahan">
               <Select
-                value={maritalStatus}
-                onChange={(e) => setMaritalStatus(e.target.value)}
+                value={form.maritalStatus}
+                onChange={(e) => dispatch({ maritalStatus: e.target.value })}
                 options={MARITAL_STATUS_OPTIONS}
                 placeholder="-- Pilih Status Pernikahan --"
               />
@@ -350,8 +338,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="Tanggal Masuk Kerja">
               <Input
                 type="date"
-                value={joinDate}
-                onChange={(e) => setJoinDate(e.target.value)}
+                value={form.joinDate}
+                onChange={(e) => dispatch({ joinDate: e.target.value })}
               />
             </FormField>
 
@@ -359,34 +347,34 @@ export function UserFormView({ userId }: UserFormViewProps) {
               <label className="flex items-center gap-3 text-sm font-semibold text-foreground">
                 <input
                   type="checkbox"
-                  checked={hasTmt}
+                  checked={form.hasTmt}
                   onChange={(e) => {
-                    setHasTmt(e.target.checked);
                     if (!e.target.checked) {
-                      setTmtStartDate("");
-                      setTmtEndDate("");
+                      dispatch({ hasTmt: false, tmtStartDate: "", tmtEndDate: "" });
+                    } else {
+                      dispatch({ hasTmt: true });
                     }
                   }}
                   className="h-4 w-4 rounded border-border accent-primary"
                 />
-                Pegawai memiliki TMT / masa kontrak
+                Pegawai memiliki data TMT
               </label>
 
-              {hasTmt && (
+              {form.hasTmt && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Mulai TMT">
+                  <FormField label="Mulai TMT / Kontrak">
                     <Input
                       type="date"
-                      value={tmtStartDate}
-                      onChange={(e) => setTmtStartDate(e.target.value)}
+                      value={form.tmtStartDate}
+                      onChange={(e) => dispatch({ tmtStartDate: e.target.value })}
                     />
                   </FormField>
 
-                  <FormField label="Akhir TMT / Kontrak">
+                  <FormField label="Akhir TMT / Kontrak (Opsional)">
                     <Input
                       type="date"
-                      value={tmtEndDate}
-                      onChange={(e) => setTmtEndDate(e.target.value)}
+                      value={form.tmtEndDate}
+                      onChange={(e) => dispatch({ tmtEndDate: e.target.value })}
                     />
                   </FormField>
                 </div>
@@ -395,8 +383,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
             <FormField label="Pendidikan Terakhir">
               <Select
-                value={lastEducation}
-                onChange={(e) => setLastEducation(e.target.value)}
+                value={form.lastEducation}
+                onChange={(e) => dispatch({ lastEducation: e.target.value })}
                 options={EDUCATION_OPTIONS}
                 placeholder="-- Pilih Pendidikan Terakhir --"
               />
@@ -405,8 +393,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="Nomor Telepon / WhatsApp">
               <Input
                 type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={form.phone}
+                onChange={(e) => dispatch({ phone: e.target.value })}
                 placeholder="081234567890"
                 className="font-mono"
               />
@@ -415,8 +403,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <FormField label="Alamat Lengkap" className="md:col-span-2">
               <Textarea
                 rows={3}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                value={form.address}
+                onChange={(e) => dispatch({ address: e.target.value })}
                 placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota/Kabupaten..."
               />
             </FormField>
@@ -438,10 +426,9 @@ export function UserFormView({ userId }: UserFormViewProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Status Kepegawaian">
                 <Select
-                  value={employmentStatusId}
+                  value={form.employmentStatusId}
                   onChange={(e) => {
-                    setEmploymentStatusId(e.target.value);
-                    setEmployeeGroupId("");
+                    dispatch({ employmentStatusId: e.target.value, employeeGroupId: "" });
                   }}
                   options={categories?.employmentStatuses.map((s) => ({ value: s.id, label: s.name }))}
                   placeholder="-- Pilih Status (e.g. ASN, Non ASN) --"
@@ -450,9 +437,9 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
               <FormField label="Jenis Kepegawaian (Sub-Status)">
                 <Select
-                  value={employeeGroupId}
-                  onChange={(e) => setEmployeeGroupId(e.target.value)}
-                  disabled={!employmentStatusId || availableGroups.length === 0}
+                  value={form.employeeGroupId}
+                  onChange={(e) => dispatch({ employeeGroupId: e.target.value })}
+                  disabled={!form.employmentStatusId || availableGroups.length === 0}
                   options={availableGroups.map((g) => ({ value: g.id, label: g.name }))}
                   placeholder="-- Pilih Jenis (e.g. PNS, PPPK) --"
                 />
@@ -460,10 +447,9 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
               <FormField label="Kelompok Profesi">
                 <Select
-                  value={professionGroupId}
+                  value={form.professionGroupId}
                   onChange={(e) => {
-                    setProfessionGroupId(e.target.value);
-                    setEmployeePositionId("");
+                    dispatch({ professionGroupId: e.target.value, employeePositionId: "" });
                   }}
                   options={categories?.professionGroups.map((p) => ({ value: p.id, label: p.name }))}
                   placeholder="-- Pilih Profesi (e.g. Medis, Administrasi) --"
@@ -472,9 +458,9 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
               <FormField label="Jabatan (Sub-Profesi)">
                 <Select
-                  value={employeePositionId}
-                  onChange={(e) => setEmployeePositionId(e.target.value)}
-                  disabled={!professionGroupId || availablePositions.length === 0}
+                  value={form.employeePositionId}
+                  onChange={(e) => dispatch({ employeePositionId: e.target.value })}
+                  disabled={!form.professionGroupId || availablePositions.length === 0}
                   options={availablePositions.map((pos) => ({ value: pos.id, label: pos.name }))}
                   placeholder="-- Pilih Jabatan --"
                 />
@@ -482,8 +468,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
               <FormField label="Pangkat / Golongan">
                 <Select
-                  value={employeeRankId}
-                  onChange={(e) => setEmployeeRankId(e.target.value)}
+                  value={form.employeeRankId}
+                  onChange={(e) => dispatch({ employeeRankId: e.target.value })}
                   options={categories?.employeeRanks.map((r) => ({ value: r.id, label: r.name }))}
                   placeholder="-- Pilih Pangkat --"
                 />
@@ -491,8 +477,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
 
               <FormField label="Tempat / Unit Tugas">
                 <Select
-                  value={workplaceId}
-                  onChange={(e) => setWorkplaceId(e.target.value)}
+                  value={form.workplaceId}
+                  onChange={(e) => dispatch({ workplaceId: e.target.value })}
                   options={categories?.workplaces.map((w) => ({ value: w.id, label: w.name }))}
                   placeholder="-- Pilih Tempat Tugas --"
                 />

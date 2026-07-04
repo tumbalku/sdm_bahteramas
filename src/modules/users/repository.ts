@@ -324,9 +324,6 @@ export async function createUsersBulk(users: BulkCreateUserInput[]): Promise<num
           hasTmt: Boolean(hasTmt),
           tmtStartDate: hasTmt && tmtStartDate ? new Date(tmtStartDate) : null,
           tmtEndDate: hasTmt && tmtEndDate ? new Date(tmtEndDate) : null,
-          userRoles: {
-            create: { role },
-          },
         },
       });
     })
@@ -345,11 +342,6 @@ export async function createUser(
       data: {
         ...rest,
         birthDate: birthDate ? new Date(birthDate) : null,
-        userRoles: {
-          create: {
-            role: data.role,
-          },
-        },
       },
       include: {
         employmentStatus: true,
@@ -401,13 +393,6 @@ export async function updateUser(
     ...(passwordHash && { passwordHash }),
     ...(role && { role }),
   };
-
-  if (role) {
-    await prisma.userRole.deleteMany({ where: { userId: id } });
-    updateData.userRoles = {
-      create: { role },
-    };
-  }
 
   await prisma.user.update({
     where: { id },

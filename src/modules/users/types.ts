@@ -111,3 +111,38 @@ export interface ImportUsersResult {
   errorCount: number;
   errors: ImportUserError[];
 }
+
+export interface MasterCategories {
+  employmentStatuses: { id: string; name: string; employeeGroups: { id: string; name: string }[] }[];
+  professionGroups: { id: string; name: string; employeePositions: { id: string; name: string }[] }[];
+  employeeRanks: { id: string; name: string }[];
+  workplaces: { id: string; name: string }[];
+}
+
+export interface UserFormState {
+  employeeId: string;
+  nik: string;
+  name: string;
+  email: string;
+  password: string;
+  role: Role;
+  gender: string;
+  birthDate: string;
+  academicDegree: string;
+  lastEducation: string;
+  religion: string;
+  maritalStatus: string;
+  phone: string;
+  address: string;
+  joinDate: string;
+  hasTmt: boolean;
+  tmtStartDate: string;
+  tmtEndDate: string;
+  employmentStatusId: string;
+  employeeGroupId: string;
+  professionGroupId: string;
+  employeePositionId: string;
+  employeeRankId: string;
+  workplaceId: string;
+}
+

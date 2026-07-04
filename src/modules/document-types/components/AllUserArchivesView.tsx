@@ -69,7 +69,7 @@ export function AllUserArchivesView() {
     employeePositionId: "",
   });
   const [documentStatus, setDocumentStatus] = useState<DocumentStatus | "">("");
-  const [uploadStatus, setUploadStatus] = useState<"UPLOADED" | "MISSING" | "">("");
+  const [uploadStatus, setUploadStatus] = useState<"UPLOADED" | "MISSING" | "">("UPLOADED");
   const [rowToDelete, setRowToDelete] = useState<DocumentArchiveRow | null>(null);
 
   const filters = useMemo<DocumentArchiveFilter>(() => {
@@ -311,7 +311,7 @@ export function AllUserArchivesView() {
           <Select
             value={uploadStatus}
             onChange={(event) => setUploadStatus(event.target.value as "UPLOADED" | "MISSING" | "")}
-            placeholder="Semua Status Upload"
+            placeholder="Sudah Upload"
             className="h-9 text-xs font-semibold"
             options={[
               { value: "UPLOADED", label: "Sudah Upload" },
@@ -338,7 +338,7 @@ export function AllUserArchivesView() {
         isLoading={isLoading}
         loadingMessage="Memuat rekap arsip pegawai..."
         emptyMessage="Tidak ada data rekap ditemukan"
-        emptyDescription="Belum ada kewajiban dokumen yang cocok dengan pencarian atau filter ini."
+        emptyDescription="Belum ada dokumen yang sudah diupload dan cocok dengan pencarian atau filter ini."
         emptyIcon={FileText}
         keyExtractor={(item) => item.key}
       />

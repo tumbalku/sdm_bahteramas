@@ -3,6 +3,17 @@ import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { authOptions } from "@/lib/auth-options";
 
+export {
+  ADMIN_CAPABLE_ROLES,
+  EMPLOYEE_CAPABLE_ROLES,
+  VERIFICATION_CAPABLE_ROLES,
+  canManageAllDocuments,
+  canManageOwnDocuments,
+  canManageUsers,
+  canVerifyDocuments,
+  hasCapability,
+} from "@/lib/rbac";
+
 export interface AuthUser {
   id: string;
   name: string;

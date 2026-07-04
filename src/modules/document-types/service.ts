@@ -1,5 +1,5 @@
 import { logActivity } from "@/lib/security-log";
-import { AuthUser } from "@/lib/auth-utils";
+import type { AuthUser } from "@/lib/auth-utils";
 import { getStorageProvider } from "@/lib/storage";
 import * as repo from "./repository";
 import {
@@ -13,17 +13,15 @@ import {
   UpdateDocumentTypeInput,
 } from "./types";
 import { createDocumentTypeSchema, updateDocumentTypeSchema } from "./validation";
+import {
+  buildDocumentArchiveCsvContent,
+  formatDateTimeForFileName,
+  getDocumentTypeFolderName,
+  rowPassesDocumentFilters,
+} from "./utils";
 
 import { prisma } from "@/lib/prisma";
 import { DocumentStatus } from "@prisma/client";
-
-function getDocumentTypeFolderName(docCode: string) {
-  return docCode
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9_-]/g, "_")
-    .replace(/_+/g, "_");
-}
 
 export function isDocumentTypeApplicableToUser(docType: DocumentTypeRecord, userProfile: any): boolean {
   if (!userProfile) return true;
@@ -187,88 +185,107 @@ export async function deleteDocumentTypeService(
   return true;
 }
 
-function toStartOfDay(date?: string) {
-  if (!date) return null;
-  const parsed = new Date(`${date}T00:00:00.000Z`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function toEndOfDay(date?: string) {
-  if (!date) return null;
-  const parsed = new Date(`${date}T23:59:59.999Z`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function isWithinDateRange(value: Date | null | undefined, from?: Date | null, to?: Date | null) {
-  if (!from && !to) return true;
-  if (!value) return false;
-  if (from && value < from) return false;
-  if (to && value > to) return false;
-  return true;
-}
-
-function hasDateFilters(filters: DocumentArchiveFilter) {
-  return Boolean(
-    filters.issueDateFrom ||
-      filters.issueDateTo ||
-      filters.expiryDateFrom ||
-      filters.expiryDateTo ||
-      filters.uploadedAtFrom ||
-      filters.uploadedAtTo
-  );
-}
-
-function formatDateOnly(value?: Date | string | null) {
-  if (!value) return "";
-  return new Date(value).toISOString().slice(0, 10);
-}
-
-function formatDateTimeForFileName(date = new Date()) {
-  const pad = (value: number) => String(value).padStart(2, "0");
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
-}
-
-function formatStatusLabel(status?: DocumentStatus | null) {
-  if (status === DocumentStatus.APPROVED) return "Disetujui";
-  if (status === DocumentStatus.REJECTED) return "Ditolak";
-  if (status === DocumentStatus.PENDING) return "Menunggu";
-  return "Belum Upload";
-}
-
-function escapeCsvValue(value: unknown) {
-  const stringValue = value === null || value === undefined ? "" : String(value);
-  if (/[",\n\r]/.test(stringValue)) {
-    return `"${stringValue.replace(/"/g, '""')}"`;
-  }
-  return stringValue;
-}
-
-function rowPassesDocumentFilters(row: DocumentArchiveRow, filters: DocumentArchiveFilter) {
-  if (filters.uploadStatus && row.uploadStatus !== filters.uploadStatus) return false;
-  if (filters.status && row.status !== filters.status) return false;
-
-  if (hasDateFilters(filters)) {
-    if (!row.document) return false;
-
-    if (!isWithinDateRange(row.document.issueDate, toStartOfDay(filters.issueDateFrom), toEndOfDay(filters.issueDateTo))) {
-      return false;
-    }
-    if (!isWithinDateRange(row.document.expiryDate, toStartOfDay(filters.expiryDateFrom), toEndOfDay(filters.expiryDateTo))) {
-      return false;
-    }
-    if (!isWithinDateRange(row.document.uploadedAt, toStartOfDay(filters.uploadedAtFrom), toEndOfDay(filters.uploadedAtTo))) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 export async function getDocumentArchiveRecapService(filters: DocumentArchiveFilter = {}): Promise<DocumentArchiveRecap> {
-  const [employees, documentTypes] = await Promise.all([
-    repo.findArchiveEmployees(filters),
-    repo.findMandatoryArchiveDocumentTypes(filters),
-  ]);
+  const employees = await repo.findArchiveEmployees(filters);
+
+  if (filters.uploadStatus === "UPLOADED") {
+    const employeeById = new Map(employees.map((employee) => [employee.id, employee]));
+    const documents = await repo.findUploadedArchiveDocuments(
+      employees.map((employee) => employee.id),
+      filters
+    );
+
+    const rows: DocumentArchiveRow[] = documents
+      .map((document) => {
+        const employee = employeeById.get(document.ownerId);
+        if (!employee) return null;
+
+        const documentType = {
+          ...document.documentType,
+          targetProfessions: document.documentType.documentProfessions?.map((dp: any) => ({
+            id: dp.professionGroup.id,
+            name: dp.professionGroup.name,
+          })) || [],
+          targetStatuses: document.documentType.documentStatuses?.map((ds: any) => ({
+            id: ds.employmentStatus.id,
+            name: ds.employmentStatus.name,
+          })) || [],
+          targetGroups: document.documentType.documentGroups?.map((dg: any) => ({
+            id: dg.employeeGroup.id,
+            name: dg.employeeGroup.name,
+          })) || [],
+          targetRanks: document.documentType.documentRanks?.map((dr: any) => ({
+            id: dr.employeeRank.id,
+            name: dr.employeeRank.name,
+          })) || [],
+          targetWorkplaces: document.documentType.documentWorkplaces?.map((dw: any) => ({
+            id: dw.workplace.id,
+            name: dw.workplace.name,
+          })) || [],
+        };
+
+        const row: DocumentArchiveRow = {
+          key: document.id,
+          uploadStatus: "UPLOADED",
+          employee: {
+            id: employee.id,
+            employeeId: employee.employeeId,
+            name: employee.name,
+            avatarUrl: employee.avatarUrl,
+            employmentStatusName: employee.employmentStatus?.name ?? null,
+            employeeGroupName: employee.employeeGroup?.name ?? null,
+            professionGroupName: employee.professionGroup?.name ?? null,
+            employeePositionName: employee.employeePosition?.name ?? null,
+            employeeRankName: employee.employeeRank?.name ?? null,
+            workplaceName: employee.workplace?.name ?? null,
+          },
+          documentType: {
+            id: documentType.id,
+            code: documentType.code,
+            name: documentType.name,
+            archiveCategory: documentType.archiveCategory,
+          },
+          document: {
+            id: document.id,
+            fileName: document.fileName,
+            filePath: document.filePath,
+            documentNumber: document.documentNumber,
+            issueDate: document.issueDate,
+            expiryDate: document.expiryDate,
+            uploadedAt: document.uploadedAt,
+            status: document.status,
+            latestReviewNote: document.verificationHistories[0]?.reviewNote ?? null,
+          },
+          status: document.status,
+        };
+
+        return rowPassesDocumentFilters(row, filters) ? row : null;
+      })
+      .filter((row): row is DocumentArchiveRow => row !== null);
+
+    const approved = rows.filter((row) => row.status === DocumentStatus.APPROVED).length;
+    const pending = rows.filter((row) => row.status === DocumentStatus.PENDING).length;
+    const rejected = rows.filter((row) => row.status === DocumentStatus.REJECTED).length;
+
+    return {
+      rows,
+      stats: {
+        totalRequired: rows.length,
+        uploaded: rows.length,
+        approved,
+        pending,
+        rejected,
+        missing: 0,
+        percentage: rows.length > 0 ? 100 : 0,
+        employeeCount: new Set(rows.map((row) => row.employee.id)).size,
+        documentTypeCount: new Set(rows.map((row) => row.documentType.id)).size,
+      },
+      generatedAt: new Date().toISOString(),
+      filters,
+    };
+  }
+
+  const documentTypes = await repo.findMandatoryArchiveDocumentTypes(filters);
 
   const documents = await repo.findArchiveDocuments(
     employees.map((employee) => employee.id),
@@ -365,58 +382,6 @@ export async function getDocumentArchiveRecapService(filters: DocumentArchiveFil
     generatedAt: new Date().toISOString(),
     filters,
   };
-}
-
-function buildDocumentArchiveCsvContent(recap: DocumentArchiveRecap) {
-  const headers = [
-    "NIP",
-    "Nama Pegawai",
-    "Unit Kerja",
-    "Profesi",
-    "Status Kepegawaian",
-    "Jenis Pegawai",
-    "Jenis Dokumen",
-    "Kode Dokumen",
-    "Kategori Arsip",
-    "Status Upload",
-    "Status Verifikasi",
-    "Nomor Surat",
-    "Tanggal Terbit",
-    "Tanggal Kedaluwarsa",
-    "Tanggal Upload",
-    "Nama File",
-    "Catatan Terakhir",
-  ];
-
-  const dataRows = recap.rows
-    .map((row) => {
-      const values = [
-        row.employee.employeeId,
-        row.employee.name,
-        row.employee.workplaceName,
-        row.employee.professionGroupName,
-        row.employee.employmentStatusName,
-        row.employee.employeeGroupName,
-        row.documentType.name,
-        row.documentType.code,
-        row.documentType.archiveCategory,
-        row.uploadStatus === "UPLOADED" ? "Sudah Upload" : "Belum Upload",
-        formatStatusLabel(row.status),
-        row.document?.documentNumber,
-        formatDateOnly(row.document?.issueDate),
-        formatDateOnly(row.document?.expiryDate),
-        formatDateOnly(row.document?.uploadedAt),
-        row.document?.fileName,
-        row.document?.latestReviewNote,
-      ];
-
-      return values.map(escapeCsvValue).join(",");
-    });
-
-  return `\uFEFF${[
-    headers.map(escapeCsvValue).join(","),
-    ...dataRows,
-  ].join("\n")}`;
 }
 
 export async function exportDocumentArchiveRecapService(

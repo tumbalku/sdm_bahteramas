@@ -4,12 +4,14 @@ import {
   createDocumentRecord,
   deleteDocumentRecord,
   findDocumentById,
+  findDocumentByOwnerAndType,
   findDocuments,
   findDocumentTypeById,
 } from "./repository";
 import { prisma } from "@/lib/prisma";
 import { parseAllowedFormats, slugifyFileName } from "@/lib/utils";
 import { logActivity } from "@/lib/security-log";
+import { canManageAllDocuments, canManageOwnDocuments } from "@/lib/rbac";
 import { DocumentStatus } from "@prisma/client";
 
 function getDocumentTypeFolderName(docCode: string) {
@@ -67,6 +69,13 @@ export async function uploadDocumentService(
   const docType = await findDocumentTypeById(input.documentTypeId);
   if (!docType) {
     throw new Error("Jenis dokumen tidak ditemukan");
+  }
+
+  if (!input.replaceDocumentId) {
+    const existingDocument = await findDocumentByOwnerAndType(input.ownerId, input.documentTypeId);
+    if (existingDocument) {
+      throw new Error(`Dokumen ${docType.code} sudah pernah diupload. Gunakan upload ulang jika dokumen ditolak.`);
+    }
   }
 
   let replacementAuditSnapshot: Record<string, unknown> | undefined;
@@ -237,12 +246,19 @@ export async function getDocumentsService(
   filters: DocumentFilterDto,
   actor: { id: string; role: string }
 ) {
-  // RBAC: EMPLOYEE & STAFF hanya bisa melihat dokumennya sendiri di "Dokumen Saya"
-  if (actor.role !== "ADMIN") {
-    filters.ownerId = actor.id;
+  if (!canManageOwnDocuments(actor.role)) {
+    throw new Error("Akses ditolak");
   }
 
-  return findDocuments(filters);
+  const nextFilters = { ...filters };
+
+  // Default endpoint ini dipakai oleh halaman "Dokumen Saya".
+  // ADMIN tetap bisa meminta ownerId eksplisit untuk konteks admin-wide.
+  if (!canManageAllDocuments(actor.role) || !nextFilters.ownerId) {
+    nextFilters.ownerId = actor.id;
+  }
+
+  return findDocuments(nextFilters);
 }
 
 export async function deleteDocumentService(
@@ -256,8 +272,12 @@ export async function deleteDocumentService(
   }
 
   // RBAC rules:
-  // EMPLOYEE & STAFF hanya bisa menghapus dokumen milik sendiri DAN statusnya bukan APPROVED
-  if (actor.role === "EMPLOYEE" || actor.role === "STAFF") {
+  // STAFF dan EMPLOYEE hanya bisa menghapus dokumen milik sendiri DAN statusnya bukan APPROVED.
+  // ADMIN tetap mempertahankan hak admin-wide untuk menghapus dokumen siapapun.
+  if (!canManageAllDocuments(actor.role)) {
+    if (!canManageOwnDocuments(actor.role)) {
+      throw new Error("Akses ditolak");
+    }
     if (document.ownerId !== actor.id) {
       throw new Error("Tidak memiliki akses untuk menghapus dokumen ini");
     }

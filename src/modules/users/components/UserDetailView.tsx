@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
+import { getTmtStartLabel, getTmtSummaryLabel, shouldShowTmtEnd } from "@/lib/tmt";
 
 interface UserDetailViewProps {
   userId: string;
@@ -78,6 +79,9 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
   };
 
   const currentRole = roleConfig[profile.role] || roleConfig.EMPLOYEE;
+  const tmtLabel = getTmtSummaryLabel(profile);
+  const tmtStartLabel = getTmtStartLabel(profile);
+  const showTmtEnd = shouldShowTmtEnd(profile);
 
   return (
     <div className="page-container space-y-5 animate-fade-in pb-8">
@@ -170,12 +174,16 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               {profile.hasTmt && (
                 <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                   <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
-                    <Calendar className="w-3.5 h-3.5 text-primary" /> Masa Kontrak
+                    <Calendar className="w-3.5 h-3.5 text-primary" /> {tmtLabel}
                   </span>
                   <span className="font-bold text-foreground text-right">
                     {profile.tmtStartDate ? format(new Date(profile.tmtStartDate), "dd MMM yyyy", { locale: idLocale }) : "Tidak ditentukan"}
-                    {" - "}
-                    {profile.tmtEndDate ? format(new Date(profile.tmtEndDate), "dd MMM yyyy", { locale: idLocale }) : "Tidak ditentukan"}
+                    {profile.tmtEndDate && (
+                      <>
+                        {" - "}
+                        {format(new Date(profile.tmtEndDate), "dd MMM yyyy", { locale: idLocale })}
+                      </>
+                    )}
                   </span>
                 </div>
               )}
@@ -299,7 +307,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               {profile.hasTmt && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1">Tanggal Mulai TMT</label>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1">{tmtStartLabel}</label>
                     <div className="px-4 py-2.5 bg-accent/20 border border-border/40 rounded-xl font-medium text-foreground text-sm">
                       {profile.tmtStartDate
                         ? format(new Date(profile.tmtStartDate), "dd MMMM yyyy", { locale: idLocale })
@@ -307,14 +315,16 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1">Tanggal Akhir TMT / Kontrak</label>
-                    <div className="px-4 py-2.5 bg-accent/20 border border-border/40 rounded-xl font-medium text-foreground text-sm">
-                      {profile.tmtEndDate
-                        ? format(new Date(profile.tmtEndDate), "dd MMMM yyyy", { locale: idLocale })
-                        : "Tidak ditentukan"}
+                  {showTmtEnd && (
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground mb-1">Akhir Masa Kontrak</label>
+                      <div className="px-4 py-2.5 bg-accent/20 border border-border/40 rounded-xl font-medium text-foreground text-sm">
+                        {profile.tmtEndDate
+                          ? format(new Date(profile.tmtEndDate), "dd MMMM yyyy", { locale: idLocale })
+                          : "-"}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </>
               )}
 

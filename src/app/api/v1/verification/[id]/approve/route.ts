@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
+import { canVerifyDocuments } from "@/lib/rbac";
 import { approveDocumentService } from "@/modules/verification/service";
 
 export async function POST(
@@ -13,7 +14,7 @@ export async function POST(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== "ADMIN" && session.user.role !== "STAFF") {
+    if (!canVerifyDocuments(session.user.role)) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 

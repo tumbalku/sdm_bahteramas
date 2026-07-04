@@ -291,19 +291,19 @@ export function UserFormModal({
                 }}
                 className="h-4 w-4 rounded border-border accent-primary"
               />
-              Pegawai memiliki TMT / masa kontrak
+              Pegawai memiliki data TMT
             </label>
 
             {hasTmt && (
               <div className="grid grid-cols-2 gap-4">
-                <FormField label="Mulai TMT">
+                <FormField label="Mulai TMT / Kontrak">
                   <Input
                     type="date"
                     value={tmtStartDate}
                     onChange={(e) => setTmtStartDate(e.target.value)}
                   />
                 </FormField>
-                <FormField label="Akhir TMT / Kontrak">
+                <FormField label="Akhir TMT / Kontrak (Opsional)">
                   <Input
                     type="date"
                     value={tmtEndDate}

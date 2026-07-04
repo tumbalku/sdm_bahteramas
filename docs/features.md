@@ -69,13 +69,13 @@
 |---|---|
 | **Modul** | `src/modules/documents/` |
 | **Status** | 🟢 Selesai |
-| **Role** | `EMPLOYEE` (upload/lihat sendiri), `ADMIN` (semua) |
+| **Role** | `ADMIN`, `STAFF`, `EMPLOYEE` (dokumen personal); `ADMIN` (semua dokumen) |
 | **Dependency** | F01 (Auth), F03 (Document Types) |
 
 **Sub-fitur:**
-- Upload dokumen (file + metadata: issueDate, expiryDate)
+- Upload dokumen personal (file + metadata: issueDate, expiryDate)
 - Tampilkan dokumen dalam 3 tab: Arsip Utama / Kondisional / Profesi
-- Hapus dokumen (EMPLOYEE: milik sendiri + bukan APPROVED; ADMIN: semua)
+- Hapus dokumen (STAFF/EMPLOYEE: milik sendiri + bukan APPROVED; ADMIN: semua)
 - Download dokumen
 - Filter dokumen per status dan kategori
 - Generate nama file standar (`generateStorageFileName()`)

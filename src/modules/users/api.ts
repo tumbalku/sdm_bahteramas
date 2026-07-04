@@ -93,3 +93,13 @@ export async function exportUserDocumentsCsvApi(userId: string) {
     `dokumen-pegawai-${userId}.csv`
   );
 }
+
+export async function fetchUserCategoriesApi() {
+  return apiClient<{
+    employmentStatuses: { id: string; name: string; employeeGroups: { id: string; name: string }[] }[];
+    professionGroups: { id: string; name: string; employeePositions: { id: string; name: string }[] }[];
+    employeeRanks: { id: string; name: string }[];
+    workplaces: { id: string; name: string }[];
+  }>("/api/v1/users/categories", { method: "GET" });
+}
+

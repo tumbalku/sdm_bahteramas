@@ -25,6 +25,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Skeleton, CardSkeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
+import { getTmtSummaryLabel } from "@/lib/tmt";
 
 export function ProfileView() {
   const { data: profile, isLoading, error } = useProfile();
@@ -68,6 +69,7 @@ export function ProfileView() {
   };
 
   const currentRole = roleConfig[profile.role] || roleConfig.EMPLOYEE;
+  const tmtLabel = getTmtSummaryLabel(profile);
 
   return (
     <div className="page-container space-y-5 animate-fade-in pb-8">
@@ -171,12 +173,16 @@ export function ProfileView() {
               {profile.hasTmt && (
                 <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                   <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
-                    <Calendar className="w-3.5 h-3.5 text-primary" /> Masa Kontrak
+                    <Calendar className="w-3.5 h-3.5 text-primary" /> {tmtLabel}
                   </span>
                   <span className="font-bold text-foreground text-right">
                     {profile.tmtStartDate ? format(new Date(profile.tmtStartDate), "dd MMM yyyy", { locale: idLocale }) : "Tidak ditentukan"}
-                    {" - "}
-                    {profile.tmtEndDate ? format(new Date(profile.tmtEndDate), "dd MMM yyyy", { locale: idLocale }) : "Tidak ditentukan"}
+                    {profile.tmtEndDate && (
+                      <>
+                        {" - "}
+                        {format(new Date(profile.tmtEndDate), "dd MMM yyyy", { locale: idLocale })}
+                      </>
+                    )}
                   </span>
                 </div>
               )}

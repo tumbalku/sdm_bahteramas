@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
+import { canVerifyDocuments } from "@/lib/rbac";
 import { getPendingDocumentsService } from "@/modules/verification/service";
 
 // Verification API Route
@@ -11,7 +12,7 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== "ADMIN" && session.user.role !== "STAFF") {
+    if (!canVerifyDocuments(session.user.role)) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 

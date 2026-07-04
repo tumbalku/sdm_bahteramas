@@ -9,7 +9,7 @@ Aplikasi SMDP Portal menggunakan Next.js 15 dengan Prisma ORM untuk semua intera
 Supabase mendeteksi peringatan keamanan `rls_disabled_in_public` pada project ini. Peringatan ini muncul karena tabel-tabel di schema `public` tidak mengaktifkan fitur Row Level Security (RLS). Jika suatu saat endpoint REST API Supabase (anon/authenticated keys) terekspos, pihak luar berpotensi membaca/mengubah data pada tabel yang RLS-nya nonaktif.
 
 ## Findings
-Dari hasil audit menyeluruh terhadap schema Prisma, terdapat **18 tabel** pada schema `public` yang saat ini belum memiliki RLS yang aktif:
+Dari hasil audit menyeluruh terhadap schema Prisma, terdapat **17 tabel** pada schema `public` yang saat ini belum memiliki RLS yang aktif setelah normalisasi RBAC single-role:
 1. `EmploymentStatus`
 2. `EmployeeGroup`
 3. `ProfessionGroup`
@@ -17,20 +17,19 @@ Dari hasil audit menyeluruh terhadap schema Prisma, terdapat **18 tabel** pada s
 5. `EmployeeRank`
 6. `Workplace`
 7. `User`
-8. `UserRole`
-9. `DocumentType`
-10. `DocumentTypeProfession`
-11. `DocumentTypeEmploymentStatus`
-12. `DocumentTypeEmployeeGroup`
-13. `DocumentTypeEmployeeRank`
-14. `DocumentTypeWorkplace`
-15. `DocumentRecord`
-16. `VerificationHistory`
-17. `SecurityLog`
-18. `SystemSetting`
+8. `DocumentType`
+9. `DocumentTypeProfession`
+10. `DocumentTypeEmploymentStatus`
+11. `DocumentTypeEmployeeGroup`
+12. `DocumentTypeEmployeeRank`
+13. `DocumentTypeWorkplace`
+14. `DocumentRecord`
+15. `VerificationHistory`
+16. `SecurityLog`
+17. `SystemSetting`
 
 ## Actions Taken
-1. **Enable RLS:** RLS akan diaktifkan (via instruksi `ENABLE ROW LEVEL SECURITY`) pada seluruh 18 tabel di atas.
+1. **Enable RLS:** RLS akan diaktifkan (via instruksi `ENABLE ROW LEVEL SECURITY`) pada seluruh 17 tabel di atas.
 2. **No Policies Created:** Sesuai constraint arsitektur (tidak menggunakan REST API Supabase), tidak ada policy yang dibuat untuk role anon atau authenticated. Di PostgreSQL, mengaktifkan RLS tanpa membuat policy apa pun akan menghasilkan perilaku **DENY ALL**.
 
 ## Architecture Impact & Safety

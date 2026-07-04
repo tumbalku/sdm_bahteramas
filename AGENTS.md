@@ -172,7 +172,10 @@ Semua implementasi mengacu pada PRD `PRD-SMDP-PORTAL-v1.0-20260627.md`. Lihat `d
 4. **Gunakan dokumentasi sebagai source of truth**, bukan asumsi.
 5. Sebelum membuat fitur baru, cek `docs/features.md` untuk memastikan belum ada duplikasi.
 6. Setelah menyelesaikan task besar, **update `docs/progress.md`** secara otomatis.
-7. Jika menemukan perubahan arsitektur besar, update `docs/architecture.md` dan buat ADR baru di `docs/adr/`.
+7. Jika item di section `## 🔴 Yang Belum Dibuat` sudah diimplementasi, **hapus/pindahkan dari section tersebut** dan catat hasilnya di `## ✅ Yang Sudah Selesai`.
+8. Jika menemukan perubahan arsitektur besar, update `docs/architecture.md` dan buat ADR baru di `docs/adr/`.
+9. Setelah melakukan perubahan kode atau dokumentasi, **wajib jalankan test yang relevan**. Untuk perubahan logic, service, repository, API, helper, validation, atau komponen, jalankan minimal `npm test -- --run` dan `npx tsc --noEmit`.
+10. Sebelum melakukan commit, **pastikan seluruh test berjalan baik**: `npm test -- --run` harus lulus dan `npx tsc --noEmit` harus lulus. Jika test tidak bisa dijalankan, tulis alasan dan risiko secara eksplisit sebelum meminta commit.
 
 ---
 
@@ -188,6 +191,7 @@ Semua implementasi mengacu pada PRD `PRD-SMDP-PORTAL-v1.0-20260627.md`. Lihat `d
 - **Naming berkas storage:** `{NIP}_{KATEGORI}_{KODE}_{YYYYMMDD}_{VERSI}.{ext}`
 - **Git branch:** `<type>/<tiket>-<deskripsi>` (contoh: `feat/SMDP-12-upload-dokumen`)
 - **Git commit:** Conventional Commits (contoh: `feat(documents): tambah filter kategori arsip`)
+- **Quality gate:** setiap perubahan dan setiap commit harus didahului verifikasi test/typecheck yang relevan. Default project: `npm test -- --run` dan `npx tsc --noEmit`.
 
 ---
 
@@ -208,5 +212,3 @@ Semua implementasi mengacu pada PRD `PRD-SMDP-PORTAL-v1.0-20260627.md`. Lihat `d
 ---
 
 > **React Component Architecture Rules, Code Quality Rules, dan Final Goal** tersimpan di [`docs/coding-standard.md`](docs/coding-standard.md). Baca file tersebut sebelum menulis atau mereview kode komponen.
-
-

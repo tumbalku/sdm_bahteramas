@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
+import { canManageAllDocuments } from "@/lib/rbac";
 import { findDocumentById } from "@/modules/documents/repository";
 import { deleteDocumentService } from "@/modules/documents/service";
 
@@ -21,8 +22,7 @@ export async function GET(
       return NextResponse.json({ message: "Dokumen tidak ditemukan" }, { status: 404 });
     }
 
-    // RBAC: hanya ADMIN yang bisa melihat dokumen milik pegawai lain.
-    if (session.user.role !== "ADMIN" && document.ownerId !== session.user.id) {
+    if (!canManageAllDocuments(session.user.role) && document.ownerId !== session.user.id) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 

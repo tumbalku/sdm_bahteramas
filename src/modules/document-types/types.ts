@@ -1,5 +1,25 @@
 import { DocumentArchiveCategory, DocumentStatus } from "@prisma/client";
 
+export interface DocumentTypeFormState {
+  code: string;
+  name: string;
+  description: string;
+  archiveCategory: DocumentArchiveCategory;
+  isMandatory: boolean;
+  requiresExpiryDate: boolean;
+  requiresIssueDate: boolean;
+  requiresDocumentNumber: boolean;
+  selectedFormats: string[];
+  sizeValue: number;
+  sizeUnit: "KB" | "MB";
+  selectedStatuses: string[];
+  selectedGroups: string[];
+  selectedProfessions: string[];
+  selectedRanks: string[];
+  selectedWorkplaces: string[];
+}
+
+
 export interface TargetSummary {
   id: string;
   name: string;

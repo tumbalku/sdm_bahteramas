@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DocumentArchiveCategory } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useDocuments, useUploadDocument, useDeleteDocument } from "../hooks";
@@ -14,6 +14,7 @@ import { UploadCloud, FileText } from "lucide-react";
 import { DocumentUploadInput, DocumentRecordDto } from "../types";
 import { PageHeader } from "@/components/PageHeader";
 import { CompletenessCard } from "@/components/CompletenessCard";
+import { canManageOwnDocuments } from "@/lib/rbac";
 
 export function DocumentsView() {
   const { data: session } = useSession();
@@ -21,6 +22,11 @@ export function DocumentsView() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<DocumentRecordDto | null>(null);
   const [docToReplace, setDocToReplace] = useState<DocumentRecordDto | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const currentUserRole = (session?.user as any)?.role || "EMPLOYEE";
   const currentUserId = (session?.user as any)?.id || "";
@@ -29,25 +35,29 @@ export function DocumentsView() {
   const { data: allDocuments = [], isLoading: isLoadingDocs } = useDocuments({});
   const { data: allDocTypes = [] } = useDocumentTypes({ forUser: true });
 
+  const activeDocuments = isMounted ? allDocuments : [];
+  const activeDocTypes = isMounted ? allDocTypes : [];
+  const showLoading = !isMounted || isLoadingDocs;
+
   const uploadMutation = useUploadDocument();
   const deleteMutation = useDeleteDocument();
 
   // Filter documents for the currently active tab
   const currentTabDocuments = useMemo(() => {
-    return allDocuments.filter(
+    return activeDocuments.filter(
       (doc) => doc.documentType?.archiveCategory === activeTab
     );
-  }, [allDocuments, activeTab]);
+  }, [activeDocuments, activeTab]);
 
   // Calculate completeness stats per category (only count APPROVED documents)
   const stats = useMemo(() => {
     const categories: DocumentArchiveCategory[] = ["UTAMA", "KONDISIONAL", "PROFESI"];
 
     return categories.reduce((acc, cat) => {
-      const typesInCategory = allDocTypes.filter((dt) => dt.archiveCategory === cat);
+      const typesInCategory = activeDocTypes.filter((dt) => dt.archiveCategory === cat);
       const total = typesInCategory.length;
 
-      const approvedDocsInCategory = allDocuments.filter(
+      const approvedDocsInCategory = activeDocuments.filter(
         (d) => d.documentType?.archiveCategory === cat && d.status === "APPROVED"
       );
       const approvedTypeIds = new Set(approvedDocsInCategory.map((d) => d.documentTypeId));
@@ -58,7 +68,7 @@ export function DocumentsView() {
       acc[cat] = { uploaded, total, percentage };
       return acc;
     }, {} as Record<DocumentArchiveCategory, TabStat>);
-  }, [allDocuments, allDocTypes]);
+  }, [activeDocuments, activeDocTypes]);
 
   // Calculate overall completeness across all categories
   const overallStats = useMemo(() => {
@@ -93,9 +103,7 @@ export function DocumentsView() {
         title="Manajemen Dokumen"
         description="Kelola arsip kepegawaian dan persyaratan profesi"
         action={
-          (currentUserRole === "EMPLOYEE" ||
-            currentUserRole === "ADMIN" ||
-            currentUserRole === "STAFF") && (
+          canManageOwnDocuments(currentUserRole) && (
             <Button
               onClick={() => {
                 setDocToReplace(null);
@@ -122,7 +130,7 @@ export function DocumentsView() {
 
       <DocumentList
         documents={currentTabDocuments}
-        isLoading={isLoadingDocs}
+        isLoading={showLoading}
         onDelete={(doc) => setDocToDelete(doc)}
         onReplace={(doc) => {
           if (doc.documentType?.archiveCategory) {
@@ -144,6 +152,7 @@ export function DocumentsView() {
         onSubmit={handleUploadSubmit}
         isLoading={uploadMutation.isPending}
         activeCategory={activeTab}
+        existingDocuments={activeDocuments}
         replacementDocument={docToReplace}
       />
 

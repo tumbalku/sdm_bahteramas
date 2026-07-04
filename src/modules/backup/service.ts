@@ -58,7 +58,6 @@ export async function generateDatabaseSqlDump(actor: { id: string; name: string;
         "createdAt", "updatedAt"
       ] 
     },
-    { name: "UserRole", cols: ["id", "userId", "role"] },
     { 
       name: "DocumentType", 
       cols: [

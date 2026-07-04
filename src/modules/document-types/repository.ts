@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getStorageProvider } from "@/lib/storage";
+import { EMPLOYEE_CAPABLE_ROLES } from "@/lib/rbac";
 import { Prisma } from "@prisma/client";
 import {
   DocumentArchiveFilter,
@@ -243,7 +244,7 @@ export async function deleteDocumentType(id: string): Promise<boolean> {
 
 export async function findArchiveEmployees(filters: DocumentArchiveFilter) {
   const where: Prisma.UserWhereInput = {
-    role: "EMPLOYEE",
+    role: { in: [...EMPLOYEE_CAPABLE_ROLES] },
   };
 
   if (filters.search) {
@@ -309,6 +310,41 @@ export async function findArchiveDocuments(ownerIds: string[], documentTypeIds: 
       documentTypeId: { in: documentTypeIds },
     },
     include: {
+      verificationHistories: {
+        take: 1,
+        orderBy: { reviewedAt: "desc" },
+        select: {
+          reviewNote: true,
+          reviewedAt: true,
+          status: true,
+        },
+      },
+    },
+    orderBy: [{ uploadedAt: "desc" }, { updatedAt: "desc" }],
+  });
+}
+
+export async function findUploadedArchiveDocuments(ownerIds: string[], filters: DocumentArchiveFilter) {
+  if (ownerIds.length === 0) return [];
+
+  const where: Prisma.DocumentRecordWhereInput = {
+    ownerId: { in: ownerIds },
+  };
+
+  if (filters.documentTypeId) where.documentTypeId = filters.documentTypeId;
+  if (filters.status) where.status = filters.status;
+  if (filters.archiveCategory) {
+    where.documentType = {
+      archiveCategory: filters.archiveCategory,
+    };
+  }
+
+  return prisma.documentRecord.findMany({
+    where,
+    include: {
+      documentType: {
+        include: defaultInclude,
+      },
       verificationHistories: {
         take: 1,
         orderBy: { reviewedAt: "desc" },

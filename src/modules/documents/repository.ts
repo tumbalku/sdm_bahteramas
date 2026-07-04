@@ -113,6 +113,16 @@ export async function findDocumentById(id: string) {
   });
 }
 
+export async function findDocumentByOwnerAndType(ownerId: string, documentTypeId: string) {
+  return prisma.documentRecord.findFirst({
+    where: {
+      ownerId,
+      documentTypeId,
+    },
+    orderBy: [{ uploadedAt: "desc" }, { updatedAt: "desc" }],
+  });
+}
+
 export async function deleteDocumentRecord(id: string) {
   return prisma.documentRecord.delete({
     where: { id },

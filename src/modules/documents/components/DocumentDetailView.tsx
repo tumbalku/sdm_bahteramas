@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useDocument } from "../hooks";
 import { PageHeader } from "@/components/PageHeader";
@@ -64,8 +65,15 @@ function DetailItem({
 
 export function DocumentDetailView({ documentId }: DocumentDetailViewProps) {
   const { data: document, isLoading, error } = useDocument(documentId);
+  const [isMounted, setIsMounted] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const showLoading = !isMounted || isLoading;
+
+  if (showLoading) {
     return (
       <div className="page-container space-y-5 animate-fade-in pb-8">
         <Skeleton className="h-16 w-full rounded-2xl" />

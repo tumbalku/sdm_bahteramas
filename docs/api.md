@@ -56,8 +56,7 @@ Verifikasi ulang password user yang sedang login, digunakan untuk aksi sensitif.
   "id": "clx...",
   "email": "user@example.com",
   "name": "Nama Pegawai",
-  "role": "EMPLOYEE",
-  "roles": ["EMPLOYEE"]
+  "role": "EMPLOYEE"
 }
 ```
 
@@ -208,7 +207,7 @@ Ambil rekapitulasi arsip dokumen wajib seluruh pegawai.
 
 - **Auth:** `ADMIN`
 - **Query Params:** `search`, `archiveCategory`, `documentTypeId`, `status`, `uploadStatus`, `employmentStatusId`, `employeeGroupId`, `professionGroupId`, `employeePositionId`, `employeeRankId`, `workplaceId`, `issueDateFrom`, `issueDateTo`, `expiryDateFrom`, `expiryDateTo`, `uploadedAtFrom`, `uploadedAtTo`.
-- **Behavior:** denominator progress dihitung dari pasangan pegawai `EMPLOYEE` dan `DocumentType.isMandatory=true` yang berlaku sesuai target status/golongan/profesi/pangkat/unit kerja; dokumen yang sudah ada dihitung sebagai `Sudah Upload`, dan pasangan tanpa dokumen dihitung `Belum Upload`.
+- **Behavior:** denominator progress dihitung dari pasangan user internal dengan kemampuan `EMPLOYEE` (`ADMIN`, `STAFF`, `EMPLOYEE`) dan `DocumentType.isMandatory=true` yang berlaku sesuai target status/golongan/profesi/pangkat/unit kerja; dokumen yang sudah ada dihitung sebagai `Sudah Upload`, dan pasangan tanpa dokumen dihitung `Belum Upload`. Mode `Sudah Upload` menampilkan `DocumentRecord` aktual dari semua role internal tersebut.
 - **Response:** `{ data: { rows, stats, generatedAt, filters } }`.
 
 ### `GET /api/v1/document-types/archives/export`
@@ -228,12 +227,13 @@ Ambil daftar dokumen.
 
 - **Auth:** Required
 - **Query Params:**
-  - `category`: `UTAMA` | `KONDISIONAL` | `PROFESI` (opsional)
+  - `archiveCategory`: `UTAMA` | `KONDISIONAL` | `PROFESI` (opsional)
   - `status`: `PENDING` | `APPROVED` | `REJECTED` (opsional)
-  - `ownerId`: string (opsional — `ADMIN`/`STAFF` bisa lihat milik user lain)
+  - `ownerId`: string (opsional — hanya efektif untuk `ADMIN`; role lain tetap dipaksa ke dokumen milik sendiri)
 - **Behavior:**
-  - `EMPLOYEE`: hanya dapat melihat dokumen milik sendiri
-  - `ADMIN`/`STAFF`: dapat melihat semua dokumen, filter by `ownerId`
+  - Default endpoint ini adalah konteks Dokumen Saya: `ADMIN`, `STAFF`, dan `EMPLOYEE` melihat dokumen personal milik sendiri.
+  - `ADMIN` dapat memakai `ownerId` eksplisit untuk melihat dokumen user lain pada konteks admin-wide.
+  - `STAFF` dan `EMPLOYEE` tetap dipaksa ke dokumen milik sendiri walaupun mengirim `ownerId` user lain.
 - **Response:**
 ```json
 {
@@ -261,7 +261,7 @@ Ambil daftar dokumen.
 ### `POST /api/v1/documents/upload`
 Upload dokumen baru.
 
-- **Auth:** `EMPLOYEE` (atau `ADMIN` untuk upload atas nama pegawai lain)
+- **Auth:** semua role internal (`ADMIN`, `STAFF`, `EMPLOYEE`) untuk upload dokumen milik sendiri.
 - **Content-Type:** `multipart/form-data`
 - **Body:**
   ```
@@ -271,7 +271,7 @@ Upload dokumen baru.
   documentNumber: "800/123/RSUD/2026" (required jika requiresDocumentNumber=true)
   issueDate: "2026-01-15" (required jika requiresIssueDate=true)
   expiryDate: "2028-01-15" (required jika requiresExpiryDate=true)
-  ownerId: "clx..." (opsional — hanya ADMIN yang bisa upload untuk pegawai lain)
+  ownerId: "clx..." (opsional; pada implementasi saat ini route upload memakai user login sebagai owner)
   ```
 - **Validation:**
   - Format file harus sesuai `DocumentType.allowedFormats`
@@ -279,6 +279,7 @@ Upload dokumen baru.
   - `documentNumber` wajib jika `requiresDocumentNumber = true`
   - `issueDate` wajib jika `requiresIssueDate = true`
   - `expiryDate` wajib jika `requiresExpiryDate = true`
+  - Upload normal ditolak jika user sudah memiliki dokumen dengan `documentTypeId` yang sama.
   - `replaceDocumentId` jika diisi wajib merujuk ke dokumen milik user yang login, status `REJECTED`, dan jenis dokumennya sama.
 - **Upload ulang dokumen ditolak:** membuat `DocumentRecord` baru dengan status `PENDING`, menyalin snapshot audit dokumen lama ke `SecurityLog.metadata`, lalu menghapus file dan record dokumen lama agar tidak tampil lagi.
 - **Response:** `201 Created` dengan data `DocumentRecord`.
@@ -289,7 +290,7 @@ Detail satu dokumen.
 - **Auth:** `ADMIN` atau pemilik dokumen
 - **Behavior:**
   - `ADMIN` dapat melihat detail dokumen siapapun.
-  - Role selain `ADMIN` hanya dapat melihat detail dokumen milik sendiri.
+  - `STAFF` dan `EMPLOYEE` hanya dapat melihat detail dokumen milik sendiri.
 - **Response:** Data lengkap dokumen, pemilik, jenis dokumen, dan `verificationHistories` terakhir.
 
 ```json
@@ -330,7 +331,7 @@ Detail satu dokumen.
 Hapus dokumen.
 
 - **Auth:**
-  - `EMPLOYEE`: hanya milik sendiri dan status bukan `APPROVED`
+  - `STAFF`/`EMPLOYEE`: hanya milik sendiri dan status bukan `APPROVED`
   - `ADMIN`: dokumen siapapun
 - **Response:** `204 No Content`
 
@@ -341,7 +342,7 @@ Unduh file dokumen.
 - **Query Params:**
   - `file`: path relatif file di storage, sesuai `DocumentRecord.filePath`
 - **Response:** File stream (Content-Type sesuai format file)
-- **Behavior:** hanya `ADMIN` yang dapat mengunduh file milik pegawai lain; role lain hanya dapat mengunduh file milik sendiri. File dibaca melalui storage bridge aktif (`local` atau `supabase`).
+- **Behavior:** hanya `ADMIN` yang dapat mengunduh file milik user lain; `STAFF` dan `EMPLOYEE` hanya dapat mengunduh file milik sendiri. File dibaca melalui storage bridge aktif (`local` atau `supabase`).
 
 ---
 
@@ -407,7 +408,7 @@ Buat pegawai baru.
 Update data pegawai.
 - **Auth:** `ADMIN`
 - **Body:** Partial dari payload `POST /api/v1/users`, termasuk `hasTmt`, `tmtStartDate`, dan `tmtEndDate`.
-- **Validasi TMT:** Jika `tmtStartDate` dan `tmtEndDate` sama-sama diisi, `tmtEndDate` tidak boleh lebih awal dari `tmtStartDate`.
+- **Validasi TMT:** `tmtEndDate` opsional. Jika `tmtStartDate` dan `tmtEndDate` sama-sama diisi, `tmtEndDate` tidak boleh lebih awal dari `tmtStartDate`.
 
 ### `GET /api/v1/users/import/template`
 Download template CSV import pegawai.
@@ -459,7 +460,7 @@ Export dokumen relevan milik satu pegawai dari Page Preview Profil Pegawai ke CS
 ### `DELETE /api/v1/users/[id]`
 Hapus pegawai.
 - **Auth:** `ADMIN`
-- **Note:** Cascade hapus `UserRole` dan `DocumentRecord`.
+- **Note:** Cascade hapus `DocumentRecord` milik user. Role tersimpan langsung di `User.role`.
 
 ### `GET /api/v1/users/categories`
 Ambil master kategori kepegawaian untuk dropdown dan halaman kategori.
@@ -642,6 +643,7 @@ Export database sebagai file `.sql`.
 | `400 Bad Request` | Validasi Zod gagal |
 | `401 Unauthorized` | Tidak ada sesi aktif |
 | `403 Forbidden` | Role tidak memiliki izin |
+| `409 Conflict` | Data bertabrakan, misalnya upload dokumen dengan `documentTypeId` yang sudah dimiliki user |
 | `404 Not Found` | Resource tidak ditemukan |
 | `500 Internal Server Error` | Error server yang tidak tertangani |
 

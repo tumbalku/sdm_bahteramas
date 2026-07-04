@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, DragEvent } from "react";
 import { DocumentArchiveCategory } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ interface DocumentUploadModalProps {
   onSubmit: (data: DocumentUploadInput) => void;
   isLoading: boolean;
   activeCategory: DocumentArchiveCategory;
+  existingDocuments?: DocumentRecordDto[];
   replacementDocument?: DocumentRecordDto | null;
 }
 
@@ -36,6 +37,7 @@ export function DocumentUploadModal({
   onSubmit,
   isLoading,
   activeCategory,
+  existingDocuments = [],
   replacementDocument,
 }: DocumentUploadModalProps) {
   const { data: documentTypes, isLoading: isLoadingTypes } = useDocumentTypes({ forUser: true });
@@ -48,6 +50,9 @@ export function DocumentUploadModal({
   const [isDragging, setIsDragging] = useState(false);
   const isReplacementMode = Boolean(replacementDocument);
   const modalCopy = getUploadModalCopy(isReplacementMode);
+  const uploadedDocumentTypeIds = useMemo(() => {
+    return new Set(existingDocuments.map((document) => document.documentTypeId));
+  }, [existingDocuments]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -111,9 +116,10 @@ export function DocumentUploadModal({
     fileInputRef.current?.click();
   };
 
-  const currentCategoryTypes = documentTypes?.filter(
-    (type) => type.archiveCategory === activeCategory
-  ) || [];
+  const currentCategoryTypes = documentTypes?.filter((type) => {
+    if (isReplacementMode) return type.id === replacementDocument?.documentTypeId;
+    return type.archiveCategory === activeCategory && !uploadedDocumentTypeIds.has(type.id);
+  }) || [];
 
   const selectedType = documentTypes?.find((type) => type.id === documentTypeId);
   const allowedFormats = selectedType?.allowedFormats
@@ -170,6 +176,11 @@ export function DocumentUploadModal({
             {isReplacementMode && (
               <p className="mt-1 text-xs text-muted-foreground">
                 Jenis dokumen dikunci agar upload ulang tetap mengganti dokumen yang sama.
+              </p>
+            )}
+            {!isReplacementMode && !isLoadingTypes && optionItems.length === 0 && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Semua jenis dokumen pada kategori ini sudah pernah diunggah.
               </p>
             )}
           </div>

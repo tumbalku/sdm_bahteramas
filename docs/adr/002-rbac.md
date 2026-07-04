@@ -27,12 +27,12 @@ Pertanyaan desain:
 ### 1. Tiga Role Cukup
 
 ```
-ADMIN   — Akses penuh ke semua fitur
-STAFF   — Fokus pada verifikasi dokumen + lihat data
+ADMIN   — Akses penuh ke semua fitur; mewarisi kemampuan STAFF dan EMPLOYEE
+STAFF   — Fokus pada verifikasi dokumen + lihat data; mewarisi kemampuan EMPLOYEE
 EMPLOYEE — Kelola dokumen dan profil milik sendiri
 ```
 
-Tidak perlu permission granular di luar 3 role ini untuk v1.0.
+Tidak perlu permission granular di luar 3 role ini untuk v1.0. Permission tidak dianggap eksklusif: kode aplikasi memakai helper capability-based agar `ADMIN` dan `STAFF` juga dapat menjalankan aksi personal milik `EMPLOYEE`.
 
 ### 2. Tiga Lapis Otorisasi
 
@@ -62,7 +62,14 @@ enum Role {
 }
 ```
 
-`role` utama disimpan di `User.role`, dan `UserRole` table mendukung multi-role per user (fleksibel untuk pengembangan lanjutan).
+Role disimpan langsung di `User.role` sebagai source of truth penyimpanan. Untuk v1.0, satu user hanya boleh memiliki satu role sehingga tabel `UserRole` tidak digunakan.
+
+Permission runtime dihitung bertingkat:
+- `ADMIN` memiliki capability `ADMIN`, `STAFF`, dan `EMPLOYEE`.
+- `STAFF` memiliki capability `STAFF` dan `EMPLOYEE`.
+- `EMPLOYEE` hanya memiliki capability `EMPLOYEE`.
+
+Implikasinya, dokumen personal milik `ADMIN` dan `STAFF` tetap masuk ke arsip/rekomputasi dokumen yang berbasis kemampuan employee.
 
 ### 4. Isi Session
 
@@ -71,8 +78,7 @@ enum Role {
   "id": "clx...",
   "email": "...",
   "name": "...",
-  "role": "EMPLOYEE",
-  "roles": ["EMPLOYEE"]
+  "role": "EMPLOYEE"
 }
 ```
 
@@ -82,11 +88,13 @@ enum Role {
 - Sederhana dan mudah dimengerti oleh tim junior
 - 3 lapis otorisasi memberikan keamanan defense-in-depth
 - Enum mencegah typo role (vs string bebas)
-- `UserRole` table memungkinkan user punya lebih dari satu role di masa depan
+- Single-role di `User.role` menghindari duplikasi data role dan lebih mudah diaudit
+- Capability helper menghindari hardcode `role === "EMPLOYEE"` untuk aksi personal
 
 **Negatif / Trade-off:**
 - Tidak ada permission granular per resource (misal: tidak bisa "STAFF hanya bisa verifikasi departemen tertentu")
 - Jika kebutuhan permission berkembang kompleks, perlu refactor ke model RBAC yang lebih canggih (misal: Casbin)
+- Jika kebutuhan multi-role muncul di masa depan, perlu migration baru untuk memisahkan role ke tabel relasi.
 
 ## Alternatif yang Ditolak
 

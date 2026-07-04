@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { DocumentStatus, Role } from "@prisma/client";
+import { EMPLOYEE_CAPABLE_ROLES } from "@/lib/rbac";
+import { DocumentStatus } from "@prisma/client";
 
 export async function getDashboardStats(ownerId?: string) {
   const baseWhere = ownerId ? { ownerId } : {};
@@ -61,7 +62,7 @@ export async function getRecentDocuments(ownerId?: string) {
 export async function groupEmployeesByEmploymentStatus() {
   const groups = await prisma.user.groupBy({
     by: ["employmentStatusId"],
-    where: { role: Role.EMPLOYEE },
+    where: { role: { in: [...EMPLOYEE_CAPABLE_ROLES] } },
     _count: { id: true },
   });
 
@@ -80,7 +81,7 @@ export async function groupEmployeesByEmploymentStatus() {
 export async function groupEmployeesByEmployeeGroup() {
   const groups = await prisma.user.groupBy({
     by: ["employeeGroupId"],
-    where: { role: Role.EMPLOYEE },
+    where: { role: { in: [...EMPLOYEE_CAPABLE_ROLES] } },
     _count: { id: true },
   });
 
@@ -99,7 +100,7 @@ export async function groupEmployeesByEmployeeGroup() {
 export async function groupEmployeesByGender() {
   return prisma.user.groupBy({
     by: ["gender"],
-    where: { role: Role.EMPLOYEE },
+    where: { role: { in: [...EMPLOYEE_CAPABLE_ROLES] } },
     _count: { id: true },
   });
 }
@@ -107,7 +108,7 @@ export async function groupEmployeesByGender() {
 export async function groupEmployeesByWorkplace() {
   const groups = await prisma.user.groupBy({
     by: ["workplaceId"],
-    where: { role: Role.EMPLOYEE },
+    where: { role: { in: [...EMPLOYEE_CAPABLE_ROLES] } },
     _count: { id: true },
   });
 
@@ -155,7 +156,7 @@ export async function findDocumentUploadsSince(since: Date) {
 
 export async function findMandatoryDashboardEmployees() {
   return prisma.user.findMany({
-    where: { role: Role.EMPLOYEE },
+    where: { role: { in: [...EMPLOYEE_CAPABLE_ROLES] } },
     select: {
       id: true,
       employmentStatusId: true,

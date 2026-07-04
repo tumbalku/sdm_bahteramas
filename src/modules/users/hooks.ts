@@ -7,6 +7,7 @@ import {
   downloadUsersImportTemplateApi,
   exportUserDocumentsCsvApi,
   exportUsersApi,
+  fetchUserCategoriesApi,
   getUsersApi,
   importUsersApi,
   updateUserApi,
@@ -46,14 +47,13 @@ export function useMasterCategories() {
   return useQuery({
     queryKey: ["users", "categories"],
     queryFn: async () => {
-      const res = await fetch("/api/v1/users/categories", { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || "Gagal memuat data master kategori");
+      const res = await fetchUserCategoriesApi();
+      if (!res.success) {
+        throw new Error(res.error || "Gagal memuat data master kategori");
       }
-      return json.data;
+      return res.data!;
     },
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

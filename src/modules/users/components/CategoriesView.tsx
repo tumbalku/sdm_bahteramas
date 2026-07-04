@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton, CardSkeleton } from "@/components/ui/skeleton";
 import { MasterCategoryCard } from "@/components/MasterCategoryCard";
 import {
-  Loader2,
   Layers,
   Plus,
   Folder,
@@ -18,48 +17,20 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CategoryFormModal, DataType } from "./CategoryFormModal";
-
-interface ItemWithChild {
-  id: string;
-  name: string;
-  employeeGroups?: { id: string; name: string }[];
-  employeePositions?: { id: string; name: string }[];
-}
+import { useMasterCategories } from "../hooks";
 
 export function CategoriesView() {
-  const [employmentStatuses, setEmploymentStatuses] = useState<ItemWithChild[]>([]);
-  const [professionGroups, setProfessionGroups] = useState<ItemWithChild[]>([]);
-  const [employeeRanks, setEmployeeRanks] = useState<{ id: string; name: string }[]>([]);
-  const [workplaces, setWorkplaces] = useState<{ id: string; name: string }[]>([]);
-  const [fetchLoading, setFetchLoading] = useState(true);
+  const { data: categories, isLoading: fetchLoading, refetch: refetchCategories } = useMasterCategories();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingItem, setEditingItem] = useState<{ id: string; name: string; type: DataType; parentId?: string } | null>(null);
   const [defaultType, setDefaultType] = useState<DataType>("STATUS");
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const res = await fetch("/api/v1/users/categories", { cache: "no-store" });
-      const json = await res.json();
-      if (res.ok && json.success && json.data) {
-        setEmploymentStatuses(json.data.employmentStatuses || []);
-        setProfessionGroups(json.data.professionGroups || []);
-        setEmployeeRanks(json.data.employeeRanks || []);
-        setWorkplaces(json.data.workplaces || []);
-      } else {
-        throw new Error(json.error || "Gagal memuat data master kategori.");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Terjadi kesalahan koneksi.");
-    } finally {
-      setFetchLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  const employmentStatuses = categories?.employmentStatuses || [];
+  const professionGroups = categories?.professionGroups || [];
+  const employeeRanks = categories?.employeeRanks || [];
+  const workplaces = categories?.workplaces || [];
 
   const handleOpenAddModal = (type: DataType = "STATUS") => {
     setEditingItem(null);
@@ -97,7 +68,7 @@ export function CategoriesView() {
 
       toast.success(`Data "${itemName}" berhasil dihapus.`);
       if (editingItem?.id === id) handleCloseModal();
-      fetchCategories();
+      refetchCategories();
     } catch (err: any) {
       toast.error(err.message || "Gagal menghapus data.");
     }
@@ -129,7 +100,7 @@ export function CategoriesView() {
 
       toast.success(`Data "${payload.name}" berhasil ${editingItem ? "diperbarui" : "ditambahkan"}.`);
       handleCloseModal();
-      fetchCategories();
+      refetchCategories();
     } catch (err: any) {
       toast.error(err.message || "Terjadi kesalahan.");
     } finally {

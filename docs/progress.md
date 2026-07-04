@@ -1,7 +1,8 @@
 # Progress — SMDP Portal
 
-> **Last Updated:** 2026-07-03
+> **Last Updated:** 2026-07-04
 > **AI Agent:** Update file ini setelah menyelesaikan task besar. Tandai item sesuai statusnya.
+> **Rule:** Jika item pada `## 🔴 Yang Belum Dibuat` sudah diimplementasi, pindahkan/catat hasilnya ke `## ✅ Yang Sudah Selesai` dan hapus dari backlog.
 
 ---
 
@@ -155,6 +156,23 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `docs/api.md`
 - [x] `docs/business-rules.md`
 
+### Tampilan TMT Awal CPNS vs Masa Kontrak
+- [x] `Akhir TMT / Kontrak` dipertegas sebagai field opsional pada form tambah/edit pegawai.
+- [x] Jika `hasTmt=true`, `tmtStartDate` terisi, dan `tmtEndDate` kosong, profil menampilkan label `TMT Awal CPNS`.
+- [x] Jika `tmtStartDate` dan `tmtEndDate` sama-sama terisi, profil menampilkan label `Masa Kontrak`.
+- [x] Detail profil admin hanya menampilkan field akhir kontrak ketika `tmtEndDate` tersedia.
+- [x] Helper pure TMT ditambahkan agar label profil user dan preview admin konsisten.
+- [x] Unit test ditambahkan untuk helper TMT dan validasi `tmtEndDate` opsional.
+- [x] `docs/business-rules.md`, `docs/api.md`, dan `docs/progress.md` diperbarui.
+
+### Upload Dokumen — Anti-Duplikasi Jenis Dokumen
+- [x] Select input upload normal hanya menampilkan jenis dokumen yang belum pernah diupload oleh user pada kategori aktif.
+- [x] Jika seluruh jenis dokumen pada kategori aktif sudah pernah diupload, modal menampilkan informasi bahwa semua jenis dokumen sudah diunggah.
+- [x] Backend menolak upload normal jika user sudah memiliki dokumen dengan `documentTypeId` yang sama.
+- [x] Flow `Upload Ulang` untuk dokumen `REJECTED` tetap menjadi jalur resmi perbaikan dokumen yang ditolak dan jenis dokumennya tetap dikunci.
+- [x] Unit test service documents ditambahkan untuk memastikan upload duplikat ditolak sebelum file disimpan.
+- [x] `docs/business-rules.md`, `docs/api.md`, dan `docs/progress.md` diperbarui.
+
 ### Upload Ulang Dokumen Ditolak
 - [x] Page Dokumen Saya menampilkan aksi utama `Upload Ulang` pada dokumen `REJECTED`, bukan `Unduh`.
 - [x] Tombol `Unduh` pada dokumen `REJECTED` dipertahankan sebagai aksi sekunder untuk referensi file lama.
@@ -201,7 +219,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 
 ### Rekapitulasi Arsip Dokumen Pegawai — Export CSV & Progress Bar
 - [x] Page Rekapitulasi Arsip Dokumen Pegawai memakai endpoint rekap khusus, bukan lagi menghitung dari daftar dokumen milik user/session saat ini.
-- [x] Progress bar `Rekapitulasi Dokumen Seluruh Pegawai` menghitung pasangan pegawai `EMPLOYEE` dan jenis dokumen wajib (`isMandatory=true`) yang berlaku sesuai target status/profesi/golongan/pangkat/unit kerja.
+- [x] Progress bar `Rekapitulasi Dokumen Seluruh Pegawai` menghitung pasangan user internal dengan kemampuan `EMPLOYEE` (`ADMIN`, `STAFF`, `EMPLOYEE`) dan jenis dokumen wajib (`isMandatory=true`) yang berlaku sesuai target status/profesi/golongan/pangkat/unit kerja.
 - [x] Numerator `Sudah Upload` menghitung kewajiban yang sudah memiliki dokumen terbaru; metrik `Terverifikasi`, `Menunggu`, `Ditolak`, dan `Belum Upload` ditampilkan terpisah.
 - [x] Query rekap menggunakan batch query untuk pegawai, jenis dokumen wajib, dan dokumen terkait sehingga tidak melakukan N+1 query per pegawai.
 - [x] Tabel rekap menampilkan baris dokumen yang sudah diupload dan baris kewajiban yang `Belum Upload`.
@@ -321,6 +339,142 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `src/modules/backup/service.ts`
 - [x] `src/app/api/v1/backup/export/route.ts`
 
+### Normalisasi Database Prisma - RBAC Single Role
+- [x] `prisma/schema.prisma` mempertahankan `User.role` sebagai source of truth dan menghapus `model UserRole`.
+- [x] Index `User.role` ditambahkan untuk filter role pada dashboard/list pegawai.
+- [x] Migration `prisma/migrations/20260704000000_remove_user_roles/migration.sql` dibuat untuk drop tabel `UserRole` dan menambahkan index role.
+- [x] `prisma/seed.ts` tidak lagi membuat data `UserRole`.
+- [x] `src/modules/users/repository.ts` tidak lagi melakukan nested create/update/delete `userRoles`.
+- [x] `src/modules/backup/service.ts` tidak lagi mengekspor tabel `UserRole`.
+- [x] Auth/session tetap single-role dengan `session.user.role`; tidak ada `session.user.roles`.
+- [x] Dokumentasi `docs/database.md`, `docs/business-rules.md`, `docs/api.md`, `docs/adr/002-rbac.md`, dan `docs/security-report.md` disinkronkan dengan keputusan single-role.
+- [x] `npx prisma generate` dan `npx tsc --noEmit` berhasil.
+
+### TDD & Refactor Ringan Module Users
+- [x] Dependency `vitest` ditambahkan sebagai dev dependency.
+- [x] Script `test` dan `test:watch` ditambahkan ke `package.json`.
+- [x] Konfigurasi `vitest.config.ts` dibuat dengan environment `node` dan alias `@/` ke `src/`.
+- [x] `src/modules/users/validation.test.ts` dibuat untuk mengetes `createUserSchema` dan `updateUserSchema`.
+- [x] Validation test mencakup input user valid, email invalid, NIP terlalu pendek, nama terlalu pendek, password terlalu pendek, password kosong, TMT valid, TMT akhir lebih awal dari TMT mulai, dan payload update partial.
+- [x] Helper pure users dipindahkan dari `src/modules/users/service.ts` ke `src/modules/users/utils.ts`.
+- [x] Helper yang dipindahkan mencakup header CSV, CSV parsing/escaping, normalisasi string/boolean, date formatting, status label dokumen, lookup by name, dan validasi header CSV.
+- [x] `src/modules/users/utils.test.ts` dibuat untuk mengetes helper CSV, normalisasi, tanggal, label status dokumen, dan lookup.
+- [x] `src/modules/users/service.test.ts` dibuat untuk unit test service users dengan mock repository, bcrypt, security log, dan service document-types.
+- [x] Service unit test mencakup create user, update user, delete user, template import CSV, error import CSV, export CSV users, dan error export dokumen pegawai ketika user tidak ditemukan.
+- [x] `users/service.ts` tetap menjadi public service modul users, sementara helper non-DB dipisahkan agar service lebih fokus pada orchestration bisnis.
+- [x] `npm.cmd test -- --run src/modules/users/validation.test.ts src/modules/users/utils.test.ts src/modules/users/service.test.ts` berhasil: 3 file test, 45 test passed.
+- [x] `npx.cmd tsc --noEmit` berhasil.
+
+### Unit Test Users Category Service
+- [x] Rencana pengetesan `src/modules/users/categories-service.ts` ditambahkan ke `docs/progress.md` sebelum implementasi test.
+- [x] `src/modules/users/tests/categories-service.test.ts` dibuat untuk unit test service kategori master pegawai.
+- [x] Dependency `../categories-repository` dimock agar test tidak menyentuh Prisma/database.
+- [x] Dependency `@/lib/security-log` dimock agar audit log dapat diverifikasi tanpa menulis ke database.
+- [x] `getCategoriesService()` dites agar memanggil `findAllCategories()` dan mengembalikan payload repository.
+- [x] `createCategoryService()` dites untuk path dengan actor, tanpa actor, dan fallback `actor.email` ketika `actor.name` kosong.
+- [x] `updateCategoryService()` dites agar memanggil repository dengan argumen benar dan mencatat audit `CATEGORY_UPDATED`.
+- [x] `deleteCategoryService()` dites agar memanggil repository dengan argumen benar dan mencatat audit `CATEGORY_DELETED`.
+- [x] `categories-service.ts` memakai `import type { AuthUser }` agar dependency type-only tidak ditarik sebagai runtime dependency.
+- [x] `npm.cmd test -- --run` berhasil: 4 file test, 51 test passed.
+- [x] `npx.cmd tsc --noEmit` berhasil.
+
+### TDD Module Auth
+- [x] Rencana TDD module auth ditambahkan ke `docs/progress.md` sebelum implementasi test.
+- [x] `src/modules/auth/tests/validation.test.ts` dibuat untuk test `loginSchema`.
+- [x] Validation test mencakup identifier email, identifier NIP/employeeId, identifier kosong, password kosong, pesan error wajib, dan fakta bahwa identifier tidak wajib format email karena bisa berisi NIP.
+- [x] Helper pure auth dibuat di `src/modules/auth/utils.ts`.
+- [x] Helper `buildLoginLookupWhere()` dibuat untuk membentuk lookup user berdasarkan employeeId atau email.
+- [x] Helper `toAuthUserSession()` dibuat agar mapping session tidak menyertakan `passwordHash`.
+- [x] Konstanta `INVALID_LOGIN_MESSAGE` dibuat untuk menjaga pesan gagal login konsisten.
+- [x] `src/modules/auth/tests/utils.test.ts` dibuat untuk test helper pure auth.
+- [x] `src/modules/auth/tests/service.test.ts` dibuat untuk unit test `authenticateUser()`.
+- [x] Service unit test memock `@/lib/prisma`, `bcryptjs`, dan `@/lib/security-log`.
+- [x] Service unit test mencakup input invalid, user tidak ditemukan, password salah, login sukses, error Prisma bubble, dan error bcrypt bubble.
+- [x] Event audit login sukses tetap mengikuti behavior source code aktual: `USER_LOGIN_SUCCESS`.
+- [x] Catatan temuan: `docs/business-rules.md` menyebut event sukses login `USER_LOGIN`, sedangkan source code memakai `USER_LOGIN_SUCCESS`; normalisasi event dapat dibuat sebagai task terpisah agar tidak mengubah kontrak audit diam-diam.
+- [x] `npm.cmd test -- --run` berhasil: 7 file test, 65 test passed.
+- [x] `npx.cmd tsc --noEmit` berhasil.
+
+### TDD Module Dashboard
+- [x] Rencana TDD module dashboard ditambahkan ke `docs/progress.md` sebelum implementasi test.
+- [x] `src/modules/dashboard/validation.ts` dibuat untuk validasi user dashboard dan akses chart admin.
+- [x] `src/modules/dashboard/tests/validation.test.ts` dibuat untuk test role `ADMIN`, `STAFF`, `EMPLOYEE`, id kosong, role kosong/tidak dikenal, dan akses chart khusus admin.
+- [x] Helper pure dashboard diekstrak dari `src/modules/dashboard/service.ts` ke `src/modules/dashboard/utils.ts`.
+- [x] Helper yang diekstrak mencakup bulan, label bulan, 6 bulan terakhir, grouping chart, normalisasi gender, label status dokumen, penambahan hari, dan chart upload dokumen.
+- [x] `src/modules/dashboard/tests/utils.test.ts` dibuat untuk test helper bulan, grouping, label, dan upload chart 6 bulan terakhir.
+- [x] `src/modules/dashboard/tests/service.test.ts` dibuat untuk unit test `getDashboardDataService()` dan `getDashboardChartsService()`.
+- [x] Service unit test memock `src/modules/dashboard/repository.ts` dan `isDocumentTypeApplicableToUser()`.
+- [x] Service unit test mencakup RBAC stats untuk `ADMIN`/`STAFF` vs `EMPLOYEE`, DTO statistik, akses chart admin-only, DTO chart, dokumen wajib yang belum upload, dan error repository bubble.
+- [x] `getDashboardChartsService()` tetap mempertahankan behavior source code aktual, termasuk chart key upload yang dihitung dari semua upload repository, sementara nilai bulan tetap hanya menghitung rentang 6 bulan aktif.
+- [x] `npm.cmd test -- --run` berhasil: 10 file test, 87 test passed.
+- [x] `npx.cmd tsc --noEmit` berhasil.
+
+### TDD Module Document Types
+- [x] Rencana TDD module document-types ditambahkan ke `docs/progress.md` sebelum implementasi test.
+- [x] Helper pure document-types diekstrak dari `src/modules/document-types/service.ts` ke `src/modules/document-types/utils.ts`.
+- [x] Helper yang diekstrak mencakup normalisasi folder jenis dokumen, date range, deteksi filter tanggal, format tanggal/nama file, label status, escape CSV, filter row rekap, dan builder CSV export rekap arsip.
+- [x] `src/modules/document-types/tests/validation.test.ts` dibuat untuk test `createDocumentTypeSchema`, `updateDocumentTypeSchema`, dan `documentArchiveFilterSchema`.
+- [x] Validation test mencakup payload valid, transform `code`/`name`, default boolean/array target, kategori arsip valid/invalid, batas panjang field, `allowedFormats`, `maxSizeMb`, partial update, filter enum, upload status, search trim, dan format tanggal `YYYY-MM-DD`.
+- [x] `src/modules/document-types/tests/utils.test.ts` dibuat untuk test helper pure tanpa dependency Prisma/repository/storage/audit log.
+- [x] Utility test mencakup folder name, start/end of day, date range, date filter detection, format tanggal/nama file, label status dokumen, escape CSV, filter row rekap, dan CSV export content dengan BOM.
+- [x] `src/modules/document-types/tests/service.test.ts` dibuat untuk unit test service document-types.
+- [x] Service unit test memock `src/modules/document-types/repository.ts`, `@/lib/prisma`, `@/lib/storage`, dan `@/lib/security-log`.
+- [x] Service unit test mencakup applicability target user, `getAllDocumentTypes()`, `getDocumentTypeById()`, create duplicate/sukses, update not found/duplicate/sukses, delete sukses, rekap arsip uploaded/missing, filter rekap, export CSV, dan audit `DATA_EXPORTED`.
+- [x] `src/modules/document-types/service.ts` memakai `import type { AuthUser }` agar dependency type-only tidak ditarik sebagai runtime dependency.
+- [x] `npm.cmd test -- --run src/modules/document-types/tests` berhasil: 3 file test, 29 test passed.
+- [x] `npx.cmd tsc --noEmit` berhasil.
+
+### Archives — Default Tampilkan Dokumen Terupload
+- [x] Page Rekapitulasi Arsip Dokumen Pegawai (`/document-types/archives`) sekarang default memakai filter `Status Upload = Sudah Upload`.
+- [x] Baris `Belum Upload` tidak lagi muncul pada tampilan awal archives.
+- [x] Admin tetap bisa memilih filter `Belum Upload` jika ingin melihat kewajiban dokumen yang belum dipenuhi.
+- [x] Empty state disesuaikan agar menjelaskan konteks dokumen yang sudah diupload.
+- [x] Mode `Sudah Upload` pada endpoint archives sekarang mengambil `DocumentRecord` yang benar-benar sudah diupload pengguna, termasuk jenis dokumen non-wajib.
+- [x] Unit test service document-types diperbarui untuk memastikan dokumen non-wajib yang sudah diupload tetap muncul di archives.
+
+### Implementasi RBAC Bertingkat — ADMIN/STAFF Mewarisi Kemampuan EMPLOYEE
+- [x] Helper capability RBAC ditambahkan di `src/lib/rbac.ts` dan diekspor dari `src/lib/auth-utils.ts`.
+- [x] `ADMIN` memiliki capability `ADMIN`, `STAFF`, dan `EMPLOYEE`; `STAFF` memiliki capability `STAFF` dan `EMPLOYEE`; `EMPLOYEE` tetap personal.
+- [x] Query archives dan dashboard mandatory users tidak lagi mengunci `role = EMPLOYEE`, tetapi memakai role internal dengan kemampuan employee: `ADMIN`, `STAFF`, dan `EMPLOYEE`.
+- [x] Halaman/endpoint Dokumen Saya default menampilkan dokumen personal untuk semua role internal; `ADMIN` tetap dapat meminta `ownerId` eksplisit untuk konteks admin-wide.
+- [x] UI Dokumen Saya memakai helper capability untuk tombol upload, upload ulang dokumen `REJECTED`, dan hapus dokumen personal.
+- [x] Route detail/download dokumen dan route verifikasi memakai helper capability agar aturan akses tidak tersebar sebagai hardcode role manual.
+- [x] Dokumentasi `docs/business-rules.md`, `docs/api.md`, `docs/database.md`, `docs/features.md`, dan `docs/adr/002-rbac.md` disinkronkan dengan RBAC bertingkat.
+- [x] Unit test helper RBAC dan service documents ditambahkan untuk mengunci kemampuan personal `ADMIN`/`STAFF` serta aturan hapus dokumen `APPROVED`.
+
+### Refactor View.tsx Tahap 1 — Refactor `UserFormView.tsx`
+- [x] `UserFormState` ditambahkan ke `src/modules/users/types.ts` untuk mendefinisikan shape 24 field form secara terpadu.
+- [x] `MasterCategories` type ditambahkan ke `types.ts` agar shape response `/api/v1/users/categories` terdokumentasi secara eksplisit.
+- [x] `fetchUserCategoriesApi()` ditambahkan ke `src/modules/users/api.ts` menggunakan `apiClient` (mengganti `fetch()` manual).
+- [x] `useMasterCategories()` di `src/modules/users/hooks.ts` difix: `fetch()` langsung diganti dengan `fetchUserCategoriesApi()`, `staleTime` dinaikkan ke 5 menit.
+- [x] `UserFormView.tsx` direfactor total: 27 `useState` → 1 `useReducer(formReducer, USER_FORM_INITIAL_STATE)`, `fetch()` manual dihapus, diganti dengan `useMasterCategories()` hook.
+- [x] `USER_FORM_INITIAL_STATE` dan `formReducer` didefinisikan di dalam `UserFormView.tsx` sebagai konstanta dan helper murni.
+- [x] `mapUserToFormState(user)` dibuat untuk mengkonversi data server ke `UserFormState` (termasuk format tanggal `date-fns`) — mengganti 18 baris `setXxx()` dengan 1 `dispatch()` tunggal.
+- [x] Dropdown dependent status kepegawaian → jenis kepegawaian dan profesi → jabatan tetap berfungsi melalui `availableGroups` dan `availablePositions` (derived dari `form.employmentStatusId` dan `form.professionGroupId`).
+- [x] Semua `onChange` field form menggunakan `dispatch({ fieldKey: value })` — tidak ada lagi setter individual.
+- [x] `handleSubmit` merakit payload dari satu object `form`, bukan dari puluhan variabel tersebar.
+- [x] `npm.cmd test -- --run` berhasil: 10 file test, 87 test passed.
+- [x] `npx.cmd tsc --noEmit` berhasil bersih.
+
+### Refactor View.tsx Tahap 2 — Ekstrak `DocumentTypeForm` Reusable
+- [x] `DocumentTypeFormState` ditambahkan ke `src/modules/document-types/types.ts` untuk mendefinisikan tipe status form jenis dokumen yang seragam.
+- [x] Komponen form reusable `DocumentTypeForm` dibuat di `src/modules/document-types/components/DocumentTypeForm.tsx` lengkap dengan local `useReducer` management.
+- [x] Helper `mapDocumentTypeToFormState(data)` dan `formStateToPayload(state)` diekspor dari `DocumentTypeForm.tsx` untuk kemudahan parsing input/output.
+- [x] `AddDocumentTypeView.tsx` direfactor penuh: dari 319 baris disederhanakan menjadi ~40 baris dengan memanggil `DocumentTypeForm`.
+- [x] `EditDocumentTypeView.tsx` direfactor penuh: dari 376 baris disederhanakan menjadi ~65 baris, loading & error state tetap dipertahankan, remount form dipicu oleh `key={id}`.
+- [x] Berhasil menghilangkan redundansi kode sebesar ~200+ baris JSX & state management duplikat antara Add dan Edit views.
+- [x] `npm.cmd test -- --run` berhasil: 87 test passed.
+- [x] `npx.cmd tsc --noEmit` berhasil bersih.
+
+### Refactor View.tsx Tahap 3 — Refactor `CategoriesView.tsx`
+- [x] State manual `employmentStatuses`, `professionGroups`, `employeeRanks`, `workplaces`, dan `fetchLoading` beserta raw `fetch()` call di `useEffect` dihilangkan.
+- [x] `useMasterCategories()` hook dari modul users diintegrasikan langsung ke dalam `CategoriesView.tsx`.
+- [x] Hirarki data-fetching dialihkan sepenuhnya ke TanStack Query, menyelesaikan pelanggaran arsitektur `fetch` manual.
+- [x] Tombol delete dan submit form modal memicu `refetchCategories()` dari hook untuk sinkronisasi ulang data kategori pasca aksi.
+- [x] State lokal yang tersisa disisakan hanya untuk UI modal dan form data yang memang dinamis.
+- [x] `npm.cmd test -- --run` berhasil: 87 test passed.
+- [x] `npx.cmd tsc --noEmit` berhasil bersih.
+
 ---
 
 ## 🟡 Sedang Dikerjakan
@@ -379,3 +533,23 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 | 2026-07-03 | AI Agent | Padatkan layout chart dashboard admin agar lebih hemat ruang dengan card, grid, dan tinggi chart yang lebih compact |
 | 2026-07-03 | AI Agent | Tambah rencana refactor route master jenis dokumen untuk menghapus route typo/duplikat dan menstandarkan `/document-types` |
 | 2026-07-03 | AI Agent | Selesaikan refactor route master jenis dokumen: tambah route edit canonical, update link tambah/edit, hapus route typo lama, dan update routing |
+| 2026-07-04 | AI Agent | Tambah rencana detail TDD module users: validation test, pure helper test, service unit test, dan refactor helper CSV/formatting dari `users/service.ts` ke utility module |
+| 2026-07-04 | AI Agent | Selesaikan normalisasi RBAC single-role: pertahankan `User.role`, hapus `UserRole` dari schema/seed/repository/backup, tambah migration, generate Prisma Client, dan sinkronkan dokumentasi |
+| 2026-07-04 | AI Agent | Selesaikan TDD module users: setup Vitest, tambah validation/helper/service unit test, refactor helper users ke `utils.ts`, dan verifikasi test + TypeScript |
+| 2026-07-04 | AI Agent | Selesaikan unit test `users/categories-service`: mock repository/audit log, test get/create/update/delete category service, dan verifikasi test + TypeScript |
+| 2026-07-04 | AI Agent | Selesaikan TDD module auth: tambah validation/helper/service unit test, ekstrak helper auth ke `utils.ts`, dan verifikasi test + TypeScript |
+| 2026-07-04 | AI Agent | Selesaikan TDD module dashboard: tambah validation/helper/service unit test, ekstrak helper chart dashboard ke `utils.ts`, dan verifikasi test + TypeScript |
+| 2026-07-04 | AI Agent | Selesaikan TDD module document-types: tambah validation/helper/service unit test, ekstrak helper rekap/CSV/date ke utils.ts, dan verifikasi test + TypeScript |
+| 2026-07-04 | AI Agent | Ubah default halaman archives agar menampilkan dokumen yang sudah diupload pengguna dan menyembunyikan baris `Belum Upload` dari tampilan awal |
+| 2026-07-04 | AI Agent | Perbaiki sumber data archives mode `Sudah Upload` agar mengambil dokumen upload aktual, termasuk jenis dokumen non-wajib yang sudah disetujui |
+| 2026-07-04 | AI Agent | Tambah rencana refactor View.tsx: optimasi state management (useReducer), eliminasi duplikasi Add/Edit DocumentType, dan perbaikan pelanggaran arsitektur fetch() langsung di komponen |
+| 2026-07-04 | AI Agent | Selesaikan Refactor View.tsx Tahap 1: UserFormView.tsx dari 27 useState → 1 useReducer, fetch() manual → useMasterCategories() hook, tambah UserFormState + MasterCategories type, tambah fetchUserCategoriesApi(), fix useMasterCategories() |
+| 2026-07-04 | AI Agent | Selesaikan Refactor View.tsx Tahap 2: Ekstrak DocumentTypeForm reusable untuk menampung Add dan Edit views, merampingkan kode Add/Edit views hingga 90%, dan menyatukan status form. |
+| 2026-07-04 | AI Agent | Selesaikan Refactor View.tsx Tahap 3: CategoriesView.tsx dioptimalkan dengan mengganti fetch manual di useEffect & 4 useState data master ke useMasterCategories() hook. |
+| 2026-07-04 | AI Agent | Selesaikan implementasi RBAC bertingkat: helper capability, archives/dashboard mencakup ADMIN/STAFF/EMPLOYEE sebagai pemilik dokumen personal, konteks Dokumen Saya dibuat personal, route akses dokumen/verifikasi memakai helper, dan dokumentasi disinkronkan. |
+| 2026-07-04 | AI Agent | Tambah aturan anti-duplikasi upload dokumen: select upload menyembunyikan jenis dokumen yang sudah dimiliki user, backend menolak `documentTypeId` duplikat, dan test service documents diperbarui. |
+| 2026-07-04 | AI Agent | Ubah tampilan TMT: akhir TMT/kontrak menjadi opsional, profil menampilkan `TMT Awal CPNS` jika tanggal akhir kosong dan `Masa Kontrak` jika tanggal mulai/akhir terisi. |
+
+
+
+

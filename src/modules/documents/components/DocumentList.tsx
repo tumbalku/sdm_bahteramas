@@ -5,7 +5,9 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Download, Trash2, FileText, CheckCircle2, XCircle, Clock, AlertCircle, RefreshCcw, Eye } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { canManageAllDocuments, canManageOwnDocuments } from "@/lib/rbac";
+import { cn } from "@/lib/utils";
 
 interface DocumentListProps {
   documents: DocumentRecordDto[];
@@ -54,8 +56,8 @@ export function DocumentList({
   }
 
   const canDelete = (doc: DocumentRecordDto) => {
-    if (currentUserRole === "ADMIN") return true;
-    if (currentUserRole === "EMPLOYEE" || currentUserRole === "STAFF") {
+    if (canManageAllDocuments(currentUserRole)) return true;
+    if (canManageOwnDocuments(currentUserRole)) {
       return doc.ownerId === currentUserId && doc.status !== "APPROVED";
     }
     return false;
@@ -65,7 +67,7 @@ export function DocumentList({
     return (
       doc.status === "REJECTED" &&
       doc.ownerId === currentUserId &&
-      (currentUserRole === "EMPLOYEE" || currentUserRole === "ADMIN")
+      canManageOwnDocuments(currentUserRole)
     );
   };
 
@@ -158,16 +160,13 @@ export function DocumentList({
             </div>
 
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-              <Button
-                asChild
-                variant="outline"
-                className="flex-1 rounded-xl"
+              <Link
+                href={`/documents/${doc.id}`}
+                className={cn(buttonVariants({ variant: "outline" }), "flex-1 rounded-xl")}
               >
-                <Link href={`/documents/${doc.id}`}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  <span>Preview</span>
-                </Link>
-              </Button>
+                <Eye className="w-4 h-4 mr-2" />
+                <span>Preview</span>
+              </Link>
 
               {canReplace(doc) ? (
                 <>

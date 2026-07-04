@@ -125,25 +125,16 @@ model User {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
-  userRoles             UserRole[]
   documents             DocumentRecord[]
   verificationHistories VerificationHistory[]
   securityLogs          SecurityLog[]
 
+  @@index([role])
   @@index([professionGroupId])
   @@index([employmentStatusId])
   @@index([employeeGroupId])
   @@index([employeePositionId])
   @@index([workplaceId])
-}
-
-model UserRole {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role   Role
-
-  @@unique([userId, role])
 }
 
 // ==========================================
