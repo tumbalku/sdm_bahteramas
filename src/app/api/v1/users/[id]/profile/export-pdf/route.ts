@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, hasRole } from "@/lib/auth-utils";
 import { exportUserProfilePdfService } from "@/modules/users/service";
 
+export const runtime = "nodejs";
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
