@@ -1,4 +1,4 @@
-import puppeteer, { type LaunchOptions } from "puppeteer";
+import puppeteer, { type LaunchOptions } from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import QRCode from "qrcode";
 
