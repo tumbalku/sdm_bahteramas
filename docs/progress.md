@@ -16,6 +16,15 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 
 ## ✅ Yang Sudah Selesai
 
+### Remediasi Code Review 2026-07-13 (Selesai 2026-07-13)
+- [x] **BUG-01** — Rapikan kontrak upload dokumen agar client tidak lagi mengirim `ownerId: ""`; owner tetap ditentukan server dari session.
+- [x] **BUG-02** — Perbaiki label satuan maksimal ukuran file di modal upload agar nilai > 50 tetap ditampilkan sebagai MB, bukan KB.
+- [x] **MINOR-01** — Jadikan approve/reject dokumen atomik dengan transaksi database: update status dan tulis `VerificationHistory` harus berhasil bersama.
+- [x] **MINOR-05 / TYPE-06** — Standarkan response endpoint documents dan verification ke helper `ok()` / `fail()` tanpa mengubah kontrak UI.
+- [x] **TYPE-08** — Tegaskan dan implementasikan aturan bisnis: `STAFF` tidak boleh melihat/memverifikasi dokumen yang mereka upload sendiri; `ADMIN` tetap dapat memverifikasi semua dokumen.
+- [x] **IMPROVE-04** — Tambahkan validasi ukuran file sisi client sebelum upload agar user tidak menunggu upload yang pasti gagal.
+- [x] Verifikasi akhir: sukses menjalankan `npm test -- --run`, `npm run lint`, `npx tsc --noEmit`, dan `npm run build`.
+
 ### Dokumentasi
 - [x] PRD v1.0 (`PRD-SMDP-PORTAL-v1.0-20260627.md`) — selesai 2026-06-27
 - [x] `AGENTS.md` — project context untuk AI agent
@@ -537,7 +546,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 
 ## 🟡 Sedang Dikerjakan
 
-*(Kosong — tidak ada task dokumentasi/implementasi aktif yang tercatat.)*
+- Tidak ada task aktif.
 
 ## 🟢 Audit Security RLS (Selesai 2026-07-01)
 - **Analisis masalah:** Terdapat peringatan `rls_disabled_in_public` dari Supabase. Project menggunakan Prisma dan tidak menggunakan REST API Supabase.
@@ -619,3 +628,4 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 | 2026-07-11 | AI Agent | Tambah export PDF mandiri pada Page Profil Saya lewat endpoint `/api/v1/profile/export-pdf`, hook profile, tombol UI, dan audit `OWN_PROFILE_PDF`. |
 | 2026-07-12 | AI Agent | Remediasi audit kode 2026-07-12: perbaiki semua P0 (secret env helper, rate limit verify-password, backup OOM pagination, eslint CLI migration) dan P1 (getDocumentByIdService, fetch komponen ke hooks, standard response API, Prisma generated update, atomic delete, standard download id). Seluruh quality gate hijau, siap dideploy ke produksi. |
 | 2026-07-12 | AI Agent | Selesaikan implementasi Unified Employee Dashboard UI & Statistik Global (/statistics) untuk ADMIN & STAFF. |
+| 2026-07-13 | AI Agent | Selesaikan Remediasi Code Review 2026-07-13: perbaikan BUG-01, BUG-02, MINOR-01, MINOR-05/TYPE-06, TYPE-08, dan IMPROVE-04. Semua tests, lint, typecheck, dan build successfully passed. |

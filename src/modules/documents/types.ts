@@ -50,7 +50,7 @@ export interface DocumentRecordDto {
 }
 
 export interface DocumentUploadInput {
-  ownerId: string;
+  ownerId?: string;
   documentTypeId: string;
   replaceDocumentId?: string;
   documentNumber?: string;

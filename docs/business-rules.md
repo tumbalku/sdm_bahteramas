@@ -148,9 +148,17 @@ Semua dokumen yang baru diunggah masuk dengan `status: PENDING`.
 1. ADMIN/STAFF buka daftar dokumen `PENDING`.
 2. Klik **Approve** atau **Reject** (wajib isi `reviewNote` jika Reject).
 3. Backend:
-   - Update `DocumentRecord.status` ke `APPROVED` atau `REJECTED`.
-   - Tambah baris baru di `VerificationHistory` (log riwayat).
+   - Update `DocumentRecord.status` ke `APPROVED` atau `REJECTED` dan mencatat `VerificationHistory` secara atomik dalam satu transaksi database.
    - Panggil `logActivity("DOCUMENT_APPROVED" | "DOCUMENT_REJECTED", ...)`.
+
+### Aturan Self-Verification (Verifikasi Mandiri)
+
+1. **STAFF**:
+   - Hanya boleh melihat dan memverifikasi dokumen `PENDING` milik orang lain.
+   - Dokumen pending milik STAFF yang bersangkutan akan secara otomatis disembunyikan/dikecualikan dari daftar pending dokumen verifikasi untuk STAFF tersebut.
+   - STAFF dilarang keras dan ditolak oleh backend jika mencoba menyetujui (approve) atau menolak (reject) dokumen miliknya sendiri.
+2. **ADMIN**:
+   - Dapat melihat, mengakses, dan memverifikasi seluruh dokumen `PENDING` di sistem tanpa pengecualian, termasuk jika dokumen tersebut adalah milik dirinya sendiri.
 
 ### State Machine Status Dokumen
 

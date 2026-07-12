@@ -1,28 +1,30 @@
-import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import { canVerifyDocuments } from "@/lib/rbac";
 import { getPendingDocumentsService } from "@/modules/verification/service";
+import { ok, fail } from "@/lib/api-response";
 
 // Verification API Route
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return fail("Unauthorized", 401);
     }
 
     if (!canVerifyDocuments(session.user.role)) {
-      return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
+      return fail("Akses ditolak", 403);
     }
 
-    const documents = await getPendingDocumentsService();
-    return NextResponse.json(documents);
+    const actor = {
+      id: session.user.id,
+      role: session.user.role,
+    };
+
+    const documents = await getPendingDocumentsService(actor);
+    return ok(documents);
   } catch (error: any) {
     console.error("GET /api/v1/verification Error:", error);
-    return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
-      { status: 500 }
-    );
+    return fail(error.message || "Terjadi kesalahan internal server", 500);
   }
 }

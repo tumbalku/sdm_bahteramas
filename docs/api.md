@@ -590,6 +590,30 @@ Endpoint master data aktual dipusatkan di `/api/v1/users/categories`.
 Ambil daftar dokumen yang perlu diverifikasi.
 
 - **Auth:** `ADMIN`, `STAFF`
+- **Behavior:**
+  - `STAFF` hanya dapat melihat dokumen `PENDING` milik orang lain. Dokumen pending milik staff yang bersangkutan secara otomatis dikecualikan.
+  - `ADMIN` dapat melihat seluruh dokumen `PENDING` tanpa pengecualian.
+- **Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "clx...",
+      "ownerId": "clx...",
+      "documentType": {
+        "id": "clx...",
+        "code": "KTP",
+        "name": "Kartu Tanda Penduduk",
+        "archiveCategory": "UTAMA"
+      },
+      "status": "PENDING",
+      "fileName": "KTP_Budi.pdf",
+      "uploadedAt": "2026-06-27T08:00:00.000Z"
+    }
+  ]
+}
+```
 
 ### `GET /api/v1/verification/document/[id]`
 Ambil detail dokumen untuk proses verifikasi.
@@ -600,14 +624,32 @@ Ambil detail dokumen untuk proses verifikasi.
 Approve dokumen.
 
 - **Auth:** `ADMIN`, `STAFF`
-- **Behavior:** update `DocumentRecord.status`, buat `VerificationHistory`, panggil `logActivity()`.
+- **Behavior:** Update `DocumentRecord.status` dan buat `VerificationHistory` secara atomik dalam satu transaksi database, kemudian panggil `logActivity()`. STAFF ditolak jika mencoba memverifikasi dokumen miliknya sendiri.
+- **Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Dokumen berhasil disetujui"
+  }
+}
+```
 
 ### `POST /api/v1/verification/[id]/reject`
 Reject dokumen.
 
 - **Auth:** `ADMIN`, `STAFF`
 - **Body:** `reviewNote` wajib berisi alasan penolakan.
-- **Behavior:** update `DocumentRecord.status`, buat `VerificationHistory`, panggil `logActivity()`.
+- **Behavior:** Update `DocumentRecord.status` dan buat `VerificationHistory` secara atomik dalam satu transaksi database, kemudian panggil `logActivity()`. STAFF ditolak jika mencoba memverifikasi dokumen miliknya sendiri.
+- **Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Dokumen ditolak"
+  }
+}
+```
 
 ---
 
