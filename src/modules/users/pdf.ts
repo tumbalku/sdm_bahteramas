@@ -415,8 +415,15 @@ function buildFooterTemplate(input: EmployeeProfilePdfInput, qrDataUri: string) 
     </div>`;
 }
 
-function isServerlessRuntime() {
-  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+export function isServerlessRuntime(env: Record<string, string | undefined> = process.env) {
+  return Boolean(
+    env.VERCEL ||
+      env.VERCEL_ENV ||
+      env.AWS_LAMBDA_FUNCTION_NAME ||
+      env.AWS_EXECUTION_ENV ||
+      env.LAMBDA_TASK_ROOT ||
+      env.NEXT_RUNTIME
+  );
 }
 
 async function getBrowserLaunchOptions(): Promise<LaunchOptions> {
