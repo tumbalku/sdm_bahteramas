@@ -1,4 +1,5 @@
-import puppeteer from "puppeteer";
+import puppeteer, { type LaunchOptions } from "puppeteer";
+import chromium from "@sparticuz/chromium";
 import QRCode from "qrcode";
 
 interface PdfTableRow {
@@ -414,6 +415,25 @@ function buildFooterTemplate(input: EmployeeProfilePdfInput, qrDataUri: string) 
     </div>`;
 }
 
+function isServerlessRuntime() {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+async function getBrowserLaunchOptions(): Promise<LaunchOptions> {
+  if (!isServerlessRuntime()) {
+    return {
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--font-render-hinting=none"],
+    };
+  }
+
+  return {
+    args: [...chromium.args, "--font-render-hinting=none"],
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  };
+}
+
 export async function buildEmployeeProfilePdf(input: EmployeeProfilePdfInput) {
   const qrDataUri = await QRCode.toDataURL(input.verificationText, {
     errorCorrectionLevel: "M",
@@ -421,10 +441,7 @@ export async function buildEmployeeProfilePdf(input: EmployeeProfilePdfInput) {
     width: 96,
     color: { dark: "#111827", light: "#ffffff" },
   });
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--font-render-hinting=none"],
-  });
+  const browser = await puppeteer.launch(await getBrowserLaunchOptions());
 
   try {
     const page = await browser.newPage();
