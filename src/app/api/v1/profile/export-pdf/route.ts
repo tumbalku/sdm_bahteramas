@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { exportProfilePdfService } from "@/modules/profile/service";
 
+export const runtime = "nodejs";
+
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();

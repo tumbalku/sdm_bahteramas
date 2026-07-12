@@ -435,7 +435,7 @@ async function getBrowserLaunchOptions(): Promise<LaunchOptions> {
   }
 
   return {
-    args: [...chromium.args, "--font-render-hinting=none"],
+    args: chromium.args,
     executablePath: await chromium.executablePath(),
     headless: true,
   };
