@@ -18,8 +18,7 @@ Framework: **Next.js App Router** — routing berbasis filesystem di `src/app/`.
 |---|---|---|
 | `/` | `src/app/page.tsx` | Halaman landing / redirect ke login |
 | `/login` | `src/app/login/page.tsx` | Halaman login |
-| `/api/v1/auth/*` | `src/app/api/v1/auth/[...nextauth]/route.ts` | NextAuth endpoint (login, session, signout) |
-| `/api/auth/*` | `src/app/api/auth/[...nextauth]/route.ts` | Alias NextAuth untuk kompatibilitas library |
+| `/api/auth/*` | `src/app/api/auth/[...nextauth]/route.ts` | Endpoint canonical NextAuth (login, session, signout) |
 
 ---
 
@@ -53,7 +52,7 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 
 | Endpoint | Method | File | Role |
 |---|---|---|---|
-| `/api/v1/auth/*` | * | `api/v1/auth/[...nextauth]/route.ts` | Public |
+| `/api/auth/*` | * | `api/auth/[...nextauth]/route.ts` | Public |
 | `/api/v1/auth/verify-password` | `POST` | `api/v1/auth/verify-password/route.ts` | Semua role |
 | `/api/v1/dashboard/stats` | `GET` | `api/v1/dashboard/stats/route.ts` | Semua role |
 | `/api/v1/profile` | `GET`, `PUT` | `api/v1/profile/route.ts` | Semua role |

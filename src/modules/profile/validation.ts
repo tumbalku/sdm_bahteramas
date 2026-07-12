@@ -4,6 +4,7 @@ export const updateProfileSchema = z.object({
   name: z.string().min(3, "Nama minimal 3 karakter"),
   nik: z.string().nullable().optional(),
   gender: z.string().optional(),
+  birthPlace: z.string().nullable().optional(),
   birthDate: z.string().nullable().optional(),
   academicDegree: z.string().nullable().optional(),
   lastEducation: z.string().nullable().optional(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfile, useUploadAvatar } from "../hooks";
+import { useExportProfilePdf, useProfile, useUploadAvatar } from "../hooks";
 import { UpdateProfileForm } from "./UpdateProfileForm";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { useRef } from "react";
@@ -20,8 +20,10 @@ import {
   Camera,
   Phone,
   Calendar,
+  FileDown,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 import { Skeleton, CardSkeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -30,6 +32,7 @@ import { getTmtSummaryLabel } from "@/lib/tmt";
 export function ProfileView() {
   const { data: profile, isLoading, error } = useProfile();
   const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUploadAvatar();
+  const exportPdfMutation = useExportProfilePdf();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarClick = () => {
@@ -78,6 +81,22 @@ export function ProfileView() {
         icon={UserCircle2}
         title="Profil Saya"
         description="Kelola informasi kepegawaian, biodata pribadi, dan keamanan akun Anda."
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            disabled={exportPdfMutation.isPending}
+            onClick={() => exportPdfMutation.mutate()}
+            className="rounded-full px-5 border-border hover:bg-accent font-semibold"
+          >
+            {exportPdfMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin text-primary" />
+            ) : (
+              <FileDown className="w-4 h-4 mr-2 text-primary" />
+            )}
+            Export PDF
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -129,6 +148,14 @@ export function ProfileView() {
                 </span>
                 <span className="font-mono font-bold text-foreground">{profile.employeeId}</span>
               </div>
+              {profile.hasOldEmployeeId && (
+                <div className="flex items-center justify-between p-2 rounded-xl bg-accent/30 border border-border/50">
+                  <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
+                    <IdCard className="w-3.5 h-3.5 text-primary" /> NIP Lama
+                  </span>
+                  <span className="font-mono font-bold text-foreground">{profile.oldEmployeeId || "-"}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between p-2 rounded-xl bg-accent/30 border border-border/50">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
                   <IdCard className="w-3.5 h-3.5 text-primary" /> NIK
@@ -164,7 +191,7 @@ export function ProfileView() {
             <div className="space-y-2.5 text-xs">
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
-                  <Calendar className="w-3.5 h-3.5 text-primary" /> Tanggal Masuk
+                  <Calendar className="w-3.5 h-3.5 text-primary" /> Tmt mulai
                 </span>
                 <span className="font-bold text-foreground text-right">
                   {profile.joinDate ? format(new Date(profile.joinDate), "dd MMM yyyy", { locale: idLocale }) : "-"}
@@ -212,7 +239,7 @@ export function ProfileView() {
               </div>
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
-                  <Award className="w-3.5 h-3.5 text-primary" /> Golongan
+                  <Award className="w-3.5 h-3.5 text-primary" /> Jenis Kepegawaian
                 </span>
                 <span className="font-bold text-foreground text-right">
                   {profile.employeeGroup?.name || <span className="text-muted-foreground italic font-normal">-</span>}
@@ -220,7 +247,7 @@ export function ProfileView() {
               </div>
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
-                  <User className="w-3.5 h-3.5 text-primary" /> Pangkat
+                  <User className="w-3.5 h-3.5 text-primary" /> Pangkat / Golongan
                 </span>
                 <span className="font-bold text-foreground text-right">
                   {profile.employeeRank?.name || <span className="text-muted-foreground italic font-normal">-</span>}

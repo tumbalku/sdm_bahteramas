@@ -10,6 +10,7 @@ export const IMPORT_HEADERS = [
   "role",
   "gender",
   "birthDate",
+  "birthPlace",
   "academicDegree",
   "lastEducation",
   "religion",

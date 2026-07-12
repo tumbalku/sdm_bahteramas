@@ -1,11 +1,11 @@
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   data?: T;
   error?: string;
 }
 
-export async function apiClient<T = any>(
+export async function apiClient<T = unknown>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
@@ -42,10 +42,10 @@ export async function apiClient<T = any>(
       data: data.data !== undefined ? data.data : data,
       message: data.message,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || "Gagal menghubungi server",
+      error: error instanceof Error ? error.message : "Gagal menghubungi server",
     };
   }
 }

@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import { PasswordVerificationModal } from "@/components/PasswordVerificationModal";
-import { useSettings, useUpdateSettings } from "../hooks";
+import { useSettings, useUpdateSettings, useDownloadBackup } from "../hooks";
 import {
   Settings,
   Image as ImageIcon,
@@ -25,6 +25,7 @@ import { toast } from "sonner";
 export function SettingsFormView() {
   const { data: settings = [], isLoading } = useSettings();
   const updateSettingsMutation = useUpdateSettings();
+  const downloadBackupMutation = useDownloadBackup();
 
   const [formData, setFormData] = useState<Record<string, string>>({
     MAX_AVATAR_UPLOAD_SIZE_KB: "200",
@@ -56,23 +57,10 @@ export function SettingsFormView() {
   const handleDownloadBackup = async () => {
     setIsDownloadingBackup(true);
     try {
-      const response = await fetch("/api/v1/backup/export");
-      if (!response.ok) {
-        const json = await response.json();
-        throw new Error(json.message || "Gagal mengunduh backup database");
-      }
-
-      const blob = await response.blob();
+      const { blob, filename } = await downloadBackupMutation.mutateAsync();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `smdp_backup_${new Date().toISOString().slice(0, 10)}.sql`;
-      if (contentDisposition && contentDisposition.includes("filename=")) {
-        filename = contentDisposition.split("filename=")[1].replace(/"/g, "");
-      }
-
       a.download = filename;
       document.body.appendChild(a);
       a.click();
@@ -270,6 +258,13 @@ export function SettingsFormView() {
             <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <p className="leading-relaxed">
               Berkas backup mengontain seluruh struktur relasi data dan *record* master kepegawaian, dokumen, pengguna, serta audit log. Berkas `.sql` ini dapat diimpor langsung ke PostgreSQL untuk keperluan pemulihan bencana (*disaster recovery*).
+            </p>
+          </div>
+
+          <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 dark:text-amber-400">
+            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+            <p className="leading-relaxed font-semibold">
+              PENTING & SENSITIF: Berkas backup (.sql) ini mengandung informasi sensitif termasuk data hash kata sandi pengguna. Harap simpan berkas ini di tempat yang aman dan jangan pernah membagikan berkas ini kepada pihak lain yang tidak berwenang.
             </p>
           </div>
         </div>

@@ -55,3 +55,15 @@ export function useUploadAvatar() {
     },
   });
 }
+
+export function useExportProfilePdf() {
+  return useMutation({
+    mutationFn: () => profileApi.exportProfilePdf(),
+    onSuccess: () => {
+      toast.success("PDF profil berhasil diekspor");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Gagal mengekspor PDF profil");
+    },
+  });
+}

@@ -2,9 +2,43 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { X, Loader2, Sparkles } from "lucide-react";
 
 export type DataType = "STATUS" | "GROUP" | "PROFESSION" | "POSITION" | "RANK" | "WORKPLACE";
+
+const DATA_TYPE_OPTIONS: Record<DataType, { label: string; example: string; namePlaceholder: string }> = {
+  STATUS: {
+    label: "Status Kepegawaian",
+    example: "Contoh: ASN, Non ASN",
+    namePlaceholder: "Masukkan nama status kepegawaian...",
+  },
+  GROUP: {
+    label: "Jenis Kepegawaian",
+    example: "Contoh: PNS, PPPK",
+    namePlaceholder: "Masukkan nama jenis kepegawaian...",
+  },
+  PROFESSION: {
+    label: "Kelompok Profesi",
+    example: "Contoh: Medis, Administrasi",
+    namePlaceholder: "Masukkan nama kelompok profesi...",
+  },
+  POSITION: {
+    label: "Jabatan",
+    example: "Contoh: Dokter, Programmer",
+    namePlaceholder: "Masukkan nama jabatan...",
+  },
+  RANK: {
+    label: "Pangkat / Golongan",
+    example: "Contoh: Pembina (IV/a)",
+    namePlaceholder: "Masukkan nama pangkat / golongan...",
+  },
+  WORKPLACE: {
+    label: "Tempat Tugas",
+    example: "Contoh: Ruang ICCU",
+    namePlaceholder: "Masukkan nama tempat tugas...",
+  },
+};
 
 interface ItemWithChild {
   id: string;
@@ -56,6 +90,8 @@ export function CategoryFormModal({
 
   if (!isOpen) return null;
 
+  const selectedTypeMeta = DATA_TYPE_OPTIONS[type];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -75,7 +111,7 @@ export function CategoryFormModal({
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <h3 className="text-xl font-bold">
-              {initialData ? "Edit Master" : "Tambah Master"}
+              {initialData ? `Edit ${selectedTypeMeta.label}` : `Tambah ${selectedTypeMeta.label}`}
             </h3>
           </div>
           <Button
@@ -100,19 +136,14 @@ export function CategoryFormModal({
             <label className="block text-xs font-bold text-muted-foreground mb-1">
               Tipe Data <span className="text-red-500">*</span>
             </label>
-            <select
+            <Select
               disabled={!!initialData}
               value={type}
               onChange={(e) => setType(e.target.value as DataType)}
+              options={Object.entries(DATA_TYPE_OPTIONS).map(([value, meta]) => ({ value, label: meta.label }))}
               className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-70"
-            >
-              <option value="STATUS">Status Kepegawaian (e.g. ASN, Non ASN)</option>
-              <option value="GROUP">Jenis Kepegawaian (e.g. PNS, PPPK)</option>
-              <option value="PROFESSION">Kelompok Profesi (e.g. Medis, Administrasi)</option>
-              <option value="POSITION">Jabatan (e.g. Dokter, Programmer)</option>
-              <option value="RANK">Pangkat / Golongan (e.g. Pembina (IV/a))</option>
-              <option value="WORKPLACE">Tempat Tugas (e.g. Ruang ICCU)</option>
-            </select>
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">{selectedTypeMeta.example}</p>
           </div>
 
           {(type === "GROUP" || type === "POSITION") && (
@@ -120,39 +151,30 @@ export function CategoryFormModal({
               <label className="block text-xs font-bold text-muted-foreground mb-1">
                 {type === "GROUP" ? "Status Kepegawaian Induk *" : "Kelompok Profesi Induk *"}
               </label>
-              <select
+              <Select
                 value={parentId}
                 onChange={(e) => setParentId(e.target.value)}
+                options={
+                  type === "GROUP"
+                    ? employmentStatuses.map((s) => ({ value: s.id, label: s.name }))
+                    : professionGroups.map((p) => ({ value: p.id, label: p.name }))
+                }
+                placeholder={type === "GROUP" ? "-- Pilih Status Kepegawaian Induk --" : "-- Pilih Kelompok Profesi Induk --"}
                 className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 required
-              >
-                <option value="">
-                  {type === "GROUP" ? "-- Pilih Status Induk --" : "-- Pilih Profesi Induk --"}
-                </option>
-                {type === "GROUP"
-                  ? employmentStatuses.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))
-                  : professionGroups.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-              </select>
+              />
             </div>
           )}
 
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-1">
-              Nama Entri <span className="text-red-500">*</span>
+              Nama {selectedTypeMeta.label} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Masukkan nama..."
+              placeholder={selectedTypeMeta.namePlaceholder}
               className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               required
             />

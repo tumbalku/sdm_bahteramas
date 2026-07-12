@@ -27,6 +27,7 @@ export function UpdateProfileForm({ profile }: UpdateProfileFormProps) {
   const [name, setName] = useState(profile.name);
   const [nik, setNik] = useState(profile.nik || "");
   const [gender, setGender] = useState(profile.gender || "L");
+  const [birthPlace, setBirthPlace] = useState(profile.birthPlace || "");
   const [birthDate, setBirthDate] = useState(
     profile.birthDate ? format(new Date(profile.birthDate), "yyyy-MM-dd") : ""
   );
@@ -41,6 +42,7 @@ export function UpdateProfileForm({ profile }: UpdateProfileFormProps) {
     setName(profile.name);
     setNik(profile.nik || "");
     setGender(profile.gender || "L");
+    setBirthPlace(profile.birthPlace || "");
     setBirthDate(profile.birthDate ? format(new Date(profile.birthDate), "yyyy-MM-dd") : "");
     setAcademicDegree(profile.academicDegree || "");
     setLastEducation(profile.lastEducation || "");
@@ -61,6 +63,7 @@ export function UpdateProfileForm({ profile }: UpdateProfileFormProps) {
       name,
       nik: nik || null,
       gender,
+      birthPlace: birthPlace || null,
       birthDate: birthDate || null,
       academicDegree: academicDegree || null,
       lastEducation: lastEducation || null,
@@ -78,103 +81,106 @@ export function UpdateProfileForm({ profile }: UpdateProfileFormProps) {
         Biodata
       </h3>
 
-      <div className="space-y-3.5 flex-1 text-xs md:text-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <FormField label="Nama Lengkap" required>
-            <Input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-10 text-xs md:text-sm"
-              required
-            />
-          </FormField>
-          <FormField label="NIK (Nomor Induk Kependudukan)">
-            <Input
-              type="text"
-              value={nik}
-              onChange={(e) => setNik(e.target.value)}
-              placeholder="16 Digit NIK KTP..."
-              className="h-10 text-xs md:text-sm font-mono"
-            />
-          </FormField>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 text-xs md:text-sm">
+        <FormField label="Nama Lengkap" required>
+          <Input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-10 text-xs md:text-sm"
+            required
+          />
+        </FormField>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <FormField label="Gelar Akademik">
-            <Input
-              type="text"
-              value={academicDegree}
-              onChange={(e) => setAcademicDegree(e.target.value)}
-              placeholder="Contoh: S.Ked, Sp.B"
-              className="h-10 text-xs md:text-sm"
-            />
-          </FormField>
-          <FormField label="Jenis Kelamin">
-            <Select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              options={GENDER_OPTIONS}
-              className="h-10 text-xs md:text-sm"
-            />
-          </FormField>
-        </div>
+        <FormField label="NIK (Nomor Induk Kependudukan)">
+          <Input
+            type="text"
+            value={nik}
+            onChange={(e) => setNik(e.target.value)}
+            placeholder="16 Digit NIK KTP..."
+            className="h-10 text-xs md:text-sm font-mono"
+          />
+        </FormField>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <FormField label="Tanggal Lahir">
-            <Input
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              className="h-10 text-xs md:text-sm"
-            />
-          </FormField>
-          <FormField label="Agama">
-            <Select
-              value={religion}
-              onChange={(e) => setReligion(e.target.value)}
-              options={RELIGION_OPTIONS}
-              placeholder="-- Pilih Agama --"
-              className="h-10 text-xs md:text-sm"
-            />
-          </FormField>
-        </div>
+        <FormField label="Gelar Akademik">
+          <Input
+            type="text"
+            value={academicDegree}
+            onChange={(e) => setAcademicDegree(e.target.value)}
+            placeholder="Contoh: S.Ked, Sp.B"
+            className="h-10 text-xs md:text-sm"
+          />
+        </FormField>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <FormField label="Status Pernikahan">
-            <Select
-              value={maritalStatus}
-              onChange={(e) => setMaritalStatus(e.target.value)}
-              options={MARITAL_STATUS_OPTIONS}
-              placeholder="-- Pilih Status Pernikahan --"
-              className="h-10 text-xs md:text-sm"
-            />
-          </FormField>
-          <FormField label="Pendidikan Terakhir">
-            <Select
-              value={lastEducation}
-              onChange={(e) => setLastEducation(e.target.value)}
-              options={EDUCATION_OPTIONS}
-              placeholder="-- Pilih Pendidikan --"
-              className="h-10 text-xs md:text-sm"
-            />
-          </FormField>
-        </div>
+        <FormField label="Jenis Kelamin">
+          <Select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            options={GENDER_OPTIONS}
+            className="h-10 text-xs md:text-sm"
+          />
+        </FormField>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <FormField label="Nomor Telepon / WhatsApp">
-            <Input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="081234567890"
-              className="h-10 text-xs md:text-sm font-mono"
-            />
-          </FormField>
-          <div />
-        </div>
+        <FormField label="Tempat Lahir">
+          <Input
+            type="text"
+            value={birthPlace}
+            onChange={(e) => setBirthPlace(e.target.value)}
+            placeholder="Contoh: Kendari"
+            className="h-10 text-xs md:text-sm"
+          />
+        </FormField>
 
-        <FormField label="Alamat Lengkap Tempat Tinggal">
+        <FormField label="Tanggal Lahir">
+          <Input
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+            className="h-10 text-xs md:text-sm"
+          />
+        </FormField>
+
+        <FormField label="Agama">
+          <Select
+            value={religion}
+            onChange={(e) => setReligion(e.target.value)}
+            options={RELIGION_OPTIONS}
+            placeholder="-- Pilih Agama --"
+            className="h-10 text-xs md:text-sm"
+          />
+        </FormField>
+
+        <FormField label="Status Pernikahan">
+          <Select
+            value={maritalStatus}
+            onChange={(e) => setMaritalStatus(e.target.value)}
+            options={MARITAL_STATUS_OPTIONS}
+            placeholder="-- Pilih Status Pernikahan --"
+            className="h-10 text-xs md:text-sm"
+          />
+        </FormField>
+
+        <FormField label="Pendidikan Terakhir">
+          <Select
+            value={lastEducation}
+            onChange={(e) => setLastEducation(e.target.value)}
+            options={EDUCATION_OPTIONS}
+            placeholder="-- Pilih Pendidikan --"
+            className="h-10 text-xs md:text-sm"
+          />
+        </FormField>
+
+        <FormField label="Nomor Telepon / WhatsApp">
+          <Input
+            type="text"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="081234567890"
+            className="h-10 text-xs md:text-sm font-mono"
+          />
+        </FormField>
+
+        <FormField label="Alamat Lengkap Tempat Tinggal" className="md:col-span-2">
           <Textarea
             rows={3}
             value={address}

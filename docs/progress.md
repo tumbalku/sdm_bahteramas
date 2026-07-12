@@ -66,7 +66,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `src/modules/auth/hooks.ts` (selesai 2026-06-28)
 - [x] `src/modules/auth/components/` (LoginForm, dll) (selesai 2026-06-28)
 - [x] `src/app/login/page.tsx` (selesai 2026-06-28)
-- [x] `src/app/api/v1/auth/[...nextauth]/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/auth/[...nextauth]/route.ts` (endpoint canonical NextAuth; v1 duplicate dihapus 2026-07-12)
 
 ### F03 — Manajemen Jenis Dokumen
 - [x] `src/modules/document-types/service.ts` (selesai 2026-06-28)
@@ -107,6 +107,14 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `docs/api.md`
 - [x] `docs/business-rules.md`
 
+### Filter Lanjutan Manajemen Pegawai
+- [x] `EmployeeFilterBar` dibuat presentational dan typed tanpa `any`; data master kategori disuplai dari parent.
+- [x] Page Manajemen Pegawai mendukung filter unit kerja, TMT awal, TMT akhir/kontrak, rentang usia masa pensiun, status pernikahan, dan pendidikan terakhir.
+- [x] Endpoint daftar dan export pegawai memvalidasi query filter dengan Zod dan memakai filter yang sama.
+- [x] Page Rekapitulasi Arsip Dokumen Pegawai ikut mendukung filter pegawai lanjutan dari shared `EmployeeFilterBar`.
+- [x] Pencarian daftar pegawai diberi debounce ringan agar tidak memicu request pada setiap ketikan.
+- [x] Filter TMT satu tanggal memakai rentang dari tanggal yang dipilih sampai hari ini.
+
 ### Data TMT / Masa Kontrak Pegawai
 - [x] `prisma/schema.prisma`
 - [x] `src/modules/users/types.ts`
@@ -122,6 +130,14 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `docs/database.md`
 - [x] `docs/api.md`
 - [x] `docs/business-rules.md`
+
+### Biodata Pegawai — Tempat Lahir
+- [x] Kolom `User.birthPlace` ditambahkan ke Prisma schema dan migration.
+- [x] Form tambah/edit pegawai ADMIN mendukung input Tempat Lahir.
+- [x] Profil mandiri user mendukung update Tempat Lahir di form Biodata.
+- [x] Preview profil pegawai menampilkan Tempat Lahir.
+- [x] Import/export CSV pegawai menyertakan kolom `birthPlace`.
+- [x] Dokumentasi database, API, business rules, dan progress diperbarui.
 
 ### F04 — Manajemen Dokumen
 - [x] `src/modules/documents/service.ts` (selesai 2026-06-28)
@@ -212,6 +228,20 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `DocumentSummaryTable` mendapat slot `headerAction` agar action header tetap reusable.
 - [x] `docs/api.md`, `docs/business-rules.md`, `docs/routing.md`, dan `docs/progress.md` diperbarui.
 
+### Preview Profil Pegawai — Export PDF Profil Lengkap
+- [x] Tombol `Export CSV` dokumen pegawai disabled ketika pegawai belum memiliki dokumen yang diupload.
+- [x] Page Preview Profil Pegawai memiliki tombol `Export PDF` untuk mengunduh profil lengkap pegawai.
+- [x] Endpoint `GET /api/v1/users/[id]/profile/export-pdf` dibuat server-side dan hanya dapat diakses `ADMIN`.
+- [x] PDF berisi identitas, biodata, informasi kepegawaian, dan table dokumen relevan dengan jenis dokumen serta nomor dokumen.
+- [x] Export PDF mencatat audit `DATA_EXPORTED` dengan metadata `scope: "EMPLOYEE_PROFILE_PDF"` dan `format: "pdf"`.
+- [x] Layout PDF diperbarui menjadi A4 portrait bergaya corporate/government profile dan digenerate dengan Puppeteer: header logo aplikasi, hero profile, kartu dua kolom, badge status, divider section, arsip ringkas, footer tanggal/halaman, dan QR verifikasi.
+
+### Profil Saya — Export PDF Mandiri
+- [x] Page `Profil Saya` memiliki tombol `Export PDF` untuk mengunduh profil lengkap user login.
+- [x] Endpoint `GET /api/v1/profile/export-pdf` dibuat server-side dan hanya memakai session user aktif.
+- [x] PDF memakai template profil lengkap yang sama dengan Preview Profil Pegawai, termasuk identitas, biodata, informasi kepegawaian, arsip dokumen relevan, footer halaman, dan QR verifikasi.
+- [x] Export PDF mandiri mencatat audit `DATA_EXPORTED` dengan metadata `scope: "OWN_PROFILE_PDF"` dan `format: "pdf"`.
+
 ### Preview Dokumen Saya
 - [x] Card dokumen pada Page Dokumen Saya memiliki tombol `Preview`.
 - [x] Tombol `Preview` mengarah ke page detail `/documents/[id]`.
@@ -277,6 +307,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] `src/modules/profile/components/` (selesai 2026-06-28)
 - [x] `src/app/api/v1/profile/route.ts` (selesai 2026-06-28)
 - [x] `src/app/api/v1/profile/password/route.ts` (selesai 2026-06-28)
+- [x] `src/app/api/v1/profile/export-pdf/route.ts` (selesai 2026-07-11)
 - [x] `src/app/(dashboard)/profile/page.tsx` (selesai 2026-06-28)
 
 ### F08 — Security Logs
@@ -472,8 +503,27 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] Hirarki data-fetching dialihkan sepenuhnya ke TanStack Query, menyelesaikan pelanggaran arsitektur `fetch` manual.
 - [x] Tombol delete dan submit form modal memicu `refetchCategories()` dari hook untuk sinkronisasi ulang data kategori pasca aksi.
 - [x] State lokal yang tersisa disisakan hanya untuk UI modal dan form data yang memang dinamis.
-- [x] `npm.cmd test -- --run` berhasil: 87 test passed.
-- [x] `npx.cmd tsc --noEmit` berhasil bersih.
+
+### Remediasi Audit Kode 2026-07-12 (Selesai 2026-07-12)
+- [x] **P0-01** — Hilangkan fallback hardcoded `"super-secret-key"` dari `auth-options.ts` dan `proxy.ts`, buat helper `getRequiredEnv()` di `src/lib/env.ts`, serta buat unit test `src/lib/env.test.ts`.
+- [x] **P0-02** — Tambahkan rate limit verifikasi password (5 kegagalan per 10 menit per userId), status code 429, uniform error message, pencatatan kegagalan ke SecurityLog, serta unit test `verify-password.test.ts`.
+- [x] **P0-03** — Kebijakan backup passwordHash dipertahankan untuk pemulihan penuh, penambahan warning eksplisit di Settings UI, dan implementasi pagination (LIMIT/OFFSET) pada query SQL dump di `backup/service.ts` untuk menghindari OOM.
+- [x] **P0-04** — Migrasi `next lint` ke ESLint CLI (Flat Config), membuat `eslint.config.mjs`, memperbarui script `"lint": "eslint . --max-warnings=0"` di `package.json`, dan memperbaiki error/warning lint.
+- [x] **P1-01** — Hapus import langsung dari `repository.ts` di route documents/verification dan memindahkan logic ke `getDocumentByIdService()` di `documents/service.ts`.
+- [x] **P1-02** — Memindahkan `fetch()` langsung dari komponen ke `api.ts` + `hooks.ts` untuk Kategori, Verifikasi Password Modal, Layered Delete Modal, dan Settings Form View.
+- [x] **P1-03** — Standardisasi response API dengan helper `ok(data)`, `created(data)`, `fail(error, status)` di `src/lib/api-response.ts`.
+- [x] **P1-04** — Regenerasi Prisma client (`npx prisma generate`), pendaftaran kolom `birthPlace` ke dalam `schema.prisma`, dan penghapusan dynamic SQL workaround (`$queryRawUnsafe` / `$executeRawUnsafe`) dari users/profile repository dan backup service.
+- [x] **P1-05** — Mengubah urutan delete dokumen menjadi DB-first kemudian physical storage file delete, menyerap error hapus file fisik sebagai warning saja, dan menambahkan test case kegagalan storage di `service.test.ts`.
+- [x] **P1-06** — Memperbaiki logika status code error pada `DELETE /api/v1/documents/[id]` (memetakan ke 403 atau 500 alih-alih selalu jatuh ke 403).
+- [x] **P1-07** — Membuat endpoint `GET /api/v1/documents/[id]/download` untuk menyembunyikan parameter storage path `?file=` di URL publik dan mengupdate UI agar menggunakan endpoint baru ini.
+- [x] **P2-01** — Mengurangi `any` pada `api-client.ts` dan `auth-options.ts`, mempertahankan typing NextAuth di `src/types/next-auth.d.ts`, serta mengganti error handling terkait menjadi `unknown`.
+- [x] **P2-02** — Memecah `src/modules/users/service.ts` menjadi service CRUD utama, `src/modules/users/import-service.ts` untuk import CSV/template, dan `src/modules/users/export-service.ts` untuk export CSV/PDF profil/dokumen; public exports tetap kompatibel melalui re-export dari `service.ts`.
+- [x] **P2-03** — Menambahkan coverage kritis untuk rate limit `verify-password` dan failure path delete dokumen ketika storage gagal; coverage RBAC service dokumen tetap dipertahankan.
+- [x] **P2-04** — Menstandarkan endpoint canonical NextAuth ke `/api/auth/*`, menghapus duplikat `/api/v1/auth/[...nextauth]`, mengembalikan `SessionProvider` ke base path default, dan memperbarui dokumentasi API/routing.
+- [x] **P2-05** — Mengganti `window.confirm` di `CategoriesView.tsx` dengan custom Dialog konfirmasi Shadcn UI.
+- [x] **P2-06** — Mendokumentasikan status dynamic column checker workaround di `src/lib/db-columns.ts` dan di `docs/architecture.md` beserta target/rencana TODO penghapusannya.
+- [x] **Test Coverage Batch** — Orkestrasi agy untuk menambah regression/unit/integration-style tests sebelum commit/PR: API response helpers, env helper, verify-password rate limit, document service/download route, backup pagination/warning, users import/export `birthPlace`, dan canonical NextAuth endpoint. Total test naik menjadi 163 test / 22 file test.
+- [x] **Migration Runbook** — Tambahkan `docs/supabase-production-migration-runbook.md` sebagai panduan sinkronisasi Prisma migration ke Supabase staging/production, termasuk preflight backup, jalur normal `migrate deploy`, jalur baseline saat DB non-empty/P3005, verifikasi `User.birthPlace`, dan smoke test aplikasi.
 
 ---
 
@@ -483,23 +533,27 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 
 ## 🟢 Audit Security RLS (Selesai 2026-07-01)
 - **Analisis masalah:** Terdapat peringatan `rls_disabled_in_public` dari Supabase. Project menggunakan Prisma dan tidak menggunakan REST API Supabase.
-- **Langkah dilakukan:** Audit 18 tabel Prisma pada schema `public` dan menyusun script SQL untuk mengaktifkan RLS tanpa menetapkan policy (Default: DENY ALL untuk REST API).
+- **Langkah dilakukan:** Audit 18 tabel Prisma pada schema `public`.
 - **Hasil Audit & Migrasi:** Script migrasi, Security Report, dan Verification Checklist berhasil dibuat di dalam folder `docs/`. Prisma tidak akan terdampak oleh perubahan ini.
-
----
 
 ## 🔴 Yang Belum Dibuat
 
 - Reset password via email belum tersedia.
 
+### 📋 Backlog Post-Commit (Hasil Review 2026-07-12)
+
+> Perbaikan opsional/tambahan yang tidak memblokir rilis produksi namun penting sebagai peningkatan berkelanjutan.
+
+- [ ] **B-01** — Tambahkan teks peringatan keamanan di UI Settings sebelum tombol unduh backup database (misal: "File backup mengandung hash kata sandi...").
+- [ ] **B-02** — Bersihkan penggunaan `catch (error: any)` secara bertahap dengan beralih ke `error instanceof Error` agar type safety lebih terjamin.
+- [ ] **B-03** — Migrasikan in-memory rate limiter `verify-password` ke Redis atau tabel DB ketika deployment mulai menggunakan multi-instance.
+- [ ] **B-04** — Ganti mapping `mapUserRecord(u: any)` di repository users dengan tipe tergenerasi Prisma.
+- [ ] **B-05** — Definisikan tipe update data profil secara eksplisit (seperti `Partial<Prisma.UserUpdateInput>`) alih-alih `any` di repository profile.
+
 ## 📋 TODO Dari Analisis PRD
 
 - [ ] **Tentukan threshold peringatan kedaluwarsa** — PRD menyebut "mendekati kedaluwarsa" tapi tidak spesifik hari. Implementor tentukan (misal: 30 hari).
-- [x] **Tentukan behavior ganti password** — tersedia endpoint `PUT /api/v1/profile/password`.
 - [ ] **Tentukan paginasi default** — PRD belum mendefinisikan ukuran halaman default untuk list API.
-- [x] **Konfigurasi Middleware path** — `src/middleware.ts` menjadi entrypoint Next.js dan mendelegasikan logic ke `src/proxy.ts`.
-- [x] **Seed data master** — `prisma/seed.ts` tersedia.
-- [x] **Format CSV import pegawai** — Header dan format kolom CSV untuk import sudah ditetapkan di fitur bulk import/export.
 - [ ] **Reset password** — Belum ada di PRD, perlu klarifikasi apakah diperlukan.
 
 ---
@@ -534,7 +588,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 | 2026-07-03 | AI Agent | Tambah rencana refactor route master jenis dokumen untuk menghapus route typo/duplikat dan menstandarkan `/document-types` |
 | 2026-07-03 | AI Agent | Selesaikan refactor route master jenis dokumen: tambah route edit canonical, update link tambah/edit, hapus route typo lama, dan update routing |
 | 2026-07-04 | AI Agent | Tambah rencana detail TDD module users: validation test, pure helper test, service unit test, dan refactor helper CSV/formatting dari `users/service.ts` ke utility module |
-| 2026-07-04 | AI Agent | Selesaikan normalisasi RBAC single-role: pertahankan `User.role`, hapus `UserRole` dari schema/seed/repository/backup, tambah migration, generate Prisma Client, dan sinkronkan dokumentasi |
+| 2026-07-04 | AI Agent | Selesaikan normalisasi RBAC single-role: pertahaman `User.role`, hapus `UserRole` dari schema/seed/repository/backup, tambah migration, generate Prisma Client, dan sinkronkan dokumentasi |
 | 2026-07-04 | AI Agent | Selesaikan TDD module users: setup Vitest, tambah validation/helper/service unit test, refactor helper users ke `utils.ts`, dan verifikasi test + TypeScript |
 | 2026-07-04 | AI Agent | Selesaikan unit test `users/categories-service`: mock repository/audit log, test get/create/update/delete category service, dan verifikasi test + TypeScript |
 | 2026-07-04 | AI Agent | Selesaikan TDD module auth: tambah validation/helper/service unit test, ekstrak helper auth ke `utils.ts`, dan verifikasi test + TypeScript |
@@ -549,7 +603,10 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 | 2026-07-04 | AI Agent | Selesaikan implementasi RBAC bertingkat: helper capability, archives/dashboard mencakup ADMIN/STAFF/EMPLOYEE sebagai pemilik dokumen personal, konteks Dokumen Saya dibuat personal, route akses dokumen/verifikasi memakai helper, dan dokumentasi disinkronkan. |
 | 2026-07-04 | AI Agent | Tambah aturan anti-duplikasi upload dokumen: select upload menyembunyikan jenis dokumen yang sudah dimiliki user, backend menolak `documentTypeId` duplikat, dan test service documents diperbarui. |
 | 2026-07-04 | AI Agent | Ubah tampilan TMT: akhir TMT/kontrak menjadi opsional, profil menampilkan `TMT Awal CPNS` jika tanggal akhir kosong dan `Masa Kontrak` jika tanggal mulai/akhir terisi. |
-
-
-
-
+| 2026-07-11 | AI Agent | Tambah filter lanjutan Manajemen Pegawai: TMT awal, TMT akhir, unit kerja, rentang usia masa pensiun, status pernikahan, pendidikan terakhir; filter bar dibuat typed/presentational dan endpoint users divalidasi Zod. |
+| 2026-07-11 | AI Agent | Ubah perilaku filter TMT awal/akhir dari exact date menjadi rentang tanggal pilihan sampai hari ini. |
+| 2026-07-11 | AI Agent | Tambah field Tempat Lahir pada biodata pegawai: schema/migration, form tambah/edit, profil mandiri, preview profil, CSV import/export, dan dokumentasi. |
+| 2026-07-11 | AI Agent | Tambah export PDF profil lengkap pada Preview Profil Pegawai dan disable export CSV dokumen ketika pegawai belum memiliki dokumen upload. |
+| 2026-07-11 | AI Agent | Ubah engine export PDF Profil Pegawai ke Puppeteer dengan template HTML print, logo/foto via data URI, dan QR verifikasi nyata pada footer. |
+| 2026-07-11 | AI Agent | Tambah export PDF mandiri pada Page Profil Saya lewat endpoint `/api/v1/profile/export-pdf`, hook profile, tombol UI, dan audit `OWN_PROFILE_PDF`. |
+| 2026-07-12 | AI Agent | Remediasi audit kode 2026-07-12: perbaiki semua P0 (secret env helper, rate limit verify-password, backup OOM pagination, eslint CLI migration) dan P1 (getDocumentByIdService, fetch komponen ke hooks, standard response API, Prisma generated update, atomic delete, standard download id). Seluruh quality gate hijau, siap dideploy ke produksi. |

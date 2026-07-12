@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, ArrowRight, ArrowLeft, Trash2, Loader2, CheckCircle2, KeyRound, Lock } from "lucide-react";
 
+import { useVerifyPassword } from "@/modules/auth/hooks";
+
 interface LayeredDeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,6 +39,8 @@ export function LayeredDeleteModal({
   const [password, setPassword] = useState("");
   const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const verifyPasswordMutation = useVerifyPassword();
 
   useEffect(() => {
     if (isOpen) {
@@ -76,17 +80,7 @@ export function LayeredDeleteModal({
     setPasswordError(null);
 
     try {
-      const res = await fetch("/api/v1/auth/verify-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || "Kata sandi yang Anda masukkan salah.");
-      }
-
+      await verifyPasswordMutation.mutateAsync(password);
       onConfirm();
     } catch (err: any) {
       setPasswordError(err.message || "Kata sandi yang Anda masukkan salah!");

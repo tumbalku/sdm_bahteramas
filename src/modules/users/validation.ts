@@ -34,6 +34,18 @@ function validateTmtDates(data: { hasTmt?: boolean | null; tmtStartDate?: string
   }
 }
 
+function validateOldNip(data: { hasOldEmployeeId?: boolean | null; oldEmployeeId?: string | null }, ctx: z.RefinementCtx) {
+  if (data.hasOldEmployeeId === undefined) return;
+  if (!data.hasOldEmployeeId) return;
+  if (!data.oldEmployeeId || data.oldEmployeeId.trim() === "") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["oldEmployeeId"],
+      message: "NIP Lama wajib diisi jika opsi NIP Lama diaktifkan",
+    });
+  }
+}
+
 const userSchema = z.object({
   employeeId: z
     .string()
@@ -56,6 +68,7 @@ const userSchema = z.object({
     errorMap: () => ({ message: "Role pengguna tidak valid" }),
   }),
   gender: z.string().optional().nullable(),
+  birthPlace: z.string().optional().nullable(),
   birthDate: z.string().optional().nullable(),
   academicDegree: z.string().optional().nullable(),
   lastEducation: z.string().optional().nullable(),
@@ -67,6 +80,8 @@ const userSchema = z.object({
   hasTmt: z.boolean().optional().default(false),
   tmtStartDate: z.string().optional().nullable(),
   tmtEndDate: z.string().optional().nullable(),
+  hasOldEmployeeId: z.boolean().optional().default(false),
+  oldEmployeeId: z.string().optional().nullable(),
   employmentStatusId: z.string().optional().nullable(),
   employeeGroupId: z.string().optional().nullable(),
   professionGroupId: z.string().optional().nullable(),
@@ -75,6 +90,53 @@ const userSchema = z.object({
   workplaceId: z.string().optional().nullable(),
 });
 
-export const createUserSchema = userSchema.superRefine(validateTmtDates);
+export const createUserSchema = userSchema.superRefine((data, ctx) => {
+  validateTmtDates(data, ctx);
+  validateOldNip(data, ctx);
+});
 
-export const updateUserSchema = userSchema.partial().superRefine(validateTmtDates);
+export const updateUserSchema = userSchema.partial().superRefine((data, ctx) => {
+  validateTmtDates(data, ctx);
+  validateOldNip(data, ctx);
+});
+
+const optionalDateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD")
+  .optional();
+
+const optionalAgeNumber = z.coerce
+  .number()
+  .int("Usia harus berupa angka bulat")
+  .min(0, "Usia minimal 0")
+  .max(100, "Usia maksimal 100")
+  .optional();
+
+export const userFilterSchema = z
+  .object({
+    search: z.string().trim().optional(),
+    professionGroupId: z.string().optional(),
+    workplaceId: z.string().optional(),
+    employmentStatusId: z.string().optional(),
+    employeeGroupId: z.string().optional(),
+    employeePositionId: z.string().optional(),
+    tmtStartDate: optionalDateString,
+    tmtEndDate: optionalDateString,
+    retirementAgeMin: optionalAgeNumber,
+    retirementAgeMax: optionalAgeNumber,
+    maritalStatus: z.string().trim().optional(),
+    lastEducation: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.retirementAgeMin !== undefined &&
+      data.retirementAgeMax !== undefined &&
+      data.retirementAgeMax < data.retirementAgeMin
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["retirementAgeMax"],
+        message: "Usia akhir pensiun tidak boleh lebih kecil dari usia awal",
+      });
+    }
+  });

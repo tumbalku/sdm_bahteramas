@@ -93,12 +93,15 @@ model User {
   id                 String            @id @default(cuid())
   employeeId         String            @unique // NIP Pegawai
   nik                String?           @unique // NIK KTP (16 Digit)
+  hasOldEmployeeId   Boolean           @default(false)
+  oldEmployeeId      String?           @unique
   email              String            @unique
   passwordHash       String
   name               String
   avatarUrl          String?
   role               Role              @default(EMPLOYEE)
   gender             String?
+  birthPlace         String?
   birthDate          DateTime?
   academicDegree     String?
   lastEducation      String?

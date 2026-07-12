@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { canManageAllDocuments } from "@/lib/rbac";
-import { findDocumentById } from "@/modules/documents/repository";
-import { deleteDocumentService } from "@/modules/documents/service";
+import { getDocumentByIdService, deleteDocumentService } from "@/modules/documents/service";
+import { ok, fail } from "@/lib/api-response";
 
 export async function GET(
   request: Request,
@@ -12,27 +11,22 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return fail("Unauthorized", 401);
     }
 
     const { id } = await params;
-    const document = await findDocumentById(id);
+    const actor = { id: session.user.id, role: session.user.role };
+    const document = await getDocumentByIdService(id, actor);
 
-    if (!document) {
-      return NextResponse.json({ message: "Dokumen tidak ditemukan" }, { status: 404 });
-    }
-
-    if (!canManageAllDocuments(session.user.role) && document.ownerId !== session.user.id) {
-      return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
-    }
-
-    return NextResponse.json(document);
+    return ok(document);
   } catch (error: any) {
     console.error("GET /api/v1/documents/[id] Error:", error);
-    return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
-      { status: 500 }
-    );
+    const status = error.message.includes("tidak ditemukan")
+      ? 404
+      : error.message.includes("Akses ditolak")
+        ? 403
+        : 500;
+    return fail(error.message || "Terjadi kesalahan internal server", status);
   }
 }
 
@@ -43,7 +37,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return fail("Unauthorized", 401);
     }
 
     const actor = {
@@ -51,19 +45,20 @@ export async function DELETE(
       name: session.user.name || "Unknown",
       role: session.user.role,
     };
-    
+
     const { id } = await params;
     const ipAddress = request.headers.get("x-forwarded-for") || "unknown";
 
     await deleteDocumentService(id, actor, ipAddress);
 
-    return NextResponse.json({ message: "Dokumen berhasil dihapus" });
+    return ok({ message: "Dokumen berhasil dihapus" });
   } catch (error: any) {
     console.error("DELETE /api/v1/documents/[id] Error:", error);
-    const status = error.message.includes("tidak ditemukan") ? 404 : 403;
-    return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
-      { status }
-    );
+    const status = error.message.includes("tidak ditemukan")
+      ? 404
+      : error.message.includes("Akses ditolak") || error.message.includes("Tidak memiliki akses") || error.message.includes("Tidak dapat menghapus")
+        ? 403
+        : 500;
+    return fail(error.message || "Terjadi kesalahan internal server", status);
   }
 }

@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { loginApi, logoutApi } from "./api";
+import { loginApi, logoutApi, verifyPasswordApi } from "./api";
 import { LoginCredentials } from "./types";
 
 export function useLogin() {
@@ -27,6 +27,18 @@ export function useLogout() {
   return useMutation({
     mutationFn: async () => {
       await logoutApi();
+    },
+  });
+}
+
+export function useVerifyPassword() {
+  return useMutation({
+    mutationFn: async (password: string) => {
+      const res = await verifyPasswordApi(password);
+      if (!res.success) {
+        throw new Error(res.error || "Gagal memverifikasi kata sandi");
+      }
+      return res.data;
     },
   });
 }

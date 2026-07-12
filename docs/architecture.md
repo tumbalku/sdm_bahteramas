@@ -194,3 +194,20 @@ Karena arsitektur sudah modular:
 5. Modul lain **tidak perlu diubah** — mereka tetap memanggil fungsi yang sama
 
 **Protokol tetap REST** — tidak berubah saat migrasi.
+
+---
+
+## 11. Database Migrations & Dynamic Column Workaround
+
+Untuk memfasilitasi migrasi schema database secara bertahap di production tanpa mengganggu runtime aplikasi (misalnya saat penambahan kolom baru pada tabel `User` seperti `nik`, `academicDegree`, dll.), sistem menggunakan helper dinamis `src/lib/db-columns.ts` untuk memeriksa keberadaan kolom di database secara real-time sebelum melakukan select/update.
+
+### Cara Kerja:
+- Query ke `information_schema.columns` dilakukan untuk memverifikasi keberadaan kolom.
+- Hasil pencarian di-cache di memori (`Map<string, boolean>`) agar tidak membebani performa database.
+- Digunakan di `src/modules/users/repository.ts` dan `src/modules/profile/repository.ts`.
+
+### Rencana Penghapusan (TODO):
+Workaround ini bersifat sementara. Helper `hasUserColumn` dan file `src/lib/db-columns.ts` harus dihapus setelah:
+1. Seluruh migration script telah berhasil dijalankan di semua target environment (development, staging, dan production).
+2. Prisma Client berhasil di-generate ulang dengan schema terbaru di seluruh environment tersebut.
+3. Seluruh repository refactored untuk menggunakan Prisma Client standard queries secara penuh tanpa raw SQL dinamis.

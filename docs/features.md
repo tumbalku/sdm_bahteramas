@@ -111,7 +111,7 @@
 
 **Sub-fitur:**
 - Daftar pegawai + search by nama/NIP
-- Filter by profesi, unit kerja, status kepegawaian
+- Filter by profesi, unit kerja, status kepegawaian, TMT awal/akhir, rentang usia masa pensiun, status pernikahan, dan pendidikan terakhir
 - Buat pegawai baru
 - Edit data pegawai
 - Hapus pegawai (cascade: dokumen & role ikut terhapus)
@@ -133,6 +133,7 @@
 - Lihat profil diri sendiri
 - Update biodata (nama, gender, tanggal lahir)
 - Ganti password mandiri
+- Export PDF profil diri sendiri
 
 ---
 

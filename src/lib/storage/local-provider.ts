@@ -93,7 +93,7 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   getFileUrl(storagePath: string): string {
-    return `/api/v1/documents/download?file=${encodeURIComponent(storagePath)}`;
+    return `/api/v1/documents/download?file=protected`;
   }
 
   async ensureFolder(folderPath: string): Promise<void> {

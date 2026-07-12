@@ -73,6 +73,8 @@ function makeUser(overrides: Partial<UserRecord> = {}): UserRecord {
     hasTmt: false,
     tmtStartDate: null,
     tmtEndDate: null,
+    hasOldEmployeeId: false,
+    oldEmployeeId: null,
     employmentStatus: null,
     employeeGroup: null,
     professionGroup: null,
@@ -100,6 +102,7 @@ describe("users service", () => {
     vi.mocked(bcrypt.hash).mockResolvedValue("hashed-password" as never);
     vi.mocked(logActivity).mockResolvedValue(undefined);
     vi.mocked(isDocumentTypeApplicableToUser).mockReturnValue(true);
+    vi.mocked(repo.findUsersByUniqueFields).mockResolvedValue([]);
   });
 
   describe("createUserService", () => {
@@ -265,9 +268,64 @@ describe("users service", () => {
       expect(result.errors[0].message).toBe("CSV tidak memiliki data pegawai");
     });
 
+    it("importUsersCsvService memproses data dengan birthPlace secara sukses", async () => {
+      vi.mocked(repo.findUserImportReferenceData).mockResolvedValue({
+        employmentStatuses: [],
+        employeeGroups: [],
+        professionGroups: [],
+        employeePositions: [],
+        employeeRanks: [],
+        workplaces: [],
+      });
+      vi.mocked(repo.createUsersBulk).mockResolvedValue(1);
+
+      const header = getUsersImportTemplateCsv().split("\n")[0];
+      const row = "199001012026011001,7471010101900001,pegawai@example.com,Pegawai123!,Nama Pegawai,EMPLOYEE,L,1990-01-01,Kendari,S.Kep,D4/S1,Islam,Kawin,081234567890,Alamat,2026-01-01,,,,,,,false,,";
+      const csv = `${header}\n${row}`;
+
+      const result = await importUsersCsvService(csv, actor);
+
+      expect(result.errorCount).toBe(0);
+      expect(result.createdCount).toBe(1);
+      expect(repo.createUsersBulk).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            birthPlace: "Kendari",
+          })
+        ])
+      );
+    });
+
+    it("importUsersCsvService memvalidasi duplikasi NIP, email, dan NIK di CSV", async () => {
+      vi.mocked(repo.findUserImportReferenceData).mockResolvedValue({
+        employmentStatuses: [],
+        employeeGroups: [],
+        professionGroups: [],
+        employeePositions: [],
+        employeeRanks: [],
+        workplaces: [],
+      });
+
+      const header = getUsersImportTemplateCsv().split("\n")[0];
+      const row1 = "199001012026011001,7471010101900001,pegawai1@example.com,Pegawai123!,Budi,EMPLOYEE,L,1990-01-01,Kendari,S.Kep,D4/S1,Islam,Kawin,081234567890,Alamat,2026-01-01,,,,,,,false,,";
+      const row2 = "199001012026011001,7471010101900001,pegawai2@example.com,Pegawai123!,Budi,EMPLOYEE,L,1990-01-01,Kendari,S.Kep,D4/S1,Islam,Kawin,081234567890,Alamat,2026-01-01,,,,,,,false,,";
+      const row3 = "199001012026011002,7471010101900002,pegawai1@example.com,Pegawai123!,Budi,EMPLOYEE,L,1990-01-01,Kendari,S.Kep,D4/S1,Islam,Kawin,081234567890,Alamat,2026-01-01,,,,,,,false,,";
+      const csv = `${header}\n${row1}\n${row2}\n${row3}`;
+
+      const result = await importUsersCsvService(csv, actor);
+
+      expect(result.errorCount).toBeGreaterThan(0);
+      const errMsgs = result.errors.map(e => e.message);
+      expect(errMsgs.some(m => m.includes("Duplikat NIP dengan baris 2"))).toBe(true);
+      expect(errMsgs.some(m => m.includes("Duplikat NIK dengan baris 2"))).toBe(true);
+      expect(errMsgs.some(m => m.includes("Duplikat email dengan baris 2"))).toBe(true);
+      expect(repo.createUsersBulk).not.toHaveBeenCalled();
+    });
+
     it("exportUsersCsvService menghasilkan CSV dan audit DATA_EXPORTED", async () => {
       vi.mocked(repo.findManyUsers).mockResolvedValue([
         makeUser({
+          birthPlace: "Kendari",
           employmentStatus: { id: "status-1", name: "PNS" },
           createdAt: new Date("2026-07-04T00:00:00.000Z"),
         }),
@@ -276,6 +334,8 @@ describe("users service", () => {
       const result = await exportUsersCsvService({ search: "Budi" }, actor, "127.0.0.1");
 
       expect(result.csv).toContain("employeeId,nik,email");
+      expect(result.csv).toContain("birthPlace");
+      expect(result.csv).toContain("Kendari");
       expect(result.csv).toContain("198501012010011001");
       expect(result.fileName).toMatch(/^smdp-users-\d{8}-\d{4}\.csv$/);
       expect(result.rowCount).toBe(1);

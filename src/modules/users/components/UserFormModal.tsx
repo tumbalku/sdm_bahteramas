@@ -18,9 +18,9 @@ import {
 } from "@/lib/constants";
 
 const ROLE_OPTIONS = [
-  { value: "EMPLOYEE", label: "EMPLOYEE (Pegawai)" },
-  { value: "STAFF", label: "STAFF (Verifikator)" },
-  { value: "ADMIN", label: "ADMIN (Administrator)" },
+  { value: "EMPLOYEE", label: "Karyawan" },
+  { value: "STAFF", label: "Staf Kepegawaian" },
+  { value: "ADMIN", label: "Admin" },
 ];
 
 interface UserFormModalProps {
@@ -45,6 +45,7 @@ export function UserFormModal({
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("EMPLOYEE");
   const [gender, setGender] = useState("L");
+  const [birthPlace, setBirthPlace] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [academicDegree, setAcademicDegree] = useState("");
   const [lastEducation, setLastEducation] = useState("");
@@ -64,6 +65,7 @@ export function UserFormModal({
       setEmail(initialData.email);
       setRole(initialData.role);
       setGender(initialData.gender || "L");
+      setBirthPlace(initialData.birthPlace || "");
       setBirthDate(initialData.birthDate ? format(new Date(initialData.birthDate), "yyyy-MM-dd") : "");
       setAcademicDegree(initialData.academicDegree || "");
       setLastEducation(initialData.lastEducation || "");
@@ -83,6 +85,7 @@ export function UserFormModal({
       setPassword("");
       setRole("EMPLOYEE");
       setGender("L");
+      setBirthPlace("");
       setBirthDate("");
       setAcademicDegree("");
       setLastEducation("");
@@ -107,6 +110,7 @@ export function UserFormModal({
       email,
       role,
       gender,
+      birthPlace: birthPlace || undefined,
       birthDate: birthDate || undefined,
       academicDegree: academicDegree || undefined,
       lastEducation: lastEducation || undefined,
@@ -239,6 +243,14 @@ export function UserFormModal({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <FormField label="Tempat Lahir">
+              <Input
+                type="text"
+                value={birthPlace}
+                onChange={(e) => setBirthPlace(e.target.value)}
+                placeholder="Contoh: Kendari"
+              />
+            </FormField>
             <FormField label="Tanggal Lahir">
               <Input
                 type="date"
