@@ -3,6 +3,7 @@
 import { useReducer, useEffect } from "react";
 import { DocumentArchiveCategory } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Loader2, Check } from "lucide-react";
 import { TargetCriteriaSelector } from "./TargetCriteriaSelector";
 import { cn } from "@/lib/utils";
@@ -158,15 +159,16 @@ export function DocumentTypeForm({
 
         <div>
           <label className="block text-sm font-semibold mb-2">Kategori Arsip *</label>
-          <select
+          <Select
             value={state.archiveCategory}
             onChange={(e) => dispatch({ archiveCategory: e.target.value as DocumentArchiveCategory })}
+            options={[
+              { value: "UTAMA", label: "Arsip Utama" },
+              { value: "KONDISIONAL", label: "Arsip Kondisional" },
+              { value: "PROFESI", label: "Arsip Profesi" },
+            ]}
             className="w-full px-4 py-3 rounded-2xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
-            <option value="UTAMA">UTAMA (Wajib Dasar Semua Pegawai)</option>
-            <option value="KONDISIONAL">KONDISIONAL (Opsional / Tergantung Kondisi)</option>
-            <option value="PROFESI">PROFESI (Khusus Tenaga Medis / Kesehatan)</option>
-          </select>
+          />
           <p className="text-xs text-muted-foreground mt-1">Klasifikasi kelompok berkas kepegawaian.</p>
         </div>
       </div>
@@ -241,14 +243,15 @@ export function DocumentTypeForm({
             className="flex-1 px-4 py-3 rounded-2xl border border-input bg-background text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/50"
             required
           />
-          <select
+          <Select
             value={state.sizeUnit}
             onChange={(e) => dispatch({ sizeUnit: e.target.value as "KB" | "MB" })}
+            options={[
+              { value: "MB", label: "Megabyte" },
+              { value: "KB", label: "Kilobyte" },
+            ]}
             className="px-5 py-3 rounded-2xl border border-input bg-background text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer shadow-xs"
-          >
-            <option value="MB">MB (Megabyte)</option>
-            <option value="KB">KB (Kilobyte)</option>
-          </select>
+          />
         </div>
         <p className="text-xs text-muted-foreground mt-1.5">
           Batas ukuran berkas maksimal saat diunggah pegawai ({state.sizeValue} {state.sizeUnit}).

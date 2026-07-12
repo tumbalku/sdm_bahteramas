@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 import { logActivity } from "@/lib/security-log";
+import type { AuthUser } from "@/lib/auth-utils";
+import { exportOwnUserProfilePdfService } from "@/modules/users/service";
 import {
   findUserProfileById,
   updateUserProfile,
@@ -32,6 +34,7 @@ export async function updateProfileService(
     name: input.name,
     nik: input.nik,
     gender: input.gender,
+    birthPlace: input.birthPlace,
     birthDate: input.birthDate ? new Date(input.birthDate) : null,
     academicDegree: input.academicDegree,
     lastEducation: input.lastEducation,
@@ -85,4 +88,8 @@ export async function changePasswordService(
   });
 
   return true;
+}
+
+export async function exportProfilePdfService(actor: AuthUser, ipAddress?: string) {
+  return exportOwnUserProfilePdfService(actor, ipAddress);
 }

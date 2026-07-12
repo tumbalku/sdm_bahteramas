@@ -56,6 +56,7 @@ Data utama pegawai + akun login.
 | `name` | String | Nama lengkap |
 | `role` | Role | Role utama (default: EMPLOYEE) |
 | `gender` | String? | Opsional |
+| `birthPlace` | String? | Tempat lahir pegawai, opsional |
 | `birthDate` | DateTime? | Opsional |
 | `academicDegree` | String? | Gelar akademik (e.g. S.Ked, Sp.B) |
 | `lastEducation` | String? | Pendidikan terakhir (SD, SMP, SMA/SMK, D3, D4/S1, S2, S3, Spesialis) |

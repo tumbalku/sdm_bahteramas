@@ -38,7 +38,7 @@ export function VerificationActionModal({
 
   if (!isOpen || !document) return null;
 
-  const fileUrl = `/api/v1/documents/download?file=${encodeURIComponent(document.filePath)}`;
+  const fileUrl = `/api/v1/documents/${document.id}/download`;
   const isPdf = document.filePath.toLowerCase().endsWith(".pdf");
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(document.filePath);
   
@@ -69,7 +69,6 @@ export function VerificationActionModal({
                   title={document.fileName}
                 />
              ) : isImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img 
                   src={fileUrl} 
                   alt={document.fileName}

@@ -54,6 +54,53 @@ function formatDocumentType(item: any): DocumentTypeRecord {
   };
 }
 
+function startOfDate(value: string) {
+  const date = new Date(`${value}T00:00:00.000`);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function endOfDate(value: string) {
+  const date = new Date(`${value}T23:59:59.999`);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function birthDateUpperBoundForAge(age: number) {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - age);
+  date.setHours(23, 59, 59, 999);
+  return date;
+}
+
+function birthDateLowerBoundForAge(age: number) {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - age - 1);
+  date.setDate(date.getDate() + 1);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function applyDateRange(where: any, field: string, from?: string, to?: string) {
+  const range: Record<string, Date> = {};
+  const fromDate = from ? startOfDate(from) : undefined;
+  const toDate = to ? endOfDate(to) : undefined;
+
+  if (fromDate) range.gte = fromDate;
+  if (toDate) range.lte = toDate;
+  if (Object.keys(range).length > 0) where[field] = range;
+}
+
+function applyDateUntilToday(where: any, field: string, value?: string) {
+  if (!value) return;
+  const today = new Date();
+  const todayString = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  applyDateRange(where, field, value, todayString);
+}
+
 export async function findManyDocumentTypes(
   filters?: DocumentTypeFilter
 ): Promise<DocumentTypeRecord[]> {
@@ -259,6 +306,22 @@ export async function findArchiveEmployees(filters: DocumentArchiveFilter) {
   if (filters.employeePositionId) where.employeePositionId = filters.employeePositionId;
   if (filters.employeeRankId) where.employeeRankId = filters.employeeRankId;
   if (filters.workplaceId) where.workplaceId = filters.workplaceId;
+  if (filters.maritalStatus) where.maritalStatus = filters.maritalStatus;
+  if (filters.lastEducation) where.lastEducation = filters.lastEducation;
+
+  applyDateUntilToday(where, "tmtStartDate", filters.tmtStartDate);
+  applyDateUntilToday(where, "tmtEndDate", filters.tmtEndDate);
+
+  const birthDateRange: Record<string, Date> = {};
+  if (filters.retirementAgeMin !== undefined) {
+    birthDateRange.lte = birthDateUpperBoundForAge(filters.retirementAgeMin);
+  }
+  if (filters.retirementAgeMax !== undefined) {
+    birthDateRange.gte = birthDateLowerBoundForAge(filters.retirementAgeMax);
+  }
+  if (Object.keys(birthDateRange).length > 0) {
+    where.birthDate = birthDateRange;
+  }
 
   return prisma.user.findMany({
     where,

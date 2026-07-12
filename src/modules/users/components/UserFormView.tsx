@@ -32,9 +32,9 @@ import {
 } from "@/lib/constants";
 
 const ROLE_OPTIONS = [
-  { value: "EMPLOYEE", label: "EMPLOYEE (Pegawai Biasa)" },
-  { value: "STAFF", label: "STAFF (Verifikator Dokumen)" },
-  { value: "ADMIN", label: "ADMIN (Administrator Akses Penuh)" },
+  { value: "EMPLOYEE", label: "Karyawan" },
+  { value: "STAFF", label: "Staf Kepegawaian" },
+  { value: "ADMIN", label: "Admin" },
 ];
 
 const USER_FORM_INITIAL_STATE: UserFormState = {
@@ -45,6 +45,7 @@ const USER_FORM_INITIAL_STATE: UserFormState = {
   password: "",
   role: "EMPLOYEE",
   gender: "L",
+  birthPlace: "",
   birthDate: "",
   academicDegree: "",
   lastEducation: "",
@@ -62,6 +63,8 @@ const USER_FORM_INITIAL_STATE: UserFormState = {
   employeePositionId: "",
   employeeRankId: "",
   workplaceId: "",
+  hasOldEmployeeId: false,
+  oldEmployeeId: "",
 };
 
 function formReducer(state: UserFormState, patch: Partial<UserFormState>): UserFormState {
@@ -77,6 +80,7 @@ function mapUserToFormState(user: NonNullable<ReturnType<typeof useUser>["data"]
     password: "",
     role: user.role || "EMPLOYEE",
     gender: user.gender || "L",
+    birthPlace: user.birthPlace || "",
     birthDate: user.birthDate ? format(new Date(user.birthDate), "yyyy-MM-dd") : "",
     academicDegree: user.academicDegree || "",
     lastEducation: user.lastEducation || "",
@@ -94,6 +98,8 @@ function mapUserToFormState(user: NonNullable<ReturnType<typeof useUser>["data"]
     employeePositionId: user.employeePosition?.id || "",
     employeeRankId: user.employeeRank?.id || "",
     workplaceId: user.workplace?.id || "",
+    hasOldEmployeeId: Boolean(user.hasOldEmployeeId),
+    oldEmployeeId: user.oldEmployeeId || "",
   };
 }
 
@@ -141,6 +147,7 @@ export function UserFormView({ userId }: UserFormViewProps) {
       email: form.email,
       role: form.role,
       gender: form.gender,
+      birthPlace: form.birthPlace || null,
       birthDate: form.birthDate || null,
       academicDegree: form.academicDegree || null,
       lastEducation: form.lastEducation || null,
@@ -158,6 +165,8 @@ export function UserFormView({ userId }: UserFormViewProps) {
       employeePositionId: form.employeePositionId || null,
       employeeRankId: form.employeeRankId || null,
       workplaceId: form.workplaceId || null,
+      hasOldEmployeeId: form.hasOldEmployeeId,
+      oldEmployeeId: form.hasOldEmployeeId ? form.oldEmployeeId || null : null,
     };
 
     if (form.password) {
@@ -245,6 +254,37 @@ export function UserFormView({ userId }: UserFormViewProps) {
               />
             </FormField>
 
+            <div className="md:col-span-2 rounded-xl border border-border/60 bg-accent/20 p-4 space-y-4">
+              <label className="flex items-center gap-3 text-sm font-semibold text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.hasOldEmployeeId}
+                  onChange={(e) => {
+                    if (!e.target.checked) {
+                      dispatch({ hasOldEmployeeId: false, oldEmployeeId: "" });
+                    } else {
+                      dispatch({ hasOldEmployeeId: true });
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-border accent-primary"
+                />
+                Pegawai memiliki NIP Lama
+              </label>
+
+              {form.hasOldEmployeeId && (
+                <FormField label="NIP Lama" required>
+                  <Input
+                    type="text"
+                    value={form.oldEmployeeId}
+                    onChange={(e) => dispatch({ oldEmployeeId: e.target.value })}
+                    placeholder="Contoh: 1900010100000000"
+                    className="font-mono"
+                    required
+                  />
+                </FormField>
+              )}
+            </div>
+
             <FormField label="Nama Lengkap (Tanpa Gelar)" required>
               <Input
                 type="text"
@@ -301,11 +341,12 @@ export function UserFormView({ userId }: UserFormViewProps) {
               />
             </FormField>
 
-            <FormField label="Jenis Kelamin">
-              <Select
-                value={form.gender}
-                onChange={(e) => dispatch({ gender: e.target.value })}
-                options={GENDER_OPTIONS}
+            <FormField label="Tempat Lahir">
+              <Input
+                type="text"
+                value={form.birthPlace}
+                onChange={(e) => dispatch({ birthPlace: e.target.value })}
+                placeholder="Contoh: Kendari"
               />
             </FormField>
 
@@ -314,6 +355,14 @@ export function UserFormView({ userId }: UserFormViewProps) {
                 type="date"
                 value={form.birthDate}
                 onChange={(e) => dispatch({ birthDate: e.target.value })}
+              />
+            </FormField>
+
+            <FormField label="Jenis Kelamin">
+              <Select
+                value={form.gender}
+                onChange={(e) => dispatch({ gender: e.target.value })}
+                options={GENDER_OPTIONS}
               />
             </FormField>
 
@@ -415,7 +464,7 @@ export function UserFormView({ userId }: UserFormViewProps) {
         <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="border-b border-border pb-3 flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-bold text-foreground">3. Master Kategori & Kualifikasi Kepegawaian</h3>
+            <h3 className="text-lg font-bold text-foreground">3. Data Kepegawaian</h3>
           </div>
 
           {isLoadingCategories ? (
@@ -431,7 +480,7 @@ export function UserFormView({ userId }: UserFormViewProps) {
                     dispatch({ employmentStatusId: e.target.value, employeeGroupId: "" });
                   }}
                   options={categories?.employmentStatuses.map((s) => ({ value: s.id, label: s.name }))}
-                  placeholder="-- Pilih Status (e.g. ASN, Non ASN) --"
+                  placeholder="-- Pilih Status Kepegawaian --"
                 />
               </FormField>
 
@@ -441,7 +490,7 @@ export function UserFormView({ userId }: UserFormViewProps) {
                   onChange={(e) => dispatch({ employeeGroupId: e.target.value })}
                   disabled={!form.employmentStatusId || availableGroups.length === 0}
                   options={availableGroups.map((g) => ({ value: g.id, label: g.name }))}
-                  placeholder="-- Pilih Jenis (e.g. PNS, PPPK) --"
+                  placeholder="-- Pilih Jenis Kepegawaian --"
                 />
               </FormField>
 

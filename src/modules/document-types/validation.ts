@@ -42,6 +42,13 @@ const optionalDateString = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD")
   .optional();
 
+const optionalAgeNumber = z.coerce
+  .number()
+  .int("Usia harus berupa angka bulat")
+  .min(0, "Usia minimal 0")
+  .max(100, "Usia maksimal 100")
+  .optional();
+
 export const documentArchiveFilterSchema = z.object({
   search: z.string().trim().optional(),
   archiveCategory: z.nativeEnum(DocumentArchiveCategory).optional(),
@@ -54,10 +61,46 @@ export const documentArchiveFilterSchema = z.object({
   employeePositionId: z.string().optional(),
   employeeRankId: z.string().optional(),
   workplaceId: z.string().optional(),
+  tmtStartDate: optionalDateString,
+  tmtEndDate: optionalDateString,
+  retirementAgeMin: optionalAgeNumber,
+  retirementAgeMax: optionalAgeNumber,
+  maritalStatus: z.string().trim().optional(),
+  lastEducation: z.string().trim().optional(),
   issueDateFrom: optionalDateString,
   issueDateTo: optionalDateString,
   expiryDateFrom: optionalDateString,
   expiryDateTo: optionalDateString,
   uploadedAtFrom: optionalDateString,
   uploadedAtTo: optionalDateString,
+}).superRefine((data, ctx) => {
+  const datePairs = [
+    ["issueDateFrom", "issueDateTo", "tanggal terbit"],
+    ["expiryDateFrom", "expiryDateTo", "tanggal kedaluwarsa"],
+    ["uploadedAtFrom", "uploadedAtTo", "tanggal upload"],
+  ] as const;
+
+  datePairs.forEach(([fromKey, toKey, label]) => {
+    const from = data[fromKey];
+    const to = data[toKey];
+    if (from && to && new Date(to) < new Date(from)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [toKey],
+        message: `Tanggal akhir filter ${label} tidak boleh lebih awal dari tanggal awal`,
+      });
+    }
+  });
+
+  if (
+    data.retirementAgeMin !== undefined &&
+    data.retirementAgeMax !== undefined &&
+    data.retirementAgeMax < data.retirementAgeMin
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["retirementAgeMax"],
+      message: "Usia akhir pensiun tidak boleh lebih kecil dari usia awal",
+    });
+  }
 });

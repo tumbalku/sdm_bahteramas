@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSettingsApi, updateSettingsApi } from "./api";
+import { getSettingsApi, updateSettingsApi, downloadBackupApi } from "./api";
 import { UpdateSettingsInput } from "./types";
 import { toast } from "sonner";
 
@@ -32,5 +32,11 @@ export function useUpdateSettings() {
     onError: (err: any) => {
       toast.error(err.message || "Terjadi kesalahan saat memperbarui pengaturan");
     },
+  });
+}
+
+export function useDownloadBackup() {
+  return useMutation({
+    mutationFn: () => downloadBackupApi(),
   });
 }

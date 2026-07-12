@@ -4,6 +4,8 @@ import { LoginForm } from "@/modules/auth/components/LoginForm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage() {
   const user = await getCurrentUser();
 

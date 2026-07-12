@@ -1,6 +1,8 @@
 import { requireRole } from "@/lib/auth-utils";
 import { DashboardLayoutClient } from "@/components/DashboardLayoutClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

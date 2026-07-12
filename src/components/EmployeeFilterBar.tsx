@@ -1,10 +1,12 @@
 "use client";
 
-import { Search, Filter, BadgeCheck, Stethoscope } from "lucide-react";
-import { DocumentArchiveCategory } from "@prisma/client";
-import { useMasterCategories } from "@/modules/users/hooks";
+import { BadgeCheck, BriefcaseBusiness, CalendarDays, Filter, GraduationCap, Heart, Search, Stethoscope } from "lucide-react";
+import type { DocumentArchiveCategory } from "@prisma/client";
+import type { MasterCategories } from "@/modules/users/types";
+import { EDUCATION_OPTIONS, MARITAL_STATUS_OPTIONS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { FormField } from "@/components/ui/form";
 
 export interface EmployeeFilterState {
   search: string;
@@ -12,33 +14,43 @@ export interface EmployeeFilterState {
   employeeGroupId: string;
   professionGroupId: string;
   employeePositionId: string;
+  workplaceId?: string;
+  tmtStartDate?: string;
+  tmtEndDate?: string;
+  retirementAgeMin?: number | "";
+  retirementAgeMax?: number | "";
+  maritalStatus?: string;
+  lastEducation?: string;
   archiveCategory?: DocumentArchiveCategory | "ALL";
 }
 
 interface EmployeeFilterBarProps {
   values: EmployeeFilterState;
   onChange: (newValues: EmployeeFilterState) => void;
+  categories?: MasterCategories;
   showArchiveCategory?: boolean;
 }
 
-const ARCHIVE_CATEGORY_OPTIONS = [
+const ARCHIVE_CATEGORY_OPTIONS: { value: DocumentArchiveCategory | "ALL"; label: string }[] = [
   { value: "ALL", label: "Semua Kategori Arsip" },
   { value: "UTAMA", label: "Arsip Utama" },
   { value: "PROFESI", label: "Arsip Profesi" },
   { value: "KONDISIONAL", label: "Arsip Kondisional" },
 ];
 
-export function EmployeeFilterBar({ values, onChange, showArchiveCategory = false }: EmployeeFilterBarProps) {
-  const { data: categories } = useMasterCategories();
-
+export function EmployeeFilterBar({ values, onChange, categories, showArchiveCategory = false }: EmployeeFilterBarProps) {
   const handleUpdate = (updates: Partial<EmployeeFilterState>) => {
     onChange({ ...values, ...updates });
   };
 
-  const currentStatusObj = categories?.employmentStatuses.find((s: any) => s.id === values.employmentStatusId);
+  const handleNumberUpdate = (key: "retirementAgeMin" | "retirementAgeMax", value: string) => {
+    handleUpdate({ [key]: value === "" ? "" : Number(value) });
+  };
+
+  const currentStatusObj = categories?.employmentStatuses.find((status) => status.id === values.employmentStatusId);
   const availableGroups = currentStatusObj?.employeeGroups || [];
 
-  const currentProfessionObj = categories?.professionGroups.find((p: any) => p.id === values.professionGroupId);
+  const currentProfessionObj = categories?.professionGroups.find((profession) => profession.id === values.professionGroupId);
   const availablePositions = currentProfessionObj?.employeePositions || [];
 
   return (
@@ -76,62 +88,161 @@ export function EmployeeFilterBar({ values, onChange, showArchiveCategory = fals
       {/* Bottom Row: Detailed Employment Select Filters */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-border/60">
         {/* Select 1: Status Kepegawaian */}
-        <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+        <FormField
+          label={
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
             <BadgeCheck className="w-3.5 h-3.5 text-primary" /> Status Kepegawaian
-          </label>
+            </span>
+          }
+        >
           <Select
             value={values.employmentStatusId || ""}
             onChange={(e) => handleUpdate({ employmentStatusId: e.target.value, employeeGroupId: "" })}
-            options={categories?.employmentStatuses.map((st: any) => ({ value: st.id, label: st.name }))}
+            options={categories?.employmentStatuses.map((status) => ({ value: status.id, label: status.name }))}
             placeholder="Semua Status Kepegawaian"
             className="h-9 text-xs font-semibold"
           />
-        </div>
+        </FormField>
 
         {/* Select 2: Jenis / Golongan Kepegawaian */}
-        <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-muted-foreground">
-            Golongan / Kelompok
-          </label>
+        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">Golongan / Kelompok</span>}>
           <Select
             value={values.employeeGroupId || ""}
             onChange={(e) => handleUpdate({ employeeGroupId: e.target.value })}
             disabled={!values.employmentStatusId}
-            options={availableGroups.map((grp: any) => ({ value: grp.id, label: grp.name }))}
+            options={availableGroups.map((group) => ({ value: group.id, label: group.name }))}
             placeholder="Semua Golongan"
             className="h-9 text-xs font-semibold"
           />
-        </div>
+        </FormField>
 
         {/* Select 3: Kelompok Profesi */}
-        <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+        <FormField
+          label={
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
             <Stethoscope className="w-3.5 h-3.5 text-primary" /> Kelompok Profesi
-          </label>
+            </span>
+          }
+        >
           <Select
             value={values.professionGroupId || ""}
             onChange={(e) => handleUpdate({ professionGroupId: e.target.value, employeePositionId: "" })}
-            options={categories?.professionGroups.map((pf: any) => ({ value: pf.id, label: pf.name }))}
+            options={categories?.professionGroups.map((profession) => ({ value: profession.id, label: profession.name }))}
             placeholder="Semua Kelompok Profesi"
             className="h-9 text-xs font-semibold"
           />
-        </div>
+        </FormField>
 
         {/* Select 4: Jabatan */}
-        <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-muted-foreground">
-            Jabatan Pegawai
-          </label>
+        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">Jabatan Pegawai</span>}>
           <Select
             value={values.employeePositionId || ""}
             onChange={(e) => handleUpdate({ employeePositionId: e.target.value })}
             disabled={!values.professionGroupId}
-            options={availablePositions.map((pos: any) => ({ value: pos.id, label: pos.name }))}
+            options={availablePositions.map((position) => ({ value: position.id, label: position.name }))}
             placeholder="Semua Jabatan"
             className="h-9 text-xs font-semibold"
           />
-        </div>
+        </FormField>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-border/60">
+        <FormField
+          label={
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+              <BriefcaseBusiness className="w-3.5 h-3.5 text-primary" /> Unit Kerja
+            </span>
+          }
+        >
+          <Select
+            value={values.workplaceId || ""}
+            onChange={(e) => handleUpdate({ workplaceId: e.target.value })}
+            options={categories?.workplaces.map((workplace) => ({ value: workplace.id, label: workplace.name }))}
+            placeholder="Semua Unit Kerja"
+            className="h-9 text-xs font-semibold"
+          />
+        </FormField>
+
+        <FormField
+          label={
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+              <Heart className="w-3.5 h-3.5 text-primary" /> Status Pernikahan
+            </span>
+          }
+        >
+          <Select
+            value={values.maritalStatus || ""}
+            onChange={(e) => handleUpdate({ maritalStatus: e.target.value })}
+            options={MARITAL_STATUS_OPTIONS}
+            placeholder="Semua Status Pernikahan"
+            className="h-9 text-xs font-semibold"
+          />
+        </FormField>
+
+        <FormField
+          label={
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+              <GraduationCap className="w-3.5 h-3.5 text-primary" /> Pendidikan Terakhir
+            </span>
+          }
+        >
+          <Select
+            value={values.lastEducation || ""}
+            onChange={(e) => handleUpdate({ lastEducation: e.target.value })}
+            options={EDUCATION_OPTIONS}
+            placeholder="Semua Pendidikan"
+            className="h-9 text-xs font-semibold"
+          />
+        </FormField>
+
+        <FormField
+          label={
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+              <CalendarDays className="w-3.5 h-3.5 text-primary" /> Usia Masa Pensiun
+            </span>
+          }
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              value={values.retirementAgeMin ?? ""}
+              onChange={(e) => handleNumberUpdate("retirementAgeMin", e.target.value)}
+              placeholder="Dari usia"
+              className="h-9 text-xs font-semibold"
+            />
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              value={values.retirementAgeMax ?? ""}
+              onChange={(e) => handleNumberUpdate("retirementAgeMax", e.target.value)}
+              placeholder="Sampai"
+              className="h-9 text-xs font-semibold"
+            />
+          </div>
+        </FormField>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border/60">
+        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">TMT Awal</span>}>
+          <Input
+            type="date"
+            value={values.tmtStartDate || ""}
+            onChange={(e) => handleUpdate({ tmtStartDate: e.target.value })}
+            className="h-9 text-xs font-semibold"
+          />
+        </FormField>
+
+        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">TMT Akhir / Kontrak</span>}>
+          <Input
+            type="date"
+            value={values.tmtEndDate || ""}
+            onChange={(e) => handleUpdate({ tmtEndDate: e.target.value })}
+            className="h-9 text-xs font-semibold"
+          />
+        </FormField>
       </div>
     </div>
   );

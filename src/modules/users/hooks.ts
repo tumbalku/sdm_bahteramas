@@ -6,12 +6,16 @@ import {
   deleteUserApi,
   downloadUsersImportTemplateApi,
   exportUserDocumentsCsvApi,
+  exportUserProfilePdfApi,
   exportUsersApi,
   fetchUserCategoriesApi,
   getUsersApi,
   importUsersApi,
   updateUserApi,
   getUserApi,
+  createCategoryApi,
+  updateCategoryApi,
+  deleteCategoryApi,
 } from "./api";
 import { CreateUserInput, UpdateUserInput, UserFilter } from "./types";
 
@@ -142,5 +146,62 @@ export function useExportUsers(filters?: UserFilter) {
 export function useExportUserDocumentsCsv(userId: string) {
   return useMutation({
     mutationFn: () => exportUserDocumentsCsvApi(userId),
+  });
+}
+
+export function useExportUserProfilePdf(userId: string) {
+  return useMutation({
+    mutationFn: () => exportUserProfilePdfApi(userId),
+  });
+}
+
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: { type: string; name: string; parentId?: string | null }) => {
+      const res = await createCategoryApi(payload);
+      if (!res.success) {
+        throw new Error(res.error || "Gagal membuat kategori baru");
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "categories"] });
+    },
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: { id: string; type: string; name: string; parentId?: string | null }) => {
+      const res = await updateCategoryApi(payload);
+      if (!res.success) {
+        throw new Error(res.error || "Gagal memperbarui kategori");
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "categories"] });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, type }: { id: string; type: string }) => {
+      const res = await deleteCategoryApi(id, type);
+      if (!res.success) {
+        throw new Error(res.error || "Gagal menghapus kategori");
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "categories"] });
+    },
   });
 }

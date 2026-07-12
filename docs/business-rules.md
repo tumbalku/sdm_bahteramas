@@ -26,7 +26,7 @@ Permission bersifat bertingkat/capability-based:
 | Lihat dokumen milik sendiri | ✅ | ✅ | ✅ |
 | Lihat semua dokumen | ✅ | ✅ (verifikasi) | ❌ |
 | Lihat dokumen pada preview profil pegawai | ✅ | ❌ | ❌ |
-| Export CSV dokumen pada preview profil pegawai | ✅ | ❌ | ❌ |
+| Export CSV/PDF pada preview profil pegawai | ✅ | ❌ | ❌ |
 | Lihat detail dokumen | ✅ | ✅ (milik sendiri) | ✅ (milik sendiri) |
 | Hapus dokumen (milik sendiri, bukan APPROVED) | ✅ | ✅ | ✅ |
 | Hapus dokumen siapapun | ✅ | ❌ | ❌ |
@@ -36,7 +36,7 @@ Permission bersifat bertingkat/capability-based:
 | Lihat/export rekap arsip dokumen pegawai | ✅ | ❌ | ❌ |
 | CRUD pegawai | ✅ | ❌ | ❌ |
 | Import/Export CSV pegawai | ✅ | ❌ | ❌ |
-| Kelola profil (mandiri) | ✅ | ✅ | ✅ |
+| Kelola/export profil (mandiri) | ✅ | ✅ | ✅ |
 | Lihat security logs | ✅ | ❌ | ❌ |
 
 ---
@@ -70,6 +70,17 @@ Permission bersifat bertingkat/capability-based:
 8. Export CSV dokumen pegawai mencakup semua jenis dokumen yang relevan dengan pegawai, termasuk jenis yang belum diupload.
 9. Kolom export dokumen pegawai: `Jenis Dokumen`, `Kode Dokumen`, `Kategori Arsip`, `Status Upload`, `Status Verifikasi`, `Nomor Surat`, `Tanggal Terbit`, `Tanggal Kedaluwarsa`, `Tanggal Upload`, `Nama File`, dan `Catatan Terakhir`.
 10. Export CSV dokumen pegawai wajib mencatat `DATA_EXPORTED` dengan scope `EMPLOYEE_DOCUMENTS`.
+11. Tombol `Export CSV` pada Preview Profil Pegawai disabled jika pegawai belum memiliki dokumen yang diupload.
+12. `ADMIN` dapat export PDF Preview Profil Pegawai yang berisi identitas, biodata, informasi kepegawaian, dan table dokumen relevan dengan kolom jenis dokumen serta nomor dokumen.
+13. Export PDF Preview Profil Pegawai wajib mencatat `DATA_EXPORTED` dengan scope `EMPLOYEE_PROFILE_PDF`.
+14. PDF profil dibuat dengan Puppeteer memakai layout A4 portrait yang ramah cetak hitam putih, dengan data profil dalam kartu dua kolom dan arsip dokumen dalam item-card ringkas.
+15. Footer PDF wajib memuat tanggal cetak, nomor halaman, dan QR verifikasi.
+
+### Aturan Profil Mandiri
+
+1. Semua role internal dapat melihat, mengubah biodata terbatas, mengganti password, upload avatar, dan export PDF profil dirinya sendiri.
+2. Export PDF Profil Saya memakai endpoint `/api/v1/profile/export-pdf` dan tidak menerima `userId` dari client.
+3. Export PDF Profil Saya wajib mencatat `DATA_EXPORTED` dengan scope `OWN_PROFILE_PDF`.
 
 ---
 
@@ -220,6 +231,8 @@ Workplace       (Unit kerja — standalone)
 - Template import CSV disediakan dari `/api/v1/users/import/template`.
 - Import memvalidasi header, duplikasi `employeeId`/`nik`/`email`, konflik database, role, format tanggal, relasi master data berdasarkan nama, dan urutan TMT.
 - Export CSV pegawai hanya bisa dilakukan oleh `ADMIN`, mengikuti filter aktif, dan tidak boleh menyertakan `passwordHash`.
+- Biodata pegawai menyimpan tempat lahir (`birthPlace`) dan tanggal lahir (`birthDate`). Keduanya dapat diisi oleh ADMIN saat membuat/mengedit pegawai dan oleh user melalui profil mandiri.
+- Daftar dan export pegawai dapat difilter berdasarkan pencarian nama/NIP/NIK/email, kategori kepegawaian, unit kerja, TMT awal, TMT akhir/kontrak, rentang usia pegawai saat ini untuk kebutuhan masa pensiun, status pernikahan, dan pendidikan terakhir. Filter TMT memakai rentang dari tanggal yang dipilih sampai hari ini.
 
 ### Aturan TMT / Masa Kontrak
 

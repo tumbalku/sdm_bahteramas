@@ -71,8 +71,8 @@ export function DocumentList({
     );
   };
 
-  const handleDownload = (filePath: string) => {
-    window.open(`/api/v1/documents/download?file=${encodeURIComponent(filePath)}`, "_blank");
+  const handleDownload = (id: string) => {
+    window.open(`/api/v1/documents/${id}/download`, "_blank");
   };
 
   return (
@@ -182,7 +182,7 @@ export function DocumentList({
                     variant="outline"
                     size="icon"
                     className="rounded-xl"
-                    onClick={() => handleDownload(doc.filePath)}
+                    onClick={() => handleDownload(doc.id)}
                     title="Unduh file lama"
                   >
                     <Download className="w-4 h-4" />
@@ -192,7 +192,7 @@ export function DocumentList({
                 <Button
                   variant="default"
                   className="flex-1 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                  onClick={() => handleDownload(doc.filePath)}
+                  onClick={() => handleDownload(doc.id)}
                 >
                   <Download className="w-4 h-4 mr-2" />
                   <span>Unduh</span>

@@ -60,8 +60,11 @@ Verifikasi ulang password user yang sedang login, digunakan untuk aksi sensitif.
 }
 ```
 
-### `GET /api/v1/auth/session`
+### `GET /api/auth/session`
 Ambil sesi aktif. Response: session object atau `{}` jika tidak login.
+
+> **Canonical NextAuth endpoint:** NextAuth memakai endpoint standar `/api/auth/*`.
+> Endpoint `/api/v1/auth/*` tidak lagi dipakai untuk handler NextAuth agar tidak ada duplikasi route. Endpoint v1 yang tersisa hanya endpoint aplikasi seperti `/api/v1/auth/verify-password`.
 
 ### `POST /api/v1/auth/signout`
 Logout. Hapus cookie sesi.
@@ -84,6 +87,7 @@ Ambil profil user yang sedang login.
     "name": "Budi Santoso",
     "role": "EMPLOYEE",
     "gender": "L",
+    "birthPlace": "Kendari",
     "birthDate": "1985-01-01T00:00:00.000Z",
     "hasTmt": true,
     "tmtStartDate": "2026-01-01T00:00:00.000Z",
@@ -107,6 +111,7 @@ Update profil mandiri.
 {
   "name": "string (optional)",
   "gender": "string (optional)",
+  "birthPlace": "string (optional)",
   "birthDate": "ISO date string (optional)"
 }
 ```
@@ -133,6 +138,15 @@ Ambil file avatar dari storage provider.
 - **Auth:** Required (semua role)
 - **Query Params:** `file`
 - **Behavior:** membaca file melalui storage bridge aktif (`local` atau `supabase`), bukan akses filesystem langsung.
+
+### `GET /api/v1/profile/export-pdf`
+Export profil user yang sedang login ke PDF.
+
+- **Auth:** Required (semua role)
+- **Response:** file `application/pdf`
+- **PDF content:** identitas, biodata, informasi kepegawaian, dan ringkasan dokumen relevan milik user login.
+- **Behavior:** user hanya dapat mengekspor profil dirinya sendiri; endpoint tidak menerima `userId` dari client.
+- **Log:** `DATA_EXPORTED` dengan metadata `scope: OWN_PROFILE_PDF`.
 
 ---
 
@@ -206,7 +220,7 @@ Hapus jenis dokumen.
 Ambil rekapitulasi arsip dokumen wajib seluruh pegawai.
 
 - **Auth:** `ADMIN`
-- **Query Params:** `search`, `archiveCategory`, `documentTypeId`, `status`, `uploadStatus`, `employmentStatusId`, `employeeGroupId`, `professionGroupId`, `employeePositionId`, `employeeRankId`, `workplaceId`, `issueDateFrom`, `issueDateTo`, `expiryDateFrom`, `expiryDateTo`, `uploadedAtFrom`, `uploadedAtTo`.
+- **Query Params:** `search`, `archiveCategory`, `documentTypeId`, `status`, `uploadStatus`, `employmentStatusId`, `employeeGroupId`, `professionGroupId`, `employeePositionId`, `employeeRankId`, `workplaceId`, `tmtStartDate`, `tmtEndDate`, `retirementAgeMin`, `retirementAgeMax`, `maritalStatus`, `lastEducation`, `issueDateFrom`, `issueDateTo`, `expiryDateFrom`, `expiryDateTo`, `uploadedAtFrom`, `uploadedAtTo`.
 - **Behavior:** denominator progress dihitung dari pasangan user internal dengan kemampuan `EMPLOYEE` (`ADMIN`, `STAFF`, `EMPLOYEE`) dan `DocumentType.isMandatory=true` yang berlaku sesuai target status/golongan/profesi/pangkat/unit kerja; dokumen yang sudah ada dihitung sebagai `Sudah Upload`, dan pasangan tanpa dokumen dihitung `Belum Upload`. Mode `Sudah Upload` menampilkan `DocumentRecord` aktual dari semua role internal tersebut.
 - **Response:** `{ data: { rows, stats, generatedAt, filters } }`.
 
@@ -356,6 +370,12 @@ Daftar semua pegawai.
   - `search`: string — cari by nama atau NIP
   - `professionGroupId`: filter by profesi
   - `workplaceId`: filter by unit kerja
+  - `employmentStatusId`, `employeeGroupId`, `employeePositionId`: filter kategori kepegawaian
+  - `tmtStartDate`: filter TMT awal dari tanggal ini sampai hari ini (`YYYY-MM-DD`)
+  - `tmtEndDate`: filter TMT akhir/kontrak dari tanggal ini sampai hari ini (`YYYY-MM-DD`)
+  - `retirementAgeMin`, `retirementAgeMax`: filter rentang usia pegawai saat ini untuk kebutuhan masa pensiun
+  - `maritalStatus`: filter status pernikahan
+  - `lastEducation`: filter pendidikan terakhir
 - **Response:**
 ```json
 {
@@ -390,6 +410,7 @@ Buat pegawai baru.
   "name": "Budi Santoso",
   "role": "EMPLOYEE",
   "gender": "L",
+  "birthPlace": "Kendari",
   "birthDate": "1985-01-01",
   "hasTmt": true,
   "tmtStartDate": "2026-01-01",
@@ -415,7 +436,7 @@ Download template CSV import pegawai.
 
 - **Auth:** `ADMIN`
 - **Response:** file `text/csv`
-- **Header CSV:** `employeeId`, `nik`, `email`, `password`, `name`, `role`, `gender`, `birthDate`, `academicDegree`, `lastEducation`, `religion`, `maritalStatus`, `phone`, `address`, `joinDate`, `employmentStatusName`, `employeeGroupName`, `professionGroupName`, `employeePositionName`, `employeeRankName`, `workplaceName`, `hasTmt`, `tmtStartDate`, `tmtEndDate`.
+- **Header CSV:** `employeeId`, `nik`, `email`, `password`, `name`, `role`, `gender`, `birthDate`, `birthPlace`, `academicDegree`, `lastEducation`, `religion`, `maritalStatus`, `phone`, `address`, `joinDate`, `employmentStatusName`, `employeeGroupName`, `professionGroupName`, `employeePositionName`, `employeeRankName`, `workplaceName`, `hasTmt`, `tmtStartDate`, `tmtEndDate`.
 
 ### `POST /api/v1/users/import`
 Import pegawai secara bulk dari CSV.
@@ -442,7 +463,7 @@ Import pegawai secara bulk dari CSV.
 Export data pegawai ke CSV.
 
 - **Auth:** `ADMIN`
-- **Query Params:** mengikuti filter `GET /api/v1/users`: `search`, `professionGroupId`, `workplaceId`, `employmentStatusId`, `employeeGroupId`, `employeePositionId`.
+- **Query Params:** mengikuti filter `GET /api/v1/users`.
 - **Response:** file `text/csv`
 - **Keamanan:** tidak menyertakan `passwordHash` atau plaintext password.
 - **Log:** `DATA_EXPORTED`.
@@ -456,6 +477,17 @@ Export dokumen relevan milik satu pegawai dari Page Preview Profil Pegawai ke CS
 - **Behavior:** mencakup seluruh jenis dokumen yang relevan dengan pegawai berdasarkan target jenis dokumen; jenis yang belum diupload tetap muncul dengan `Status Upload = Belum Upload`.
 - **Query strategy:** batch query pegawai, jenis dokumen, dan dokumen pegawai; tidak N+1 per jenis dokumen.
 - **Log:** `DATA_EXPORTED` dengan metadata `scope: EMPLOYEE_DOCUMENTS`.
+
+### `GET /api/v1/users/[id]/profile/export-pdf`
+Export Preview Profil Pegawai ke PDF.
+
+- **Auth:** `ADMIN`
+- **Response:** file `application/pdf`
+- **PDF content:** identitas, biodata, informasi kepegawaian, dan ringkasan dokumen pegawai.
+- **Layout:** dibuat dengan Puppeteer sebagai A4 portrait: header SMDP Portal, logo instansi, hero identitas pegawai, badge status/role, kartu data dua kolom, section arsip berbentuk item-card, footer tanggal/halaman, dan QR verifikasi.
+- **Dokumen:** memuat `Jenis Dokumen`, `Nomor Dokumen`, `Kategori`, dan `Status` dalam layout ringkas agar mudah dipindai oleh petugas HR.
+- **Behavior:** table dokumen mencakup seluruh jenis dokumen yang relevan dengan pegawai; dokumen yang belum diupload tetap muncul dengan nomor `-` dan status `Belum Upload`.
+- **Log:** `DATA_EXPORTED` dengan metadata `scope: EMPLOYEE_PROFILE_PDF`.
 
 ### `DELETE /api/v1/users/[id]`
 Hapus pegawai.

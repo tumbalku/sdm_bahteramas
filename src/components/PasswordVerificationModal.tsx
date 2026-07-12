@@ -15,6 +15,8 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { ShieldAlert, ArrowRight, ArrowLeft, Lock, Loader2, CheckCircle2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
+import { useVerifyPassword } from "@/modules/auth/hooks";
+
 interface PasswordVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,7 +33,7 @@ export function PasswordVerificationModal({
   title = "Verifikasi Identitas Keamanan",
   actionDescription = "mengunduh salinan cadangan basis data (.sql)",
   securityImpacts = [
-    "Aksi ini melibatkan unduhan data sensitif sistem dan master kepegawaian.",
+    "Aksi ini melibatkan unduhan data sensitif sistem and master kepegawaian.",
     "Verifikasi password diperlukan untuk memastikan tindakan ini benar-benar dilakukan oleh Anda.",
     "Seluruh aktivitas verifikasi keamanan ini akan dicatat permanen pada Audit Log.",
   ],
@@ -40,6 +42,8 @@ export function PasswordVerificationModal({
   const [password, setPassword] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const verifyPasswordMutation = useVerifyPassword();
 
   useEffect(() => {
     if (isOpen) {
@@ -71,18 +75,7 @@ export function PasswordVerificationModal({
     setErrorMessage(null);
 
     try {
-      const res = await fetch("/api/v1/auth/verify-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || "Verifikasi kata sandi gagal.");
-      }
-
+      await verifyPasswordMutation.mutateAsync(password);
       toast.success("Verifikasi identitas berhasil!");
       onClose();
       onSuccess();

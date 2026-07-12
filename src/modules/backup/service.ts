@@ -1,8 +1,12 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/security-log";
+import { hasUserColumn } from "@/lib/db-columns";
 import { format } from "date-fns";
 
-function escapeSqlValue(val: any): string {
+type SqlDumpRow = Record<string, unknown>;
+
+function escapeSqlValue(val: unknown): string {
   if (val === null || val === undefined) {
     return "NULL";
   }
@@ -40,6 +44,12 @@ export async function generateDatabaseSqlDump(actor: { id: string; name: string;
   lines.push(`SET standard_conforming_strings = on;`);
   lines.push(``);
 
+  const userExtraColumns = [
+    ...(await hasUserColumn("birthPlace") ? ["birthPlace"] : []),
+    ...(await hasUserColumn("hasOldEmployeeId") ? ["hasOldEmployeeId", "oldEmployeeId"] : []),
+    ...(await hasUserColumn("hasTmt") ? ["hasTmt", "tmtStartDate", "tmtEndDate"] : []),
+  ];
+
   // Define tables in foreign key dependency order
   const tables = [
     { name: "EmploymentStatus", cols: ["id", "name"] },
@@ -48,38 +58,38 @@ export async function generateDatabaseSqlDump(actor: { id: string; name: string;
     { name: "EmployeePosition", cols: ["id", "name", "professionGroupId"] },
     { name: "EmployeeRank", cols: ["id", "name"] },
     { name: "Workplace", cols: ["id", "name"] },
-    { 
-      name: "User", 
+    {
+      name: "User",
       cols: [
-        "id", "employeeId", "nik", "email", "passwordHash", "name", "avatarUrl", "role", 
-        "gender", "birthDate", "academicDegree", "lastEducation", "religion", "maritalStatus", 
-        "phone", "address", "joinDate", "employmentStatusId", "employeeGroupId", 
-        "professionGroupId", "employeePositionId", "employeeRankId", "workplaceId", 
+        "id", "employeeId", "nik", "email", "passwordHash", "name", "avatarUrl", "role",
+        "gender", ...userExtraColumns, "birthDate", "academicDegree", "lastEducation", "religion", "maritalStatus",
+        "phone", "address", "joinDate", "employmentStatusId", "employeeGroupId",
+        "professionGroupId", "employeePositionId", "employeeRankId", "workplaceId",
         "createdAt", "updatedAt"
-      ] 
+      ]
     },
-    { 
-      name: "DocumentType", 
+    {
+      name: "DocumentType",
       cols: [
-        "id", "code", "name", "description", "archiveCategory", "isMandatory", 
+        "id", "code", "name", "description", "archiveCategory", "isMandatory",
         "requiresExpiryDate", "requiresIssueDate", "requiresDocumentNumber", "allowedFormats", "maxSizeMb", "icon", "createdAt", "updatedAt"
-      ] 
+      ]
     },
     { name: "DocumentTypeProfession", cols: ["id", "documentTypeId", "professionGroupId"] },
-    { 
-      name: "DocumentRecord", 
+    {
+      name: "DocumentRecord",
       cols: [
-        "id", "ownerId", "documentTypeId", "status", "fileName", "filePath", 
+        "id", "ownerId", "documentTypeId", "status", "fileName", "filePath",
         "documentNumber", "issueDate", "expiryDate", "uploadedAt", "updatedAt"
-      ] 
+      ]
     },
-    { 
-      name: "VerificationHistory", 
-      cols: ["id", "documentRecordId", "status", "reviewedById", "reviewNote", "reviewedAt"] 
+    {
+      name: "VerificationHistory",
+      cols: ["id", "documentRecordId", "status", "reviewedById", "reviewNote", "reviewedAt"]
     },
-    { 
-      name: "SecurityLog", 
-      cols: ["id", "timestamp", "actorId", "actorName", "actorRole", "eventType", "resource", "ipAddress", "status", "metadata"] 
+    {
+      name: "SecurityLog",
+      cols: ["id", "timestamp", "actorId", "actorName", "actorRole", "eventType", "resource", "ipAddress", "status", "metadata"]
     },
     { name: "SystemSetting", cols: ["key", "value", "label", "description", "updatedAt"] },
   ];
@@ -90,21 +100,40 @@ export async function generateDatabaseSqlDump(actor: { id: string; name: string;
     lines.push(`-- ------------------------------------------------------------`);
 
     const colList = t.cols.map((c) => `"${c}"`).join(", ");
-    
+
     try {
       const selectCols = t.cols.map((c) => `"${c}"`).join(", ");
-      const rawRows: any[] = await prisma.$queryRawUnsafe(`SELECT ${selectCols} FROM "${t.name}"`);
+      let offset = 0;
+      const limit = 500;
+      let hasMore = true;
+      let rowCount = 0;
 
-      if (rawRows && rawRows.length > 0) {
-        for (const row of rawRows) {
-          const valList = t.cols.map((col) => escapeSqlValue(row[col])).join(", ");
-          lines.push(`INSERT INTO "${t.name}" (${colList}) VALUES (${valList}) ON CONFLICT DO NOTHING;`);
+      while (hasMore) {
+        const rawRows = await prisma.$queryRaw<SqlDumpRow[]>(
+          Prisma.sql`SELECT ${Prisma.raw(selectCols)} FROM ${Prisma.raw(`"${t.name}"`)} LIMIT ${limit} OFFSET ${offset}`
+        );
+
+        if (rawRows && rawRows.length > 0) {
+          for (const row of rawRows) {
+            const valList = t.cols.map((col) => escapeSqlValue(row[col])).join(", ");
+            lines.push(`INSERT INTO "${t.name}" (${colList}) VALUES (${valList}) ON CONFLICT DO NOTHING;`);
+          }
+          rowCount += rawRows.length;
+          if (rawRows.length < limit) {
+            hasMore = false;
+          } else {
+            offset += limit;
+          }
+        } else {
+          if (offset === 0) {
+            lines.push(`-- (Tidak ada data)`);
+          }
+          hasMore = false;
         }
-      } else {
-        lines.push(`-- (Tidak ada data)`);
       }
-    } catch (err: any) {
-      lines.push(`-- Error dumping table ${t.name}: ${err?.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      lines.push(`-- Error dumping table ${t.name}: ${message}`);
     }
     lines.push(``);
   }
