@@ -1,6 +1,7 @@
 import puppeteer, { type LaunchOptions } from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import QRCode from "qrcode";
+import { existsSync } from "node:fs";
 
 interface PdfTableRow {
   cells: string[];
@@ -416,6 +417,10 @@ function buildFooterTemplate(input: EmployeeProfilePdfInput, qrDataUri: string) 
 }
 
 export function isServerlessRuntime(env: Record<string, string | undefined> = process.env) {
+  if (env.NODE_ENV === "development") {
+    return false;
+  }
+
   return Boolean(
     env.VERCEL ||
       env.VERCEL_ENV ||
@@ -426,11 +431,37 @@ export function isServerlessRuntime(env: Record<string, string | undefined> = pr
   );
 }
 
+export function getLocalBrowserExecutablePath(env: Record<string, string | undefined> = process.env) {
+  if (env.PUPPETEER_EXECUTABLE_PATH) {
+    return env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  const candidates =
+    process.platform === "win32"
+      ? [
+          "C:/Program Files/Google/Chrome/Application/chrome.exe",
+          "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+          "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
+          "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+        ]
+      : [
+          "/usr/bin/google-chrome-stable",
+          "/usr/bin/google-chrome",
+          "/usr/bin/chromium-browser",
+          "/usr/bin/chromium",
+        ];
+
+  return candidates.find((candidate) => existsSync(candidate));
+}
+
 async function getBrowserLaunchOptions(): Promise<LaunchOptions> {
   if (!isServerlessRuntime()) {
+    const executablePath = getLocalBrowserExecutablePath();
+
     return {
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox", "--font-render-hinting=none"],
+      ...(executablePath ? { executablePath } : {}),
     };
   }
 
