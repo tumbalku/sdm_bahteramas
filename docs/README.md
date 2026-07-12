@@ -17,6 +17,7 @@ Indeks ini membantu memilih dokumen yang tepat sebelum mengerjakan fitur, bugfix
 | `features.md` | Daftar fitur, status, dependency graph, dan backlog |
 | `progress.md` | Status implementasi dan riwayat update |
 | `glossary.md` | Istilah domain, singkatan, modul, dan event security log |
+| `supabase-production-migration-runbook.md` | Langkah migration Prisma/Supabase staging-production, termasuk baseline DB non-empty dan verifikasi `birthPlace` |
 
 ## Audit, Refactor, dan Verifikasi
 

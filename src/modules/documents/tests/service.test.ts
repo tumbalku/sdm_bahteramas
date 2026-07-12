@@ -3,7 +3,7 @@ import { DocumentStatus } from "@prisma/client";
 import { getStorageProvider } from "@/lib/storage";
 import { logActivity } from "@/lib/security-log";
 import * as repo from "../repository";
-import { deleteDocumentService, getDocumentsService } from "../service";
+import { deleteDocumentService, getDocumentsService, getDocumentByIdService } from "../service";
 
 vi.mock("@/lib/storage", () => ({
   getStorageProvider: vi.fn(),
@@ -161,6 +161,104 @@ describe("documents service RBAC", () => {
       })).resolves.toBe(true);
 
       expect(repo.deleteDocumentRecord).toHaveBeenCalledWith("doc-1");
+    });
+
+    it("tetap sukses menghapus jika hapus file fisik gagal (hanya log warning)", async () => {
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      vi.mocked(repo.findDocumentById).mockResolvedValue(makeDocument({ ownerId: "staff-1" }) as never);
+      storage.deleteFile.mockRejectedValue(new Error("Storage disk error"));
+
+      try {
+        await expect(deleteDocumentService("doc-1", {
+          id: "staff-1",
+          name: "Staff SMDP",
+          role: "STAFF",
+        })).resolves.toBe(true);
+
+        expect(repo.deleteDocumentRecord).toHaveBeenCalledWith("doc-1");
+        expect(storage.deleteFile).toHaveBeenCalledWith("KTP/ktp.pdf");
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining("Gagal menghapus file fisik"),
+          "Storage disk error"
+        );
+      } finally {
+        consoleWarnSpy.mockRestore();
+      }
+    });
+
+    it("non-owner EMPLOYEE ditolak menghapus dokumen orang lain", async () => {
+      vi.mocked(repo.findDocumentById).mockResolvedValue(makeDocument({ ownerId: "owner-2" }) as never);
+
+      await expect(deleteDocumentService("doc-1", {
+        id: "employee-1",
+        name: "Employee SMDP",
+        role: "EMPLOYEE",
+      })).rejects.toThrow("Tidak memiliki akses untuk menghapus dokumen ini");
+
+      expect(repo.deleteDocumentRecord).not.toHaveBeenCalled();
+    });
+
+    it("non-owner STAFF ditolak menghapus dokumen orang lain", async () => {
+      vi.mocked(repo.findDocumentById).mockResolvedValue(makeDocument({ ownerId: "owner-2" }) as never);
+
+      await expect(deleteDocumentService("doc-1", {
+        id: "staff-1",
+        name: "Staff SMDP",
+        role: "STAFF",
+      })).rejects.toThrow("Tidak memiliki akses untuk menghapus dokumen ini");
+
+      expect(repo.deleteDocumentRecord).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getDocumentByIdService", () => {
+    it("owner EMPLOYEE diizinkan melihat dokumen miliknya sendiri", async () => {
+      vi.mocked(repo.findDocumentById).mockResolvedValue(makeDocument({ ownerId: "employee-1" }) as never);
+
+      const doc = await getDocumentByIdService("doc-1", {
+        id: "employee-1",
+        role: "EMPLOYEE",
+      });
+      expect(doc.id).toBe("doc-1");
+      expect(repo.findDocumentById).toHaveBeenCalledWith("doc-1");
+    });
+
+    it("non-owner EMPLOYEE ditolak melihat dokumen orang lain", async () => {
+      vi.mocked(repo.findDocumentById).mockResolvedValue(makeDocument({ ownerId: "owner-2" }) as never);
+
+      await expect(getDocumentByIdService("doc-1", {
+        id: "employee-1",
+        role: "EMPLOYEE",
+      })).rejects.toThrow("Akses ditolak");
+    });
+
+    it("non-owner STAFF diizinkan melihat dokumen orang lain (verifier)", async () => {
+      vi.mocked(repo.findDocumentById).mockResolvedValue(makeDocument({ ownerId: "owner-2" }) as never);
+
+      const doc = await getDocumentByIdService("doc-1", {
+        id: "staff-1",
+        role: "STAFF",
+      });
+      expect(doc.id).toBe("doc-1");
+    });
+
+    it("non-owner ADMIN diizinkan melihat dokumen orang lain (verifier)", async () => {
+      vi.mocked(repo.findDocumentById).mockResolvedValue(makeDocument({ ownerId: "owner-2" }) as never);
+
+      const doc = await getDocumentByIdService("doc-1", {
+        id: "admin-1",
+        role: "ADMIN",
+      });
+      expect(doc.id).toBe("doc-1");
+    });
+
+    it("melemparkan error jika dokumen tidak ditemukan", async () => {
+      vi.mocked(repo.findDocumentById).mockResolvedValue(null as never);
+
+      await expect(getDocumentByIdService("non-existent", {
+        id: "admin-1",
+        role: "ADMIN",
+      })).rejects.toThrow("Dokumen tidak ditemukan");
     });
   });
 });

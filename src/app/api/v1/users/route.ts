@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, hasRole } from "@/lib/auth-utils";
 import { createUserService, getAllUsers } from "@/modules/users/service";
+import { userFilterSchema } from "@/modules/users/validation";
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,21 +15,16 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") || undefined;
-    const professionGroupId = searchParams.get("professionGroupId") || undefined;
-    const workplaceId = searchParams.get("workplaceId") || undefined;
-    const employmentStatusId = searchParams.get("employmentStatusId") || undefined;
-    const employeeGroupId = searchParams.get("employeeGroupId") || undefined;
-    const employeePositionId = searchParams.get("employeePositionId") || undefined;
+    const parsed = userFilterSchema.safeParse(Object.fromEntries(searchParams.entries()));
 
-    const data = await getAllUsers({
-      search,
-      professionGroupId,
-      workplaceId,
-      employmentStatusId,
-      employeeGroupId,
-      employeePositionId,
-    });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Input tidak valid", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const data = await getAllUsers(parsed.data);
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {

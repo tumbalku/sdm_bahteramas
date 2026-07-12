@@ -17,15 +17,22 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CategoryFormModal, DataType } from "./CategoryFormModal";
-import { useMasterCategories } from "../hooks";
+import { useMasterCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "../hooks";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export function CategoriesView() {
   const { data: categories, isLoading: fetchLoading, refetch: refetchCategories } = useMasterCategories();
+  const createCategoryMutation = useCreateCategory();
+  const updateCategoryMutation = useUpdateCategory();
+  const deleteCategoryMutation = useDeleteCategory();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingItem, setEditingItem] = useState<{ id: string; name: string; type: DataType; parentId?: string } | null>(null);
   const [defaultType, setDefaultType] = useState<DataType>("STATUS");
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<{ id: string; type: DataType; name: string } | null>(null);
 
   const employmentStatuses = categories?.employmentStatuses || [];
   const professionGroups = categories?.professionGroups || [];
@@ -48,29 +55,25 @@ export function CategoriesView() {
     setEditingItem(null);
   };
 
-  const handleDelete = async (id: string, itemType: DataType, itemName: string) => {
-    const confirmText =
-      itemType === "STATUS" || itemType === "PROFESSION"
-        ? `Menghapus "${itemName}" akan menghapus semua sub-kategori di bawahnya. Yakin ingin menghapus?`
-        : `Apakah Anda yakin ingin menghapus "${itemName}"?`;
+  const handleDelete = (id: string, itemType: DataType, itemName: string) => {
+    setDeleteItem({ id, type: itemType, name: itemName });
+    setDeleteConfirmOpen(true);
+  };
 
-    if (!window.confirm(confirmText)) return;
-
+  const executeDelete = async () => {
+    if (!deleteItem) return;
+    setSubmitting(true);
     try {
-      const res = await fetch(`/api/v1/users/categories?id=${id}&type=${itemType}`, {
-        method: "DELETE",
-      });
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || "Gagal menghapus data.");
-      }
-
-      toast.success(`Data "${itemName}" berhasil dihapus.`);
-      if (editingItem?.id === id) handleCloseModal();
+      await deleteCategoryMutation.mutateAsync({ id: deleteItem.id, type: deleteItem.type });
+      toast.success(`Data "${deleteItem.name}" berhasil dihapus.`);
+      setDeleteConfirmOpen(false);
+      setDeleteItem(null);
+      if (editingItem?.id === deleteItem.id) handleCloseModal();
       refetchCategories();
     } catch (err: any) {
       toast.error(err.message || "Gagal menghapus data.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -82,20 +85,19 @@ export function CategoriesView() {
 
     setSubmitting(true);
     try {
-      const method = editingItem ? "PATCH" : "POST";
-      const bodyPayload = editingItem
-        ? { id: editingItem.id, type: payload.type, name: payload.name, parentId: payload.parentId || null }
-        : { type: payload.type, name: payload.name, parentId: payload.parentId || null };
-
-      const res = await fetch("/api/v1/users/categories", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyPayload),
-      });
-
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || `Gagal ${editingItem ? "memperbarui" : "menambahkan"} data.`);
+      if (editingItem) {
+        await updateCategoryMutation.mutateAsync({
+          id: editingItem.id,
+          type: payload.type,
+          name: payload.name,
+          parentId: payload.parentId || null,
+        });
+      } else {
+        await createCategoryMutation.mutateAsync({
+          type: payload.type,
+          name: payload.name,
+          parentId: payload.parentId || null,
+        });
       }
 
       toast.success(`Data "${payload.name}" berhasil ${editingItem ? "diperbarui" : "ditambahkan"}.`);
@@ -228,6 +230,30 @@ export function CategoriesView() {
         professionGroups={professionGroups}
         defaultType={defaultType}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-2 text-destructive font-bold">
+              Konfirmasi Penghapusan
+            </DialogTitle>
+            <DialogDescription className="text-xs pt-2">
+              {deleteItem?.type === "STATUS" || deleteItem?.type === "PROFESSION"
+                ? `Menghapus "${deleteItem?.name}" akan menghapus semua sub-kategori di bawahnya secara permanen.`
+                : `Apakah Anda yakin ingin menghapus kategori "${deleteItem?.name}" secara permanen?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-4 flex gap-2 justify-end">
+            <Button variant="outline" size="sm" onClick={() => setDeleteConfirmOpen(false)} className="rounded-lg text-xs h-9">
+              Batal
+            </Button>
+            <Button variant="destructive" size="sm" onClick={executeDelete} disabled={submitting} className="rounded-lg text-xs h-9 font-bold">
+              Ya, Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

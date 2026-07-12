@@ -11,7 +11,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { parseAllowedFormats, slugifyFileName } from "@/lib/utils";
 import { logActivity } from "@/lib/security-log";
-import { canManageAllDocuments, canManageOwnDocuments } from "@/lib/rbac";
+import { canManageAllDocuments, canManageOwnDocuments, canVerifyDocuments } from "@/lib/rbac";
 import { DocumentStatus } from "@prisma/client";
 
 function getDocumentTypeFolderName(docCode: string) {
@@ -261,6 +261,22 @@ export async function getDocumentsService(
   return findDocuments(nextFilters);
 }
 
+export async function getDocumentByIdService(
+  id: string,
+  actor: { id: string; role: string }
+) {
+  const document = await findDocumentById(id);
+  if (!document) {
+    throw new Error("Dokumen tidak ditemukan");
+  }
+
+  if (!canVerifyDocuments(actor.role) && document.ownerId !== actor.id) {
+    throw new Error("Akses ditolak");
+  }
+
+  return document;
+}
+
 export async function deleteDocumentService(
   documentId: string,
   actor: { id: string; name: string; role: string },
@@ -287,12 +303,16 @@ export async function deleteDocumentService(
   }
   // ADMIN boleh menghapus apapun
 
-  // Hapus file fisik
-  const storage = getStorageProvider();
-  await storage.deleteFile(document.filePath);
-
-  // Hapus dari database
+  // Hapus dari database terlebih dahulu
   await deleteDocumentRecord(documentId);
+
+  // Hapus file fisik
+  try {
+    const storage = getStorageProvider();
+    await storage.deleteFile(document.filePath);
+  } catch (err: any) {
+    console.warn(`[WARNING] Gagal menghapus file fisik dokumen ${document.filePath}:`, err.message);
+  }
 
   // Log activity
   await logActivity(

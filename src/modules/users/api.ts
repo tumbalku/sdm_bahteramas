@@ -1,22 +1,30 @@
 import { apiClient } from "@/lib/api-client";
-import { CreateUserInput, ImportUsersResult, UpdateUserInput, UserFilter, UserRecord } from "./types";
+import type {
+  CreateUserInput,
+  ImportUsersResult,
+  MasterCategories,
+  UpdateUserInput,
+  UserFilter,
+  UserRecord,
+} from "./types";
 
 function buildUserFilterParams(filters?: UserFilter) {
   const params = new URLSearchParams();
-  if (filters?.search) params.set("search", filters.search);
-  if (filters?.professionGroupId) params.set("professionGroupId", filters.professionGroupId);
-  if (filters?.workplaceId) params.set("workplaceId", filters.workplaceId);
-  if (filters?.employmentStatusId) params.set("employmentStatusId", filters.employmentStatusId);
-  if (filters?.employeeGroupId) params.set("employeeGroupId", filters.employeeGroupId);
-  if (filters?.employeePositionId) params.set("employeePositionId", filters.employeePositionId);
+  if (!filters) return params;
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      params.set(key, String(value));
+    }
+  });
   return params;
 }
 
-async function downloadCsv(endpoint: string, fallbackFileName: string) {
+async function downloadFile(endpoint: string, fallbackFileName: string, fileLabel: string) {
   const response = await fetch(endpoint, { method: "GET" });
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || "Gagal mengunduh file CSV");
+    throw new Error(text || `Gagal mengunduh file ${fileLabel}`);
   }
 
   const blob = await response.blob();
@@ -78,28 +86,52 @@ export async function importUsersApi(file: File) {
 }
 
 export async function downloadUsersImportTemplateApi() {
-  return downloadCsv("/api/v1/users/import/template", "smdp-users-import-template.csv");
+  return downloadFile("/api/v1/users/import/template", "smdp-users-import-template.csv", "CSV");
 }
 
 export async function exportUsersApi(filters?: UserFilter) {
   const params = buildUserFilterParams(filters);
   const url = `/api/v1/users/export${params.toString() ? `?${params.toString()}` : ""}`;
-  return downloadCsv(url, "smdp-users.csv");
+  return downloadFile(url, "smdp-users.csv", "CSV");
 }
 
 export async function exportUserDocumentsCsvApi(userId: string) {
-  return downloadCsv(
+  return downloadFile(
     `/api/v1/users/${userId}/documents/export`,
-    `dokumen-pegawai-${userId}.csv`
+    `dokumen-pegawai-${userId}.csv`,
+    "CSV"
+  );
+}
+
+export async function exportUserProfilePdfApi(userId: string) {
+  return downloadFile(
+    `/api/v1/users/${userId}/profile/export-pdf`,
+    `profil-pegawai-${userId}.pdf`,
+    "PDF"
   );
 }
 
 export async function fetchUserCategoriesApi() {
-  return apiClient<{
-    employmentStatuses: { id: string; name: string; employeeGroups: { id: string; name: string }[] }[];
-    professionGroups: { id: string; name: string; employeePositions: { id: string; name: string }[] }[];
-    employeeRanks: { id: string; name: string }[];
-    workplaces: { id: string; name: string }[];
-  }>("/api/v1/users/categories", { method: "GET" });
+  return apiClient<MasterCategories>("/api/v1/users/categories", { method: "GET" });
+}
+
+export async function createCategoryApi(payload: { type: string; name: string; parentId?: string | null }) {
+  return apiClient<{ success: boolean }>("/api/v1/users/categories", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateCategoryApi(payload: { id: string; type: string; name: string; parentId?: string | null }) {
+  return apiClient<{ success: boolean }>("/api/v1/users/categories", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteCategoryApi(id: string, type: string) {
+  return apiClient<{ success: boolean }>(`/api/v1/users/categories?id=${id}&type=${type}`, {
+    method: "DELETE",
+  });
 }
 

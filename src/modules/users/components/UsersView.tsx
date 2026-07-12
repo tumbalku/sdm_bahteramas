@@ -1,16 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Users as UsersIcon, Layers } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { EmployeeFilterBar, EmployeeFilterState } from "@/components/EmployeeFilterBar";
-import { useDeleteUser, useUsers } from "../hooks";
-import { UserRecord } from "../types";
+import { useDeleteUser, useMasterCategories, useUsers } from "../hooks";
+import { UserFilter, UserRecord } from "../types";
 import { UserTable } from "./UserTable";
 import { LayeredDeleteModal } from "@/components/LayeredDeleteModal";
 import { UsersBulkActions } from "./UsersBulkActions";
+
+function toUserFilter(values: EmployeeFilterState): UserFilter {
+  return {
+    search: values.search.trim() || undefined,
+    employmentStatusId: values.employmentStatusId || undefined,
+    employeeGroupId: values.employeeGroupId || undefined,
+    professionGroupId: values.professionGroupId || undefined,
+    employeePositionId: values.employeePositionId || undefined,
+    workplaceId: values.workplaceId || undefined,
+    tmtStartDate: values.tmtStartDate || undefined,
+    tmtEndDate: values.tmtEndDate || undefined,
+    retirementAgeMin: values.retirementAgeMin === "" ? undefined : values.retirementAgeMin,
+    retirementAgeMax: values.retirementAgeMax === "" ? undefined : values.retirementAgeMax,
+    maritalStatus: values.maritalStatus || undefined,
+    lastEducation: values.lastEducation || undefined,
+  };
+}
 
 export function UsersView() {
   const [filterValues, setFilterValues] = useState<EmployeeFilterState>({
@@ -19,12 +36,29 @@ export function UsersView() {
     employeeGroupId: "",
     professionGroupId: "",
     employeePositionId: "",
+    workplaceId: "",
+    tmtStartDate: "",
+    tmtEndDate: "",
+    retirementAgeMin: "",
+    retirementAgeMax: "",
+    maritalStatus: "",
+    lastEducation: "",
   });
 
+  const [debouncedFilters, setDebouncedFilters] = useState<UserFilter>(() => toUserFilter(filterValues));
   const [userToDelete, setUserToDelete] = useState<UserRecord | null>(null);
 
-  const { data: users = [], isLoading, error } = useUsers(filterValues);
+  const { data: categories } = useMasterCategories();
+  const { data: users = [], isLoading, error } = useUsers(debouncedFilters);
   const deleteMutation = useDeleteUser();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedFilters(toUserFilter(filterValues));
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [filterValues]);
 
   const handleConfirmDelete = () => {
     if (!userToDelete) return;
@@ -68,10 +102,10 @@ export function UsersView() {
       )}
 
       {/* Shared Reusable Employee Filter Bar */}
-      <EmployeeFilterBar values={filterValues} onChange={setFilterValues} />
+      <EmployeeFilterBar values={filterValues} onChange={setFilterValues} categories={categories} />
 
       <div className="flex items-center justify-end gap-3">
-        <UsersBulkActions filters={filterValues} />
+        <UsersBulkActions filters={debouncedFilters} />
       </div>
 
       {/* Table Data */}

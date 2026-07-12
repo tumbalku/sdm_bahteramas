@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DocumentArchiveCategory } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import Link from "next/link";
 import { Plus, Filter, FileSpreadsheet, FolderArchive } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -85,20 +86,21 @@ export function DocumentTypesView() {
         <span className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
           <Filter className="w-4 h-4 text-primary" /> Filter Kategori:
         </span>
-        <select
+        <Select
           value={selectedCategory}
           onChange={(e) =>
             setSelectedCategory(
               e.target.value as DocumentArchiveCategory | "ALL"
             )
           }
+          options={[
+            { value: "ALL", label: "Semua Kategori" },
+            { value: "UTAMA", label: "Arsip Utama" },
+            { value: "PROFESI", label: "Arsip Profesi" },
+            { value: "KONDISIONAL", label: "Arsip Kondisional" },
+          ]}
           className="px-4 py-2 rounded-xl border border-input bg-background text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer min-w-[200px]"
-        >
-          <option value="ALL">Semua Kategori</option>
-          <option value="UTAMA">Arsip Utama</option>
-          <option value="PROFESI">Arsip Profesi</option>
-          <option value="KONDISIONAL">Arsip Kondisional</option>
-        </select>
+        />
       </div>
 
       {/* Table Data */}

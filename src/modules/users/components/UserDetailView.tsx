@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useExportUserDocumentsCsv, useUser } from "../hooks";
+import { useExportUserDocumentsCsv, useUser, useExportUserProfilePdf } from "../hooks";
 import { useDocuments } from "@/modules/documents/hooks";
 import { DocumentSummaryTable } from "@/modules/documents/components/DocumentSummaryTable";
 import { PageHeader } from "@/components/PageHeader";
@@ -41,11 +41,19 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
   const { data: profile, isLoading } = useUser(userId);
   const { data: documents = [], isLoading: isLoadingDocuments } = useDocuments({ ownerId: userId });
   const exportDocumentsMutation = useExportUserDocumentsCsv(userId);
+  const exportPdfMutation = useExportUserProfilePdf(userId);
 
   const handleExportDocuments = () => {
     exportDocumentsMutation.mutate(undefined, {
       onSuccess: () => toast.success("Dokumen pegawai berhasil diekspor"),
       onError: (error: any) => toast.error(error.message || "Gagal mengekspor dokumen pegawai"),
+    });
+  };
+
+  const handleExportPdf = () => {
+    exportPdfMutation.mutate(undefined, {
+      onSuccess: () => toast.success("PDF profil pegawai berhasil diekspor"),
+      onError: (error: any) => toast.error(error.message || "Gagal mengekspor PDF profil"),
     });
   };
 
@@ -91,12 +99,28 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
         title="Preview Profil Pegawai"
         description="Melihat informasi detail, jabatan, dan biodata dari pegawai bersangkutan."
         action={
-          <Link href="/users">
-            <Button variant="outline" className="rounded-full px-5 border-border hover:bg-accent font-semibold">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Kembali
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={exportPdfMutation.isPending}
+              onClick={handleExportPdf}
+              className="rounded-full px-5 border-border hover:bg-accent font-semibold"
+            >
+              {exportPdfMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin text-primary" />
+              ) : (
+                <FileDown className="w-4 h-4 mr-2 text-primary" />
+              )}
+              Export PDF
             </Button>
-          </Link>
+            <Link href="/users">
+              <Button variant="outline" className="rounded-full px-5 border-border hover:bg-accent font-semibold">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Kembali
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -130,6 +154,14 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                 </span>
                 <span className="font-mono font-bold text-foreground">{profile.employeeId}</span>
               </div>
+              {profile.hasOldEmployeeId && (
+                <div className="flex items-center justify-between p-2 rounded-xl bg-accent/30 border border-border/50">
+                  <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
+                    <IdCard className="w-3.5 h-3.5 text-primary" /> NIP Lama
+                  </span>
+                  <span className="font-mono font-bold text-foreground">{profile.oldEmployeeId || "-"}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between p-2 rounded-xl bg-accent/30 border border-border/50">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
                   <IdCard className="w-3.5 h-3.5 text-primary" /> NIK
@@ -165,7 +197,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
             <div className="space-y-2.5 text-xs">
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
-                  <Calendar className="w-3.5 h-3.5 text-primary" /> Tanggal Masuk
+                  <Calendar className="w-3.5 h-3.5 text-primary" /> Tmt mulai
                 </span>
                 <span className="font-bold text-foreground text-right">
                   {profile.joinDate ? format(new Date(profile.joinDate), "dd MMM yyyy", { locale: idLocale }) : "-"}
@@ -213,7 +245,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               </div>
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
-                  <Award className="w-3.5 h-3.5 text-primary" /> Golongan
+                  <Award className="w-3.5 h-3.5 text-primary" /> Jenis Kepegawaian
                 </span>
                 <span className="font-bold text-foreground text-right">
                   {profile.employeeGroup?.name || <span className="text-muted-foreground italic font-normal">-</span>}
@@ -221,7 +253,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               </div>
               <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-accent/20 border border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium shrink-0">
-                  <User className="w-3.5 h-3.5 text-primary" /> Pangkat
+                  <User className="w-3.5 h-3.5 text-primary" /> Pangkat / Golongan
                 </span>
                 <span className="font-bold text-foreground text-right">
                   {profile.employeeRank?.name || <span className="text-muted-foreground italic font-normal">-</span>}

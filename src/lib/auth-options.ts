@@ -1,6 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { authenticateUser } from "@/modules/auth/service";
+import { getRequiredEnv } from "@/lib/env";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -48,17 +49,23 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        const appUser = user as typeof user & { employeeId?: string; role?: string };
         token.id = user.id;
-        token.employeeId = (user as any).employeeId;
-        token.role = (user as any).role;
+        token.employeeId = appUser.employeeId;
+        token.role = appUser.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).employeeId = token.employeeId;
-        (session.user as any).role = token.role;
+        const sessionUser = session.user as typeof session.user & {
+          id?: string;
+          employeeId?: string;
+          role?: string;
+        };
+        sessionUser.id = typeof token.id === "string" ? token.id : "";
+        sessionUser.employeeId = typeof token.employeeId === "string" ? token.employeeId : undefined;
+        sessionUser.role = typeof token.role === "string" ? token.role : "EMPLOYEE";
       }
       return session;
     },
@@ -67,5 +74,5 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     error: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET || "super-secret-key",
+  secret: getRequiredEnv("NEXTAUTH_SECRET"),
 };

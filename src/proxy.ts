@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
+import { getRequiredEnv } from "@/lib/env";
 
 export async function proxyMiddleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -9,7 +10,7 @@ export async function proxyMiddleware(req: NextRequest) {
   if (
     pathname === "/" ||
     pathname.startsWith("/login") ||
-    pathname.startsWith("/api/v1/auth") ||
+    pathname.startsWith("/api/v1/auth/verify-password") ||
     pathname.startsWith("/api/auth")
   ) {
     return NextResponse.next();
@@ -17,7 +18,7 @@ export async function proxyMiddleware(req: NextRequest) {
 
   const token = await getToken({
     req,
-    secret: process.env.NEXTAUTH_SECRET || "super-secret-key",
+    secret: getRequiredEnv("NEXTAUTH_SECRET"),
   });
 
   // Jika mencoba mengakses API route yang butuh auth tapi belum login

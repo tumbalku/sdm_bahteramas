@@ -27,6 +27,7 @@ import { LayeredDeleteModal } from "@/components/LayeredDeleteModal";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useDeleteDocument } from "@/modules/documents/hooks";
+import { useMasterCategories } from "@/modules/users/hooks";
 import {
   useDocumentArchiveRecap,
   useExportDocumentArchiveRecap,
@@ -67,6 +68,13 @@ export function AllUserArchivesView() {
     employeeGroupId: "",
     professionGroupId: "",
     employeePositionId: "",
+    workplaceId: "",
+    tmtStartDate: "",
+    tmtEndDate: "",
+    retirementAgeMin: "",
+    retirementAgeMax: "",
+    maritalStatus: "",
+    lastEducation: "",
   });
   const [documentStatus, setDocumentStatus] = useState<DocumentStatus | "">("");
   const [uploadStatus, setUploadStatus] = useState<"UPLOADED" | "MISSING" | "">("UPLOADED");
@@ -82,12 +90,24 @@ export function AllUserArchivesView() {
     if (filterValues.employeeGroupId) nextFilters.employeeGroupId = filterValues.employeeGroupId;
     if (filterValues.professionGroupId) nextFilters.professionGroupId = filterValues.professionGroupId;
     if (filterValues.employeePositionId) nextFilters.employeePositionId = filterValues.employeePositionId;
+    if (filterValues.workplaceId) nextFilters.workplaceId = filterValues.workplaceId;
+    if (filterValues.tmtStartDate) nextFilters.tmtStartDate = filterValues.tmtStartDate;
+    if (filterValues.tmtEndDate) nextFilters.tmtEndDate = filterValues.tmtEndDate;
+    if (filterValues.retirementAgeMin !== "" && filterValues.retirementAgeMin !== undefined) {
+      nextFilters.retirementAgeMin = filterValues.retirementAgeMin;
+    }
+    if (filterValues.retirementAgeMax !== "" && filterValues.retirementAgeMax !== undefined) {
+      nextFilters.retirementAgeMax = filterValues.retirementAgeMax;
+    }
+    if (filterValues.maritalStatus) nextFilters.maritalStatus = filterValues.maritalStatus;
+    if (filterValues.lastEducation) nextFilters.lastEducation = filterValues.lastEducation;
     if (documentStatus) nextFilters.status = documentStatus;
     if (uploadStatus) nextFilters.uploadStatus = uploadStatus;
     return nextFilters;
   }, [documentStatus, filterValues, uploadStatus]);
 
   const { data: recap, isLoading, refetch } = useDocumentArchiveRecap(filters);
+  const { data: categories } = useMasterCategories();
   const exportMutation = useExportDocumentArchiveRecap();
   const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument();
 
@@ -114,8 +134,8 @@ export function AllUserArchivesView() {
     });
   };
 
-  const handleDownload = (filePath: string) => {
-    window.open(`/api/v1/documents/download?file=${encodeURIComponent(filePath)}`, "_blank");
+  const handleDownload = (id: string) => {
+    window.open(`/api/v1/documents/${id}/download`, "_blank");
   };
 
   const handleExport = () => {
@@ -240,7 +260,7 @@ export function AllUserArchivesView() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleDownload(item.document?.filePath || "")}
+                onClick={() => handleDownload(item.document?.id || "")}
                 className="h-8 px-2.5 text-xs gap-1 rounded-xl border-border hover:bg-accent font-semibold"
                 title="Unduh Berkas"
               >
@@ -289,7 +309,12 @@ export function AllUserArchivesView() {
         subtitle={`Sudah upload ${stats.uploaded}, terverifikasi ${stats.approved}, menunggu ${stats.pending}, ditolak ${stats.rejected}, belum upload ${stats.missing}`}
       />
 
-      <EmployeeFilterBar values={filterValues} onChange={setFilterValues} showArchiveCategory={true} />
+      <EmployeeFilterBar
+        values={filterValues}
+        onChange={setFilterValues}
+        categories={categories}
+        showArchiveCategory={true}
+      />
 
       <div className="bg-card border border-border p-4 rounded-2xl shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">

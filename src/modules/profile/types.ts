@@ -9,6 +9,7 @@ export interface UserProfileDto {
   avatarUrl: string | null;
   role: Role;
   gender: string | null;
+  birthPlace?: string | null;
   birthDate: Date | null;
   academicDegree?: string | null;
   lastEducation?: string | null;
@@ -20,6 +21,8 @@ export interface UserProfileDto {
   hasTmt: boolean;
   tmtStartDate?: Date | null;
   tmtEndDate?: Date | null;
+  hasOldEmployeeId: boolean;
+  oldEmployeeId?: string | null;
   employmentStatus?: { id: string; name: string } | null;
   employeeGroup?: { id: string; name: string } | null;
   professionGroup?: { id: string; name: string } | null;
@@ -32,6 +35,7 @@ export interface UpdateProfileInput {
   name: string;
   nik?: string | null;
   gender?: string;
+  birthPlace?: string | null;
   birthDate?: string | null;
   academicDegree?: string | null;
   lastEducation?: string | null;

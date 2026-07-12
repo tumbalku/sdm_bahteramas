@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, hasRole } from "@/lib/auth-utils";
 import { exportUsersCsvService } from "@/modules/users/service";
+import { userFilterSchema } from "@/modules/users/validation";
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,17 +15,17 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const filters = {
-      search: searchParams.get("search") || undefined,
-      professionGroupId: searchParams.get("professionGroupId") || undefined,
-      workplaceId: searchParams.get("workplaceId") || undefined,
-      employmentStatusId: searchParams.get("employmentStatusId") || undefined,
-      employeeGroupId: searchParams.get("employeeGroupId") || undefined,
-      employeePositionId: searchParams.get("employeePositionId") || undefined,
-    };
+    const parsed = userFilterSchema.safeParse(Object.fromEntries(searchParams.entries()));
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Input tidak valid", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
     const ipAddress = req.headers.get("x-forwarded-for") || "unknown";
-    const result = await exportUsersCsvService(filters, user, ipAddress);
+    const result = await exportUsersCsvService(parsed.data, user, ipAddress);
 
     return new NextResponse(result.csv, {
       headers: {

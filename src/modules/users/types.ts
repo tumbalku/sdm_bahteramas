@@ -14,6 +14,7 @@ export interface UserRecord {
   avatarUrl?: string | null;
   role: Role;
   gender?: string | null;
+  birthPlace?: string | null;
   birthDate?: Date | null;
   academicDegree?: string | null;
   lastEducation?: string | null;
@@ -25,6 +26,8 @@ export interface UserRecord {
   hasTmt: boolean;
   tmtStartDate?: Date | null;
   tmtEndDate?: Date | null;
+  hasOldEmployeeId: boolean;
+  oldEmployeeId?: string | null;
   employmentStatus?: MasterItemSummary | null;
   employeeGroup?: MasterItemSummary | null;
   professionGroup?: MasterItemSummary | null;
@@ -43,6 +46,7 @@ export interface CreateUserInput {
   name: string;
   role: Role;
   gender?: string | null;
+  birthPlace?: string | null;
   birthDate?: string | null;
   academicDegree?: string | null;
   lastEducation?: string | null;
@@ -54,6 +58,8 @@ export interface CreateUserInput {
   hasTmt?: boolean;
   tmtStartDate?: string | null;
   tmtEndDate?: string | null;
+  hasOldEmployeeId?: boolean;
+  oldEmployeeId?: string | null;
   employmentStatusId?: string | null;
   employeeGroupId?: string | null;
   professionGroupId?: string | null;
@@ -70,6 +76,7 @@ export interface UpdateUserInput {
   name?: string;
   role?: Role;
   gender?: string | null;
+  birthPlace?: string | null;
   birthDate?: string | null;
   academicDegree?: string | null;
   lastEducation?: string | null;
@@ -81,6 +88,8 @@ export interface UpdateUserInput {
   hasTmt?: boolean;
   tmtStartDate?: string | null;
   tmtEndDate?: string | null;
+  hasOldEmployeeId?: boolean;
+  oldEmployeeId?: string | null;
   employmentStatusId?: string | null;
   employeeGroupId?: string | null;
   professionGroupId?: string | null;
@@ -96,6 +105,12 @@ export interface UserFilter {
   employmentStatusId?: string;
   employeeGroupId?: string;
   employeePositionId?: string;
+  tmtStartDate?: string;
+  tmtEndDate?: string;
+  retirementAgeMin?: number;
+  retirementAgeMax?: number;
+  maritalStatus?: string;
+  lastEducation?: string;
 }
 
 export interface ImportUserError {
@@ -127,6 +142,7 @@ export interface UserFormState {
   password: string;
   role: Role;
   gender: string;
+  birthPlace: string;
   birthDate: string;
   academicDegree: string;
   lastEducation: string;
@@ -138,6 +154,8 @@ export interface UserFormState {
   hasTmt: boolean;
   tmtStartDate: string;
   tmtEndDate: string;
+  hasOldEmployeeId: boolean;
+  oldEmployeeId: string;
   employmentStatusId: string;
   employeeGroupId: string;
   professionGroupId: string;
@@ -145,4 +163,3 @@ export interface UserFormState {
   employeeRankId: string;
   workplaceId: string;
 }
-

@@ -105,6 +105,12 @@ export interface DocumentArchiveFilter {
   employeePositionId?: string;
   employeeRankId?: string;
   workplaceId?: string;
+  tmtStartDate?: string;
+  tmtEndDate?: string;
+  retirementAgeMin?: number;
+  retirementAgeMax?: number;
+  maritalStatus?: string;
+  lastEducation?: string;
   issueDateFrom?: string;
   issueDateTo?: string;
   expiryDateFrom?: string;

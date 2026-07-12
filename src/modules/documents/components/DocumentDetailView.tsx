@@ -100,7 +100,7 @@ export function DocumentDetailView({ documentId }: DocumentDetailViewProps) {
     );
   }
 
-  const downloadUrl = `/api/v1/documents/download?file=${encodeURIComponent(document.filePath)}`;
+  const downloadUrl = `/api/v1/documents/${document.id}/download`;
   const extension = getFileExtension(document.fileName || document.filePath);
   const canPreviewImage = isImageExtension(extension);
   const canPreviewPdf = extension === "pdf";
