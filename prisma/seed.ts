@@ -1,4 +1,4 @@
-import { PrismaClient, Role, DocumentArchiveCategory } from "@prisma/client";
+import { PrismaClient, Role, DocumentArchiveCategory, DocumentStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -347,6 +347,132 @@ async function main() {
   // DocumentType, sehingga menghapus master dokumen bisa merusak data upload
   // yang sudah ada di database aktif.
   console.log("✅ Skipped Document Types seeding (managed by ADMIN in app)");
+
+  // =========================================================================
+  // TEMP_STATISTICS_SHOWCASE_SEED — HAPUS SEBELUM PUSH/PR
+  // =========================================================================
+  // Data ini hanya untuk membuat halaman /statistics terlihat hidup saat review visual.
+  // Jangan ship seed dummy ini ke branch produksi.
+  const showcaseDocumentTypes = [
+    {
+      code: "TMP_KTP_SHOWCASE",
+      name: "KTP Showcase Statistik",
+      archiveCategory: DocumentArchiveCategory.UTAMA,
+      requiresExpiryDate: false,
+    },
+    {
+      code: "TMP_IJAZAH_SHOWCASE",
+      name: "Ijazah Showcase Statistik",
+      archiveCategory: DocumentArchiveCategory.UTAMA,
+      requiresExpiryDate: false,
+    },
+    {
+      code: "TMP_STR_SHOWCASE",
+      name: "STR Showcase Statistik",
+      archiveCategory: DocumentArchiveCategory.PROFESI,
+      requiresExpiryDate: true,
+    },
+    {
+      code: "TMP_SIP_SHOWCASE",
+      name: "SIP Showcase Statistik",
+      archiveCategory: DocumentArchiveCategory.PROFESI,
+      requiresExpiryDate: true,
+    },
+    {
+      code: "TMP_PELATIHAN_SHOWCASE",
+      name: "Sertifikat Pelatihan Showcase Statistik",
+      archiveCategory: DocumentArchiveCategory.KONDISIONAL,
+      requiresExpiryDate: true,
+    },
+  ];
+
+  const showcaseTypeMap = new Map<string, { id: string; code: string; name: string; requiresExpiryDate: boolean }>();
+  for (const type of showcaseDocumentTypes) {
+    const documentType = await prisma.documentType.upsert({
+      where: { code: type.code },
+      update: {
+        name: type.name,
+        archiveCategory: type.archiveCategory,
+        isMandatory: type.archiveCategory !== DocumentArchiveCategory.KONDISIONAL,
+        requiresExpiryDate: type.requiresExpiryDate,
+        requiresIssueDate: true,
+        requiresDocumentNumber: true,
+        allowedFormats: "pdf,jpg,png",
+        maxSizeMb: 5,
+        icon: "FileText",
+      },
+      create: {
+        code: type.code,
+        name: type.name,
+        description: "TEMP_STATISTICS_SHOWCASE_SEED — data dummy untuk review visual statistik",
+        archiveCategory: type.archiveCategory,
+        isMandatory: type.archiveCategory !== DocumentArchiveCategory.KONDISIONAL,
+        requiresExpiryDate: type.requiresExpiryDate,
+        requiresIssueDate: true,
+        requiresDocumentNumber: true,
+        allowedFormats: "pdf,jpg,png",
+        maxSizeMb: 5,
+        icon: "FileText",
+      },
+    });
+    showcaseTypeMap.set(type.code, documentType);
+  }
+
+  await prisma.documentRecord.deleteMany({
+    where: { filePath: { startsWith: "temp/statistics-showcase/" } },
+  });
+
+  const showcaseUsers = await prisma.user.findMany({
+    where: { email: { in: allowedEmails } },
+    orderBy: { email: "asc" },
+    select: { id: true, employeeId: true, email: true },
+  });
+
+  const today = new Date();
+  const monthOffsets = [-5, -4, -3, -2, -1, 0];
+  const statusCycle = [DocumentStatus.APPROVED, DocumentStatus.PENDING, DocumentStatus.REJECTED, DocumentStatus.APPROVED];
+  const typeCodes = showcaseDocumentTypes.map((type) => type.code);
+  const expiryOffsets = [18, 36, 58, 82, 120, null];
+  let createdShowcaseRecords = 0;
+
+  for (let userIndex = 0; userIndex < showcaseUsers.length; userIndex += 1) {
+    const user = showcaseUsers[userIndex];
+    for (let monthIndex = 0; monthIndex < monthOffsets.length; monthIndex += 1) {
+      const monthOffset = monthOffsets[monthIndex];
+      const typeCode = typeCodes[(userIndex + monthIndex) % typeCodes.length];
+      const documentType = showcaseTypeMap.get(typeCode);
+      if (!documentType) continue;
+
+      const uploadedAt = new Date(today);
+      uploadedAt.setMonth(today.getMonth() + monthOffset);
+      uploadedAt.setDate(8 + ((userIndex + monthIndex) % 17));
+
+      const issueDate = new Date(uploadedAt);
+      issueDate.setDate(issueDate.getDate() - 12);
+
+      const expiryOffset = expiryOffsets[(userIndex + monthIndex) % expiryOffsets.length];
+      const expiryDate = documentType.requiresExpiryDate && expiryOffset !== null
+        ? new Date(today.getFullYear(), today.getMonth(), today.getDate() + expiryOffset)
+        : null;
+
+      await prisma.documentRecord.create({
+        data: {
+          ownerId: user.id,
+          documentTypeId: documentType.id,
+          status: statusCycle[(userIndex + monthIndex) % statusCycle.length],
+          fileName: `${user.employeeId}_${documentType.code}_${monthIndex + 1}.pdf`,
+          filePath: `temp/statistics-showcase/${user.email}/${documentType.code}-${monthIndex + 1}.pdf`,
+          documentNumber: `SHOW-${userIndex + 1}-${monthIndex + 1}`,
+          issueDate,
+          expiryDate,
+          uploadedAt,
+        },
+      });
+      createdShowcaseRecords += 1;
+    }
+  }
+
+  console.log(`⚠️  TEMP_STATISTICS_SHOWCASE_SEED active: seeded ${showcaseDocumentTypes.length} document types and ${createdShowcaseRecords} document records. Remove before push/PR.`);
 
   // =========================================================================
   // 9. MASTER SYSTEM SETTINGS

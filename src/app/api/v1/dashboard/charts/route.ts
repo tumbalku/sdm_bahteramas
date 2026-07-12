@@ -10,8 +10,8 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Akses ditolak. Hanya ADMIN." }, { status: 403 });
+    if (session.user.role !== "ADMIN" && session.user.role !== "STAFF") {
+      return NextResponse.json({ message: "Akses ditolak. Hanya ADMIN dan STAFF." }, { status: 403 });
     }
 
     const data = await getDashboardChartsService({

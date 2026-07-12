@@ -614,14 +614,15 @@ Reject dokumen.
 ## 10. Dashboard, Settings, Backup
 
 ### `GET /api/v1/dashboard/stats`
-Ambil statistik dashboard sesuai role user login.
+Ambil statistik dashboard personal (user-scoped) milik user login.
 
 - **Auth:** Required (semua role)
+- **Behavior:** Mengembalikan total dokumen, pending, approved, rejected, dan daftar dokumen personal terbaru/segera kedaluwarsa milik user login.
 
 ### `GET /api/v1/dashboard/charts`
-Ambil analytics chart dashboard admin.
+Ambil analytics chart statistik global/operasional.
 
-- **Auth:** `ADMIN`
+- **Auth:** `ADMIN`, `STAFF`
 - **Dependency UI:** data response dirender di frontend menggunakan `recharts`.
 - **Behavior:** response berisi data agregat siap-render, bukan data mentah seluruh pegawai/dokumen.
 - **Query strategy:** agregasi pegawai dan status dokumen memakai `groupBy`; upload dokumen 6 bulan terakhir memakai select minimal lalu agregasi service-side; chart ranking dibatasi top 8/top 10 dan sisanya digabung sebagai `Lainnya`.

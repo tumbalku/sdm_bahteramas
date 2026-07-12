@@ -19,29 +19,24 @@
 
 ---
 
-### F02 — Dashboard
+### F02 — Dashboard & Statistik
 
 | Atribut | Detail |
 |---|---|
 | **Modul** | `src/modules/dashboard/` |
 | **Status** | 🟢 Selesai |
-| **Role** | Semua role (konten berbeda per role) |
+| **Role** | Dashboard: Semua role (personal scoped); Statistik: `ADMIN`, `STAFF` |
 | **Dependency** | F01 (Auth), F04 (Documents), F05 (Verification), F06 (Users) |
 
 **Sub-fitur:**
-- Statistik jumlah dokumen per status (PENDING/APPROVED/REJECTED)
-- Statistik dokumen mendekati kedaluwarsa
-- Analytics chart admin berbasis `recharts`:
-  - pegawai berdasarkan status kepegawaian, jenis kepegawaian, jenis kelamin, dan unit kerja
-  - upload dokumen berdasarkan jenis dokumen dalam 6 bulan terakhir
-  - tren upload bulanan
-  - ringkasan status verifikasi
-  - top dokumen wajib yang belum diupload
-  - ringkasan dokumen hampir kedaluwarsa
-- Ringkasan berdasarkan role:
-  - `ADMIN`: semua statistik
-  - `STAFF`: statistik verifikasi
-  - `EMPLOYEE`: statistik dokumen milik sendiri
+- **Dashboard Personal (Semua Role):**
+  - Statistik jumlah dokumen personal per status (PENDING/APPROVED/REJECTED)
+  - Daftar dokumen personal terbaru dan dokumen personal mendekati kedaluwarsa
+  - Tampilan seragam dan personal-user scoped demi keamanan data
+- **Halaman Statistik Global (ADMIN & STAFF):**
+  - Statistik jumlah dokumen global (Total, Pending, Approved, Rejected)
+  - Analytics chart global berbasis `recharts` (Demografi Pegawai, Kepatuhan Dokumen, Tren Bulanan)
+  - Tab view interaktif untuk pemisahan data demografi, kepatuhan, dan ringkasan umum
 
 ---
 

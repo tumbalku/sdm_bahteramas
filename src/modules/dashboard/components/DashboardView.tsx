@@ -1,10 +1,9 @@
 "use client";
 
 import { useDashboardStats } from "../hooks";
-import { StatsCard } from "./StatsCard";
+import { StatsCard } from "@/components/StatsCard";
 import { RecentDocumentsTable } from "./RecentDocumentsTable";
 import { ExpiringDocumentsList } from "./ExpiringDocumentsList";
-import { DashboardChartsSection } from "./DashboardChartsSection";
 import { Skeleton, CardSkeleton, TableSkeleton } from "@/components/ui/skeleton";
 import { 
   FileText, 
@@ -65,11 +64,7 @@ export function DashboardView({ userRole }: DashboardViewProps) {
       <PageHeader
         icon={LayoutDashboard}
         title="Dashboard"
-        description={
-          isEmployee 
-            ? "Ringkasan metrik dan dokumen pribadi Anda"
-            : "Ringkasan metrik dan aktivitas dokumen seluruh pegawai"
-        }
+        description="Ringkasan metrik dan dokumen pribadi Anda"
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -98,8 +93,6 @@ export function DashboardView({ userRole }: DashboardViewProps) {
           iconClassName="bg-red-100 text-red-600"
         />
       </div>
-
-      <DashboardChartsSection isAdmin={isAdmin} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <div className="lg:col-span-2 h-[380px]">

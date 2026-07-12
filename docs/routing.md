@@ -28,7 +28,8 @@ Semua halaman di bawah ini berada di dalam `src/app/(dashboard)/` dan di-wrap ol
 
 | Path | File | Role yang Diizinkan | Deskripsi |
 |---|---|---|---|
-| `/dashboard` | `(dashboard)/dashboard/page.tsx` | Semua role | Ringkasan statistik sesuai role |
+| `/dashboard` | `(dashboard)/dashboard/page.tsx` | Semua role | Ringkasan statistik personal (user-scoped) |
+| `/statistics` | `(dashboard)/statistics/page.tsx` | `ADMIN`, `STAFF` | Visualisasi statistik global & demografi pegawai |
 | `/documents` | `(dashboard)/documents/page.tsx` | `ADMIN`, `EMPLOYEE` | Daftar dokumen (3 tab arsip) |
 | `/documents/[id]` | `(dashboard)/documents/[id]/page.tsx` | `ADMIN`, pemilik dokumen | Detail dokumen, preview file, dan properti arsip |
 | `/verification` | `(dashboard)/verification/page.tsx` | `ADMIN`, `STAFF` | Daftar dokumen PENDING |
@@ -95,6 +96,8 @@ src/app/
 └── (dashboard)/
     ├── layout.tsx          ← Sidebar + Navbar, cek sesi aktif
     ├── dashboard/
+    │   └── page.tsx
+    ├── statistics/
     │   └── page.tsx
     ├── documents/
     │   ├── page.tsx

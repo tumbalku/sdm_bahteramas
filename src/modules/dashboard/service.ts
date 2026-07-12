@@ -14,6 +14,17 @@ import {
   groupEmployeesByEmploymentStatus,
   groupEmployeesByGender,
   groupEmployeesByWorkplace,
+  groupEmployeesByRank,
+  groupEmployeesByPosition,
+  groupEmployeesByProfessionGroup,
+  groupEmployeesByEducation,
+  groupEmployeesByReligion,
+  groupEmployeesByMaritalStatus,
+  getEmployeeBirthDates,
+  groupDocumentsByArchiveCategory,
+  getDocumentTypesForArchiveGrouping,
+  groupEmployeesByGenderAndEmployeeGroup,
+  groupEmployeesByGenderAndEmploymentStatus,
 } from "./repository";
 import { DashboardChartItem, DashboardChartsDto } from "./types";
 import {
@@ -23,12 +34,13 @@ import {
   getLastSixMonths,
   mapGroupedItems,
   normalizeGenderLabel,
+  groupEmployeesByAge,
+  buildGenderGroupedChart,
 } from "./utils";
 
 export async function getDashboardDataService(user: { id: string; role: string }): Promise<DashboardStatsDto> {
-  // Hanya ADMIN dan STAFF yang melihat metrik keseluruhan (seluruh pegawai)
-  // EMPLOYEE hanya melihat metrik miliknya sendiri
-  const ownerId = (user.role === "ADMIN" || user.role === "STAFF") ? undefined : user.id;
+  // Semua role melihat personal dashboard yang sama (user-scoped)
+  const ownerId = user.id;
 
   const [stats, expiringDocs, recentDocs] = await Promise.all([
     getDashboardStats(ownerId),
@@ -87,8 +99,8 @@ async function buildMissingMandatoryDocumentsTop(): Promise<DashboardChartItem[]
 }
 
 export async function getDashboardChartsService(user: { id: string; role: string }): Promise<DashboardChartsDto> {
-  if (user.role !== "ADMIN") {
-    throw new Error("Akses ditolak. Hanya ADMIN.");
+  if (user.role !== "ADMIN" && user.role !== "STAFF") {
+    throw new Error("Akses ditolak. Hanya ADMIN dan STAFF.");
   }
 
   const months = getLastSixMonths();
@@ -99,46 +111,118 @@ export async function getDashboardChartsService(user: { id: string; role: string
     employeeGroupResult,
     genderGroups,
     workplaceResult,
+    rankResult,
+    positionResult,
+    professionGroupResult,
+    educationGroups,
+    religionGroups,
+    maritalStatusGroups,
+    birthDates,
     documentStatusGroups,
     uploads,
     missingMandatoryDocumentsTop,
     expiring30,
     expiring60,
     expiring90,
+    documentsByType,
+    documentTypes,
+    genderByEmployeeGroupData,
+    genderByEmploymentStatusData,
   ] = await Promise.all([
     groupEmployeesByEmploymentStatus(),
     groupEmployeesByEmployeeGroup(),
     groupEmployeesByGender(),
     groupEmployeesByWorkplace(),
+    groupEmployeesByRank(),
+    groupEmployeesByPosition(),
+    groupEmployeesByProfessionGroup(),
+    groupEmployeesByEducation(),
+    groupEmployeesByReligion(),
+    groupEmployeesByMaritalStatus(),
+    getEmployeeBirthDates(),
     groupDocumentsByStatus(),
     findDocumentUploadsSince(since),
     buildMissingMandatoryDocumentsTop(),
     countExpiringDocumentsUntil(addDays(30)),
     countExpiringDocumentsUntil(addDays(60)),
     countExpiringDocumentsUntil(addDays(90)),
+    groupDocumentsByArchiveCategory(),
+    getDocumentTypesForArchiveGrouping(),
+    groupEmployeesByGenderAndEmployeeGroup(),
+    groupEmployeesByGenderAndEmploymentStatus(),
   ]);
 
   const employmentStatusNames = new Map(employmentStatusResult.names.map((item) => [item.id, item.name]));
   const employeeGroupNames = new Map(employeeGroupResult.names.map((item) => [item.id, item.name]));
   const workplaceNames = new Map(workplaceResult.names.map((item) => [item.id, item.name]));
+  const rankNames = new Map(rankResult.names.map((item) => [item.id, item.name]));
+  const positionNames = new Map(positionResult.names.map((item) => [item.id, item.name]));
+  const professionGroupNames = new Map(professionGroupResult.names.map((item) => [item.id, item.name]));
   const uploadCharts = buildDocumentUploadCharts(uploads);
+
+  // Group documents by archive category
+  const archiveCategoryMap = new Map<string, string>();
+  documentTypes.forEach((dt) => {
+    archiveCategoryMap.set(dt.id, dt.archiveCategory);
+  });
+
+  const archiveCategoryCounts = new Map<string, number>();
+  documentsByType.forEach((group) => {
+    const category = archiveCategoryMap.get(group.documentTypeId) || "LAINNYA";
+    archiveCategoryCounts.set(category, (archiveCategoryCounts.get(category) || 0) + group._count.id);
+  });
+
+  const documentsByArchiveCategory: DashboardChartItem[] = [
+    { label: "UTAMA", value: archiveCategoryCounts.get("UTAMA") || 0 },
+    { label: "KONDISIONAL", value: archiveCategoryCounts.get("KONDISIONAL") || 0 },
+    { label: "PROFESI", value: archiveCategoryCounts.get("PROFESI") || 0 },
+  ];
 
   return {
     employeeByEmploymentStatus: mapGroupedItems(
       employmentStatusResult.groups,
-      (group) => group.employmentStatusId ? employmentStatusNames.get(group.employmentStatusId) || "Belum Diisi" : "Belum Diisi"
+      (group) => (group.employmentStatusId ? employmentStatusNames.get(group.employmentStatusId) || "Belum Diisi" : "Belum Diisi")
     ),
     employeeByEmployeeGroup: mapGroupedItems(
       employeeGroupResult.groups,
-      (group) => group.employeeGroupId ? employeeGroupNames.get(group.employeeGroupId) || "Belum Diisi" : "Belum Diisi",
+      (group) => (group.employeeGroupId ? employeeGroupNames.get(group.employeeGroupId) || "Belum Diisi" : "Belum Diisi"),
       10
     ),
     employeeByGender: mapGroupedItems(genderGroups, (group) => normalizeGenderLabel(group.gender)),
     employeeByWorkplace: mapGroupedItems(
       workplaceResult.groups,
-      (group) => group.workplaceId ? workplaceNames.get(group.workplaceId) || "Belum Diisi" : "Belum Diisi",
+      (group) => (group.workplaceId ? workplaceNames.get(group.workplaceId) || "Belum Diisi" : "Belum Diisi"),
       10
     ),
+    employeeByRank: mapGroupedItems(
+      rankResult.groups,
+      (group) => (group.employeeRankId ? rankNames.get(group.employeeRankId) || "Belum Diisi" : "Belum Diisi"),
+      10
+    ),
+    employeeByPosition: mapGroupedItems(
+      positionResult.groups,
+      (group) => (group.employeePositionId ? positionNames.get(group.employeePositionId) || "Belum Diisi" : "Belum Diisi"),
+      10
+    ),
+    employeeByProfessionGroup: mapGroupedItems(
+      professionGroupResult.groups,
+      (group) => (group.professionGroupId ? professionGroupNames.get(group.professionGroupId) || "Belum Diisi" : "Belum Diisi")
+    ),
+    employeeByEducation: mapGroupedItems(educationGroups, (group) => group.lastEducation || "Belum Diisi"),
+    employeeByReligion: mapGroupedItems(religionGroups, (group) => group.religion || "Belum Diisi"),
+    employeeByMaritalStatus: mapGroupedItems(maritalStatusGroups, (group) => group.maritalStatus || "Belum Diisi"),
+    employeeByAgeGroup: groupEmployeesByAge(birthDates),
+    employeeByGenderAndEmployeeGroup: buildGenderGroupedChart(
+      genderByEmployeeGroupData.employees as any,
+      genderByEmployeeGroupData.groupNameMap,
+      "employeeGroupId"
+    ),
+    employeeByGenderAndEmploymentStatus: buildGenderGroupedChart(
+      genderByEmploymentStatusData.employees as any,
+      genderByEmploymentStatusData.statusNameMap,
+      "employmentStatusId"
+    ),
+    documentsByArchiveCategory,
     documentUploadsByTypeLastSixMonths: uploadCharts.byType,
     documentUploadTypeKeys: uploadCharts.chartKeys,
     monthlyUploadTrend: uploadCharts.trend,

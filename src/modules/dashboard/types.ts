@@ -16,6 +16,11 @@ export interface DashboardChartItem {
   value: number;
 }
 
+export interface DashboardGroupedChartItem {
+  category: string;
+  [key: string]: string | number;
+}
+
 export interface DashboardMonthlyUploadByType {
   month: string;
   [documentType: string]: string | number;
@@ -37,6 +42,16 @@ export interface DashboardChartsDto {
   employeeByEmployeeGroup: DashboardChartItem[];
   employeeByGender: DashboardChartItem[];
   employeeByWorkplace: DashboardChartItem[];
+  employeeByRank: DashboardChartItem[];
+  employeeByPosition: DashboardChartItem[];
+  employeeByProfessionGroup: DashboardChartItem[];
+  employeeByEducation: DashboardChartItem[];
+  employeeByReligion: DashboardChartItem[];
+  employeeByMaritalStatus: DashboardChartItem[];
+  employeeByAgeGroup: DashboardChartItem[];
+  employeeByGenderAndEmployeeGroup: DashboardGroupedChartItem[];
+  employeeByGenderAndEmploymentStatus: DashboardGroupedChartItem[];
+  documentsByArchiveCategory: DashboardChartItem[];
   documentUploadsByTypeLastSixMonths: DashboardMonthlyUploadByType[];
   documentUploadTypeKeys: string[];
   monthlyUploadTrend: DashboardUploadTrendItem[];

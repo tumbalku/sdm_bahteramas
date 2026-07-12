@@ -1,6 +1,6 @@
 # Progress — SMDP Portal
 
-> **Last Updated:** 2026-07-04
+> **Last Updated:** 2026-07-12
 > **AI Agent:** Update file ini setelah menyelesaikan task besar. Tandai item sesuai statusnya.
 > **Rule:** Jika item pada `## 🔴 Yang Belum Dibuat` sudah diimplementasi, pindahkan/catat hasilnya ke `## ✅ Yang Sudah Selesai` dan hapus dari backlog.
 
@@ -356,6 +356,14 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] Chart hanya dirender untuk role `ADMIN`; role lain tetap memakai dashboard existing.
 - [x] `docs/api.md`, `docs/features.md`, dan `docs/progress.md` diperbarui.
 
+### Unified Dashboard & Halaman Statistik Global (Selesai 2026-07-12)
+- [x] Dashboard personal (user-scoped) seragam untuk semua role (ADMIN, STAFF, EMPLOYEE), menyembunyikan visualisasi chart global demi data safety.
+- [x] Halaman `/statistics` khusus ADMIN dan STAFF untuk visualisasi statistik global.
+- [x] Integrasi sidebar menu `Statistik` dengan proteksi role ADMIN dan STAFF.
+- [x] Modifikasi `getDashboardDataService` agar ownerId selalu ter-scoped ke `user.id`.
+- [x] Modifikasi `getDashboardChartsService` dan API route `/api/v1/dashboard/charts` agar STAFF diizinkan mengakses data charts.
+- [x] Update unit test dashboard dan seluruh quality gate passed.
+
 ### F09 — Settings
 - [x] `src/modules/settings/service.ts`
 - [x] `src/modules/settings/repository.ts`
@@ -610,3 +618,4 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 | 2026-07-11 | AI Agent | Ubah engine export PDF Profil Pegawai ke Puppeteer dengan template HTML print, logo/foto via data URI, dan QR verifikasi nyata pada footer. |
 | 2026-07-11 | AI Agent | Tambah export PDF mandiri pada Page Profil Saya lewat endpoint `/api/v1/profile/export-pdf`, hook profile, tombol UI, dan audit `OWN_PROFILE_PDF`. |
 | 2026-07-12 | AI Agent | Remediasi audit kode 2026-07-12: perbaiki semua P0 (secret env helper, rate limit verify-password, backup OOM pagination, eslint CLI migration) dan P1 (getDocumentByIdService, fetch komponen ke hooks, standard response API, Prisma generated update, atomic delete, standard download id). Seluruh quality gate hijau, siap dideploy ke produksi. |
+| 2026-07-12 | AI Agent | Selesaikan implementasi Unified Employee Dashboard UI & Statistik Global (/statistics) untuk ADMIN & STAFF. |
