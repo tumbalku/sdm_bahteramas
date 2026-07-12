@@ -14,7 +14,8 @@ export {
 } from "./export-service";
 
 export async function getAllUsers(filters?: UserFilter): Promise<UserRecord[]> {
-  return repo.findManyUsers(filters);
+  const result = await repo.findManyUsers(filters);
+  return Array.isArray(result) ? result : result.items;
 }
 
 export async function getUserById(id: string): Promise<UserRecord | null> {

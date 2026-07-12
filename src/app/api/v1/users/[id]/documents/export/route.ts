@@ -27,9 +27,9 @@ export async function GET(
         "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/users/[id]/documents/export Error:", error);
-    const message = error.message || "Gagal mengekspor dokumen pegawai";
+    const message = (error instanceof Error ? error.message : undefined) || "Gagal mengekspor dokumen pegawai";
     const status = message.includes("tidak ditemukan") ? 404 : 500;
 
     return NextResponse.json(

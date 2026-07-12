@@ -23,9 +23,9 @@ export async function GET() {
       { success: true, data },
       { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengambil master kategori" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengambil master kategori" },
       { status: 500 }
     );
   }
@@ -53,9 +53,9 @@ export async function POST(req: NextRequest) {
 
     const data = await createCategoryService(type as CategoryType, name, parentId, user);
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal membuat kategori" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal membuat kategori" },
       { status: 500 }
     );
   }
@@ -83,9 +83,9 @@ export async function PATCH(req: NextRequest) {
 
     const data = await updateCategoryService(id, type as CategoryType, name, parentId, user);
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal memperbarui kategori" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal memperbarui kategori" },
       { status: 500 }
     );
   }
@@ -114,9 +114,9 @@ export async function DELETE(req: NextRequest) {
 
     const data = await deleteCategoryService(id, type, user);
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal menghapus kategori" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal menghapus kategori" },
       { status: 500 }
     );
   }

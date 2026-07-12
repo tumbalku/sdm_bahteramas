@@ -4,6 +4,7 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/security-log";
 import { authenticateUser } from "../service";
+import { failedLoginAttempts } from "../login-rate-limit";
 
 vi.mock("bcryptjs", () => ({
   default: {
@@ -36,6 +37,7 @@ describe("authenticateUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(logActivity).mockResolvedValue(undefined);
+    failedLoginAttempts.clear();
   });
 
   it("mengembalikan error validasi dan tidak memanggil dependency eksternal ketika input invalid", async () => {
@@ -147,5 +149,41 @@ describe("authenticateUser", () => {
     vi.mocked(bcrypt.compare).mockRejectedValue(new Error("Bcrypt failed") as never);
 
     await expect(authenticateUser({ identifier: "ADMIN001", password: "secret123" })).rejects.toThrow("Bcrypt failed");
+  });
+
+  it("membatasi login (rate limiting) setelah 5 kali gagal berturut-turut", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(userRecord as never);
+    vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
+
+    // Lakukan 5 kali percobaan gagal
+    for (let i = 0; i < 5; i++) {
+      const result = await authenticateUser(
+        { identifier: "ADMIN001", password: "wrong-password" },
+        "127.0.0.1"
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("NIP/Email atau password salah");
+    }
+
+    // Percobaan ke-6 harus di-rate limit
+    const limitResult = await authenticateUser(
+      { identifier: "ADMIN001", password: "wrong-password" },
+      "127.0.0.1"
+    );
+    expect(limitResult).toEqual({
+      success: false,
+      error: "Terlalu banyak percobaan gagal. Silakan coba lagi setelah 10 menit.",
+    });
+
+    // logActivity harus merekam event USER_LOGIN_FAILED dengan reason rate limited
+    expect(logActivity).toHaveBeenLastCalledWith(expect.objectContaining({
+      actorName: "ADMIN001",
+      actorRole: "UNKNOWN",
+      eventType: "USER_LOGIN_FAILED",
+      resource: "/api/v1/auth/login",
+      ipAddress: "127.0.0.1",
+      status: "failed",
+      metadata: { reason: "Rate limited due to too many failed attempts" },
+    }));
   });
 });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { generateDatabaseSqlDump } from "@/modules/backup/service";
+import { generateDatabaseSqlDumpStream } from "@/modules/backup/service";
 import { format } from "date-fns";
 
 export async function GET(request: Request) {
@@ -23,12 +23,25 @@ export async function GET(request: Request) {
     };
 
     const ipAddress = request.headers.get("x-forwarded-for") || "unknown";
-    const sqlDump = await generateDatabaseSqlDump(actor, ipAddress);
-
     const dateFormatted = format(new Date(), "yyyyMMdd_HHmmss");
     const filename = `smdp_backup_${dateFormatted}.sql`;
 
-    return new NextResponse(sqlDump, {
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        try {
+          for await (const chunk of generateDatabaseSqlDumpStream(actor, ipAddress)) {
+            controller.enqueue(encoder.encode(chunk));
+          }
+        } catch (err) {
+          console.error("Backup stream generation error:", err);
+        } finally {
+          controller.close();
+        }
+      }
+    });
+
+    return new NextResponse(stream, {
       status: 200,
       headers: {
         "Content-Type": "application/sql",
@@ -36,10 +49,11 @@ export async function GET(request: Request) {
         "Cache-Control": "no-store, max-age=0",
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/backup/export Error:", error);
+    const message = error instanceof Error ? error.message : "Gagal menghasilkan backup database";
     return NextResponse.json(
-      { message: error.message || "Gagal menghasilkan backup database" },
+      { message },
       { status: 500 }
     );
   }

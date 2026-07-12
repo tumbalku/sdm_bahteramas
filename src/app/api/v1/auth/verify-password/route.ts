@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     return ok({
       message: "Verifikasi kata sandi dan identitas pengguna berhasil.",
     });
-  } catch (error: any) {
-    return fail(error.message || "Terjadi kesalahan saat memverifikasi kata sandi.", 500);
+  } catch (error: unknown) {
+    return fail((error instanceof Error ? error.message : undefined) || "Terjadi kesalahan saat memverifikasi kata sandi.", 500);
   }
 }

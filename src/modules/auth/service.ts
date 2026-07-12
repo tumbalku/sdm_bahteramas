@@ -4,6 +4,12 @@ import { logActivity } from "@/lib/security-log";
 import { LoginCredentials, LoginResult } from "./types";
 import { buildLoginLookupWhere, INVALID_LOGIN_MESSAGE, toAuthUserSession } from "./utils";
 import { loginSchema } from "./validation";
+import {
+  pruneLoginAttempts,
+  recordLoginFailure,
+  clearLoginFailures,
+  LOGIN_MAX_FAILED_ATTEMPTS,
+} from "./login-rate-limit";
 
 export async function authenticateUser(
   credentials: LoginCredentials,
@@ -19,6 +25,26 @@ export async function authenticateUser(
   }
 
   const { identifier, password } = validation.data;
+  const now = Date.now();
+
+  // Rate Limiting check
+  const attempts = pruneLoginAttempts(identifier, now);
+  if (attempts.length >= LOGIN_MAX_FAILED_ATTEMPTS) {
+    await logActivity({
+      actorName: identifier,
+      actorRole: "UNKNOWN",
+      eventType: "USER_LOGIN_FAILED",
+      resource: "/api/v1/auth/login",
+      ipAddress,
+      status: "failed",
+      metadata: { reason: "Rate limited due to too many failed attempts" },
+    });
+
+    return {
+      success: false,
+      error: "Terlalu banyak percobaan gagal. Silakan coba lagi setelah 10 menit.",
+    };
+  }
 
   // Cari user berdasarkan employeeId (NIP) atau email
   const user = await prisma.user.findFirst({
@@ -26,6 +52,7 @@ export async function authenticateUser(
   });
 
   if (!user) {
+    recordLoginFailure(identifier, now);
     await logActivity({
       actorName: identifier,
       actorRole: "UNKNOWN",
@@ -45,6 +72,7 @@ export async function authenticateUser(
   const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isPasswordValid) {
+    recordLoginFailure(identifier, now);
     await logActivity({
       actorId: user.id,
       actorName: user.name,
@@ -61,6 +89,9 @@ export async function authenticateUser(
       error: INVALID_LOGIN_MESSAGE,
     };
   }
+
+  // Clear failed attempts upon successful login
+  clearLoginFailures(identifier);
 
   // Log sukses
   await logActivity({

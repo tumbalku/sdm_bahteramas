@@ -111,6 +111,15 @@ export interface UserFilter {
   retirementAgeMax?: number;
   maritalStatus?: string;
   lastEducation?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedUsersResult {
+  items: UserRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface ImportUserError {

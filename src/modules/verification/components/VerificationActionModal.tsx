@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { DocumentRecordDto } from "@/modules/documents/types";
 import { Button } from "@/components/ui/button";
@@ -189,7 +190,7 @@ export function VerificationActionModal({
                   className="flex-1 rounded-xl"
                   onClick={() => {
                     if (rejectReason.length < 5) {
-                      alert("Alasan penolakan minimal 5 karakter.");
+                      toast.error("Alasan penolakan minimal 5 karakter.");
                       return;
                     }
                     onReject(document.id, rejectReason);

@@ -34,7 +34,7 @@ export async function getExpiringDocuments(ownerId?: string, daysThreshold = 30)
     },
     include: {
       documentType: true,
-      owner: { select: { id: true, name: true, employeeId: true } },
+      owner: { select: { id: true, name: true, employeeId: true, avatarUrl: true } },
     },
     orderBy: {
       expiryDate: "asc",
@@ -50,7 +50,7 @@ export async function getRecentDocuments(ownerId?: string) {
     where: baseWhere,
     include: {
       documentType: true,
-      owner: { select: { id: true, name: true, employeeId: true } },
+      owner: { select: { id: true, name: true, employeeId: true, avatarUrl: true } },
     },
     orderBy: {
       uploadedAt: "desc",

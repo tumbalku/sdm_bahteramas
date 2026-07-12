@@ -1,5 +1,7 @@
 import { DashboardStatsDto } from "./types";
 import { isDocumentTypeApplicableToUser } from "@/modules/document-types/service";
+import { DocumentRecordDto } from "../documents/types";
+import { DocumentTypeRecord } from "../document-types/types";
 import {
   countExpiringDocumentsUntil,
   findDocumentUploadsSince,
@@ -54,8 +56,8 @@ export async function getDashboardDataService(user: { id: string; role: string }
     approvedDocuments: stats.approved,
     rejectedDocuments: stats.rejected,
     expiringCount: expiringDocs.length,
-    recentDocuments: recentDocs as any, // Cast to DTO
-    expiringDocuments: expiringDocs as any, // Cast to DTO
+    recentDocuments: recentDocs as DocumentRecordDto[], // Cast to DTO
+    expiringDocuments: expiringDocs as DocumentRecordDto[], // Cast to DTO
   };
 }
 
@@ -79,7 +81,7 @@ async function buildMissingMandatoryDocumentsTop(): Promise<DashboardChartItem[]
 
   employees.forEach((employee) => {
     documentTypes.forEach((documentType) => {
-      if (!isDocumentTypeApplicableToUser(documentType as any, employee)) return;
+      if (!isDocumentTypeApplicableToUser(documentType as DocumentTypeRecord, employee)) return;
 
       const pairKey = `${employee.id}:${documentType.id}`;
       if (existingPairs.has(pairKey)) return;
@@ -213,12 +215,12 @@ export async function getDashboardChartsService(user: { id: string; role: string
     employeeByMaritalStatus: mapGroupedItems(maritalStatusGroups, (group) => group.maritalStatus || "Belum Diisi"),
     employeeByAgeGroup: groupEmployeesByAge(birthDates),
     employeeByGenderAndEmployeeGroup: buildGenderGroupedChart(
-      genderByEmployeeGroupData.employees as any,
+      genderByEmployeeGroupData.employees,
       genderByEmployeeGroupData.groupNameMap,
       "employeeGroupId"
     ),
     employeeByGenderAndEmploymentStatus: buildGenderGroupedChart(
-      genderByEmploymentStatusData.employees as any,
+      genderByEmploymentStatusData.employees,
       genderByEmploymentStatusData.statusNameMap,
       "employmentStatusId"
     ),

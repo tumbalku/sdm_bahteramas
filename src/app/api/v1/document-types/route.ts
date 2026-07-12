@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
     );
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengambil data" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengambil data" },
       { status: 500 }
     );
   }
@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
     const data = await createDocumentTypeService(body, user);
 
     return NextResponse.json({ success: true, data }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal membuat jenis dokumen" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal membuat jenis dokumen" },
       { status: 400 }
     );
   }

@@ -244,6 +244,7 @@ Ambil daftar dokumen.
   - `archiveCategory`: `UTAMA` | `KONDISIONAL` | `PROFESI` (opsional)
   - `status`: `PENDING` | `APPROVED` | `REJECTED` (opsional)
   - `ownerId`: string (opsional — hanya efektif untuk `ADMIN`; role lain tetap dipaksa ke dokumen milik sendiri)
+  - `page`, `pageSize`: number (opsional; jika dikirim repository memakai pagination dan menghitung `total`)
 - **Behavior:**
   - Default endpoint ini adalah konteks Dokumen Saya: `ADMIN`, `STAFF`, dan `EMPLOYEE` melihat dokumen personal milik sendiri.
   - `ADMIN` dapat memakai `ownerId` eksplisit untuk melihat dokumen user lain pada konteks admin-wide.
@@ -376,6 +377,7 @@ Daftar semua pegawai.
   - `retirementAgeMin`, `retirementAgeMax`: filter rentang usia pegawai saat ini untuk kebutuhan masa pensiun
   - `maritalStatus`: filter status pernikahan
   - `lastEducation`: filter pendidikan terakhir
+  - `page`, `pageSize`: number (opsional; repository mendukung pagination untuk query besar)
 - **Response:**
 ```json
 {
@@ -541,7 +543,7 @@ Ambil audit trail.
   - `from`: ISO date — filter dari tanggal
   - `to`: ISO date — filter sampai tanggal
   - `page`: number (pagination)
-  - `limit`: number (pagination, default: 50)
+  - `limit`: number (pagination, default: 100, maksimum: 500)
 - **Response:**
 ```json
 {
@@ -705,6 +707,7 @@ Export database sebagai file `.sql`.
 
 - **Auth:** `ADMIN`
 - **Response:** SQL dump dengan header `Content-Disposition`.
+- **Performa:** dump dibuat per chunk/batch tabel agar tidak menumpuk seluruh row database besar ke array di memori sekaligus.
 
 ---
 

@@ -78,10 +78,10 @@ export async function POST(request: Request) {
       message: "Avatar berhasil diperbarui",
       data: { avatarUrl: fileUrl }
     }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/v1/profile/avatar Error:", error);
     return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
+      { message: (error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server" },
       { status: 500 }
     );
   }

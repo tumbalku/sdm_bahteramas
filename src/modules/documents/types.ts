@@ -68,4 +68,6 @@ export interface DocumentFilterDto {
   employeeGroupId?: string;
   professionGroupId?: string;
   employeePositionId?: string;
+  page?: number;
+  pageSize?: number;
 }

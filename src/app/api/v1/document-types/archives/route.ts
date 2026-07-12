@@ -27,10 +27,10 @@ export async function GET(req: NextRequest) {
 
     const recap = await getDocumentArchiveRecapService(parsed.data);
     return NextResponse.json({ success: true, data: recap });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/document-types/archives Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengambil rekap arsip dokumen" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengambil rekap arsip dokumen" },
       { status: 500 }
     );
   }

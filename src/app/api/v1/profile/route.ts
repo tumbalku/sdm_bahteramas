@@ -13,10 +13,10 @@ export async function GET() {
 
     const profile = await getProfileService(session.user.id);
     return NextResponse.json(profile);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/profile Error:", error);
     return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
+      { message: (error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server" },
       { status: 500 }
     );
   }
@@ -49,10 +49,10 @@ export async function PUT(request: Request) {
     const updated = await updateProfileService(session.user.id, parseResult.data, actor, ipAddress);
 
     return NextResponse.json({ message: "Profil berhasil diperbarui", data: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PUT /api/v1/profile Error:", error);
     return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
+      { message: (error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server" },
       { status: 500 }
     );
   }

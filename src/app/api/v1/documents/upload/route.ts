@@ -72,9 +72,9 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json(document, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/v1/documents/upload Error:", error);
-    const message = error.message || "Terjadi kesalahan internal server";
+    const message = (error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server";
     const status = message.includes("sudah pernah diupload") ? 409 : 500;
 
     return NextResponse.json(

@@ -37,8 +37,8 @@ export async function POST(
     await rejectDocumentService(id, parseResult.data.reviewNote, actor, ipAddress);
 
     return ok({ message: "Dokumen ditolak" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/v1/verification/[id]/reject Error:", error);
-    return fail(error.message || "Terjadi kesalahan internal server", 500);
+    return fail((error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server", 500);
   }
 }

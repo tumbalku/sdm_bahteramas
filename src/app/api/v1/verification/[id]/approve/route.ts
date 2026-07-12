@@ -29,8 +29,8 @@ export async function POST(
     await approveDocumentService(id, actor, ipAddress);
 
     return ok({ message: "Dokumen berhasil disetujui" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/v1/verification/[id]/approve Error:", error);
-    return fail(error.message || "Terjadi kesalahan internal server", 500);
+    return fail((error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server", 500);
   }
 }

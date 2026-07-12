@@ -6,7 +6,7 @@ import { getStorageProvider } from "@/lib/storage";
 import type { AuthUser } from "@/lib/auth-utils";
 import { isDocumentTypeApplicableToUser } from "@/modules/document-types/service";
 import * as repo from "./repository";
-import type { UserFilter } from "./types";
+import type { UserFilter, UserRecord } from "./types";
 import {
   EMPLOYEE_DOCUMENT_EXPORT_HEADERS,
   EXPORT_HEADERS,
@@ -22,7 +22,8 @@ export async function exportUsersCsvService(
   actor: AuthUser,
   ipAddress?: string
 ) {
-  const users = await repo.findManyUsers(filters);
+  const usersResult = await repo.findManyUsers(filters);
+  const users: UserRecord[] = Array.isArray(usersResult) ? usersResult : usersResult.items;
   const lines = [
     EXPORT_HEADERS.join(","),
     ...users.map((user) =>

@@ -29,8 +29,8 @@ export async function GET(request: Request) {
     const documents = await getDocumentsService(parseResult.data, actor);
 
     return ok(documents);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/documents Error:", error);
-    return fail(error.message || "Terjadi kesalahan internal server", 500);
+    return fail((error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server", 500);
   }
 }

@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
     const result = await importUsersCsvService(csvText, user, ipAddress);
 
     return NextResponse.json({ success: result.errorCount === 0, data: result });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengimport pegawai" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengimport pegawai" },
       { status: 400 }
     );
   }

@@ -26,13 +26,14 @@ export async function GET(
 
     const history = await getDocumentVerificationHistoryService(id);
     return ok(history);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/verification/document/[id] Error:", error);
-    const status = error.message.includes("tidak ditemukan")
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan internal server";
+    const status = message.includes("tidak ditemukan")
       ? 404
-      : error.message.includes("Akses ditolak")
+      : message.includes("Akses ditolak")
         ? 403
         : 500;
-    return fail(error.message || "Terjadi kesalahan internal server", status);
+    return fail(message, status);
   }
 }

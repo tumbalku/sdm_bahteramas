@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { normalizeSecurityLogStatus, SecurityLogStatus } from "@/modules/security-logs/status";
+import { Prisma } from "@prisma/client";
 
 export interface LogActivityParams {
   actorId?: string;
@@ -9,13 +10,11 @@ export interface LogActivityParams {
   resource: string;
   ipAddress?: string;
   status?: SecurityLogStatus | string;
-  metadata?: Record<string, any>;
+  metadata?: unknown;
 }
 
 export const EXCLUDED_EVENT_TYPES = [
   "USER_LOGIN",
-  "USER_LOGIN_SUCCESS",
-  "USER_LOGIN_FAILED",
   "USER_LOGOUT",
   "PROFILE_UPDATED",
   "PASSWORD_CHANGED",
@@ -38,7 +37,7 @@ export async function logActivity(params: LogActivityParams) {
         resource: params.resource || "/api/v1/system",
         ipAddress: params.ipAddress || null,
         status,
-        metadata: params.metadata || undefined,
+        metadata: params.metadata === undefined ? undefined : (params.metadata as Prisma.InputJsonValue),
       },
     });
   } catch (error) {

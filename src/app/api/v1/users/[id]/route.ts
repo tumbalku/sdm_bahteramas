@@ -27,9 +27,9 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengambil data pegawai" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengambil data pegawai" },
       { status: 500 }
     );
   }
@@ -54,9 +54,9 @@ export async function PATCH(
     const data = await updateUserService(id, body, user);
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal meng-update pegawai" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal meng-update pegawai" },
       { status: 400 }
     );
   }
@@ -80,9 +80,9 @@ export async function DELETE(
     await deleteUserService(id, user);
 
     return NextResponse.json({ success: true, message: "Pegawai berhasil dihapus" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal menghapus pegawai" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal menghapus pegawai" },
       { status: 400 }
     );
   }

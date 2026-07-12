@@ -31,14 +31,15 @@ export async function PUT(request: Request) {
     await changePasswordService(session.user.id, parseResult.data, actor, ipAddress);
 
     return NextResponse.json({ message: "Kata sandi berhasil diperbarui" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PUT /api/v1/profile/password Error:", error);
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan internal server";
     
     // Status 400 bila kata sandi tidak cocok
-    const status = error.message.includes("tidak sesuai") ? 400 : 500;
+    const status = message.includes("tidak sesuai") ? 400 : 500;
     
     return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
+      { message },
       { status }
     );
   }

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { getStorageProvider } from "@/lib/storage";
 import { DocumentUploadInput, DocumentFilterDto } from "./types";
 import {
@@ -55,8 +56,9 @@ async function generateStorageFileName(
   
   const nextVersion = Math.max(existingCount + 1, minimumVersion ?? 1);
   const version = `v${nextVersion}`;
+  const randomSuffix = crypto.randomBytes(4).toString("hex");
   
-  const rawFileName = `${employeeId}_${category}_${docCode}_${dateStr}_${version}${originalExt}`;
+  const rawFileName = `${employeeId}_${category}_${docCode}_${dateStr}_${version}_${randomSuffix}${originalExt}`;
   return slugifyFileName(rawFileName);
 }
 
@@ -312,8 +314,9 @@ export async function deleteDocumentService(
   try {
     const storage = getStorageProvider();
     await storage.deleteFile(document.filePath);
-  } catch (err: any) {
-    console.warn(`[WARNING] Gagal menghapus file fisik dokumen ${document.filePath}:`, err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.warn(`[WARNING] Gagal menghapus file fisik dokumen ${document.filePath}:`, message);
   }
 
   // Log activity

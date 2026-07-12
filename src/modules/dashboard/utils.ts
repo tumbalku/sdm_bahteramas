@@ -176,14 +176,14 @@ export function groupEmployeesByAge(birthDates: Array<{ birthDate: Date | null }
 }
 
 export function buildGenderGroupedChart(
-  employees: Array<{ gender: string | null; groupId: string | null }>,
+  employees: Array<{ gender: string | null; employeeGroupId?: string | null; employmentStatusId?: string | null }>,
   groupNameMap: Map<string, string>,
   groupIdKey: "employeeGroupId" | "employmentStatusId"
 ): DashboardGroupedChartItem[] {
   const categoryMap = new Map<string, { "Laki-laki": number; Perempuan: number; "Belum Diisi": number }>();
 
   employees.forEach((emp) => {
-    const groupId = groupIdKey === "employeeGroupId" ? (emp as any).employeeGroupId : (emp as any).employmentStatusId;
+    const groupId = groupIdKey === "employeeGroupId" ? emp.employeeGroupId : emp.employmentStatusId;
     const categoryName = groupId ? groupNameMap.get(groupId) || "Belum Diisi" : "Belum Diisi";
     const genderLabel = normalizeGenderLabel(emp.gender);
 

@@ -23,8 +23,8 @@ export async function GET() {
 
     const documents = await getPendingDocumentsService(actor);
     return ok(documents);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/verification Error:", error);
-    return fail(error.message || "Terjadi kesalahan internal server", 500);
+    return fail((error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server", 500);
   }
 }

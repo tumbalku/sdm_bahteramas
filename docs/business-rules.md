@@ -261,7 +261,7 @@ Aksi berikut **WAJIB** dipanggil `logActivity()`:
 
 | Event Type | Kapan |
 |---|---|
-| `USER_LOGIN` | Login berhasil |
+| `USER_LOGIN_SUCCESS` | Login berhasil |
 | `USER_LOGIN_FAILED` | Login gagal |
 | `DOCUMENT_UPLOADED` | Dokumen berhasil diupload |
 | `DOCUMENT_APPROVED` | Dokumen diapprove |

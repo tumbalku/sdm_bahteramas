@@ -35,10 +35,10 @@ export async function GET(req: NextRequest) {
         "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/document-types/archives/export Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengekspor rekap arsip dokumen" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengekspor rekap arsip dokumen" },
       { status: 500 }
     );
   }

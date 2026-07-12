@@ -197,17 +197,11 @@ Karena arsitektur sudah modular:
 
 ---
 
-## 11. Database Migrations & Dynamic Column Workaround
+## 11. Database Migrations & Prisma Client
 
-Untuk memfasilitasi migrasi schema database secara bertahap di production tanpa mengganggu runtime aplikasi (misalnya saat penambahan kolom baru pada tabel `User` seperti `nik`, `academicDegree`, dll.), sistem menggunakan helper dinamis `src/lib/db-columns.ts` untuk memeriksa keberadaan kolom di database secara real-time sebelum melakukan select/update.
+Dynamic column workaround lama (`src/lib/db-columns.ts` / `hasUserColumn`) sudah dihapus pada remediasi lanjutan 2026-07-13. Repository dan backup sekarang kembali memakai schema Prisma sebagai source of truth.
 
-### Cara Kerja:
-- Query ke `information_schema.columns` dilakukan untuk memverifikasi keberadaan kolom.
-- Hasil pencarian di-cache di memori (`Map<string, boolean>`) agar tidak membebani performa database.
-- Digunakan di `src/modules/users/repository.ts` dan `src/modules/profile/repository.ts`.
-
-### Rencana Penghapusan (TODO):
-Workaround ini bersifat sementara. Helper `hasUserColumn` dan file `src/lib/db-columns.ts` harus dihapus setelah:
-1. Seluruh migration script telah berhasil dijalankan di semua target environment (development, staging, dan production).
-2. Prisma Client berhasil di-generate ulang dengan schema terbaru di seluruh environment tersebut.
-3. Seluruh repository refactored untuk menggunakan Prisma Client standard queries secara penuh tanpa raw SQL dinamis.
+Aturan operasional setelah perubahan ini:
+1. Jalankan migration di target environment sebelum deploy aplikasi yang membutuhkan kolom baru.
+2. Jalankan `npx prisma generate` saat schema berubah.
+3. Jika database production belum memiliki kolom terbaru, lakukan deployment melalui runbook migrasi terlebih dahulu; jangan menambahkan fallback raw SQL dinamis baru tanpa ADR.
