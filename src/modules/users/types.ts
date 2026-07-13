@@ -104,6 +104,7 @@ export interface UserFilter {
   workplaceId?: string;
   employmentStatusId?: string;
   employeeGroupId?: string;
+  employeeRankId?: string;
   employeePositionId?: string;
   tmtStartDate?: string;
   tmtEndDate?: string;

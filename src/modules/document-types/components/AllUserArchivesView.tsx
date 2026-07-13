@@ -66,6 +66,7 @@ export function AllUserArchivesView() {
     archiveCategory: "ALL",
     employmentStatusId: "",
     employeeGroupId: "",
+    employeeRankId: "",
     professionGroupId: "",
     employeePositionId: "",
     workplaceId: "",
@@ -88,6 +89,7 @@ export function AllUserArchivesView() {
     if (filterValues.search.trim()) nextFilters.search = filterValues.search.trim();
     if (filterValues.employmentStatusId) nextFilters.employmentStatusId = filterValues.employmentStatusId;
     if (filterValues.employeeGroupId) nextFilters.employeeGroupId = filterValues.employeeGroupId;
+    if (filterValues.employeeRankId) nextFilters.employeeRankId = filterValues.employeeRankId;
     if (filterValues.professionGroupId) nextFilters.professionGroupId = filterValues.professionGroupId;
     if (filterValues.employeePositionId) nextFilters.employeePositionId = filterValues.employeePositionId;
     if (filterValues.workplaceId) nextFilters.workplaceId = filterValues.workplaceId;

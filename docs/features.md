@@ -106,7 +106,7 @@
 
 **Sub-fitur:**
 - Daftar pegawai + search by nama/NIP
-- Filter by profesi, unit kerja, status kepegawaian, TMT awal/akhir, rentang usia masa pensiun, status pernikahan, dan pendidikan terakhir
+- Filter by profesi, unit kerja, status kepegawaian, jenis kepegawaian, golongan, TMT awal/akhir, rentang usia masa pensiun, status pernikahan, dan pendidikan terakhir
 - Buat pegawai baru
 - Edit data pegawai
 - Hapus pegawai (cascade: dokumen & role ikut terhapus)

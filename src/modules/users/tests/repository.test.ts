@@ -82,4 +82,16 @@ describe("users repository findManyUsers pagination", () => {
     expect(Array.isArray(result)).toBe(true);
     expect(Array.isArray(result) ? result.length : 0).toBe(1);
   });
+
+  it("should filter users by employee rank", async () => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue([]);
+
+    await findManyUsers({ employeeRankId: "rank-1" });
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { employeeRankId: "rank-1" },
+      })
+    );
+  });
 });

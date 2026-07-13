@@ -371,7 +371,7 @@ Daftar semua pegawai.
   - `search`: string — cari by nama atau NIP
   - `professionGroupId`: filter by profesi
   - `workplaceId`: filter by unit kerja
-  - `employmentStatusId`, `employeeGroupId`, `employeePositionId`: filter kategori kepegawaian
+  - `employmentStatusId`, `employeeGroupId`, `employeeRankId`, `employeePositionId`: filter kategori kepegawaian dan golongan
   - `tmtStartDate`: filter TMT awal dari tanggal ini sampai hari ini (`YYYY-MM-DD`)
   - `tmtEndDate`: filter TMT akhir/kontrak dari tanggal ini sampai hari ini (`YYYY-MM-DD`)
   - `retirementAgeMin`, `retirementAgeMax`: filter rentang usia pegawai saat ini untuk kebutuhan masa pensiun

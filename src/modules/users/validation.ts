@@ -119,6 +119,7 @@ export const userFilterSchema = z
     workplaceId: z.string().optional(),
     employmentStatusId: z.string().optional(),
     employeeGroupId: z.string().optional(),
+    employeeRankId: z.string().optional(),
     employeePositionId: z.string().optional(),
     tmtStartDate: optionalDateString,
     tmtEndDate: optionalDateString,

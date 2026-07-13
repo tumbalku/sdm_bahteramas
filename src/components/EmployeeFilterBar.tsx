@@ -12,6 +12,7 @@ export interface EmployeeFilterState {
   search: string;
   employmentStatusId: string;
   employeeGroupId: string;
+  employeeRankId: string;
   professionGroupId: string;
   employeePositionId: string;
   workplaceId?: string;
@@ -55,38 +56,37 @@ export function EmployeeFilterBar({ values, onChange, categories, showArchiveCat
 
   return (
     <div className="bg-card border border-border p-4 rounded-2xl shadow-sm space-y-3">
-      {/* Top Row: Search Input & Optional Archive Category Filter */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-        {/* Search Input */}
-        <div className={`relative ${showArchiveCategory ? "md:col-span-8" : "md:col-span-12"}`}>
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground z-10" />
-          <Input
-            type="text"
-            placeholder="Cari berdasarkan nama atau NIP pegawai..."
-            value={values.search || ""}
-            onChange={(e) => handleUpdate({ search: e.target.value })}
-            className="pl-10 h-10 text-sm font-medium"
-          />
-        </div>
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground z-10" />
+        <Input
+          type="text"
+          placeholder="Cari berdasarkan nama atau NIP pegawai..."
+          value={values.search || ""}
+          onChange={(e) => handleUpdate({ search: e.target.value })}
+          className="pl-10 h-10 text-sm font-medium"
+        />
+      </div>
 
-        {/* Archive Category Filter Select (If Enabled) */}
+      {/* Detailed Filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-border/60">
         {showArchiveCategory && (
-          <div className="md:col-span-4 flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1 whitespace-nowrap shrink-0">
-              <Filter className="w-3.5 h-3.5 text-primary" /> Filter Arsip:
-            </span>
+          <FormField
+            label={
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                <Filter className="w-3.5 h-3.5 text-primary" /> Filter Arsip
+              </span>
+            }
+          >
             <Select
               value={values.archiveCategory || "ALL"}
               onChange={(e) => handleUpdate({ archiveCategory: e.target.value as DocumentArchiveCategory | "ALL" })}
               options={ARCHIVE_CATEGORY_OPTIONS}
-              className="h-10 text-xs font-bold"
+              className="h-9 text-xs font-semibold"
             />
-          </div>
+          </FormField>
         )}
-      </div>
 
-      {/* Bottom Row: Detailed Employment Select Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-border/60">
         {/* Select 1: Status Kepegawaian */}
         <FormField
           label={
@@ -104,14 +104,14 @@ export function EmployeeFilterBar({ values, onChange, categories, showArchiveCat
           />
         </FormField>
 
-        {/* Select 2: Jenis / Golongan Kepegawaian */}
-        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">Golongan / Kelompok</span>}>
+        {/* Select 2: Jenis Kepegawaian */}
+        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">Jenis kepegawaian</span>}>
           <Select
             value={values.employeeGroupId || ""}
             onChange={(e) => handleUpdate({ employeeGroupId: e.target.value })}
             disabled={!values.employmentStatusId}
             options={availableGroups.map((group) => ({ value: group.id, label: group.name }))}
-            placeholder="Semua Golongan"
+            placeholder="Semua Jenis Kepegawaian"
             className="h-9 text-xs font-semibold"
           />
         </FormField>
@@ -144,9 +144,17 @@ export function EmployeeFilterBar({ values, onChange, categories, showArchiveCat
             className="h-9 text-xs font-semibold"
           />
         </FormField>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-border/60">
+        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">Golongan</span>}>
+          <Select
+            value={values.employeeRankId || ""}
+            onChange={(e) => handleUpdate({ employeeRankId: e.target.value })}
+            options={categories?.employeeRanks.map((rank) => ({ value: rank.id, label: rank.name }))}
+            placeholder="Semua Golongan"
+            className="h-9 text-xs font-semibold"
+          />
+        </FormField>
+
         <FormField
           label={
             <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
@@ -195,6 +203,24 @@ export function EmployeeFilterBar({ values, onChange, categories, showArchiveCat
           />
         </FormField>
 
+        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">TMT Awal</span>}>
+          <Input
+            type="date"
+            value={values.tmtStartDate || ""}
+            onChange={(e) => handleUpdate({ tmtStartDate: e.target.value })}
+            className="h-9 text-xs font-semibold"
+          />
+        </FormField>
+
+        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">TMT Akhir / Kontrak</span>}>
+          <Input
+            type="date"
+            value={values.tmtEndDate || ""}
+            onChange={(e) => handleUpdate({ tmtEndDate: e.target.value })}
+            className="h-9 text-xs font-semibold"
+          />
+        </FormField>
+
         <FormField
           label={
             <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
@@ -222,26 +248,6 @@ export function EmployeeFilterBar({ values, onChange, categories, showArchiveCat
               className="h-9 text-xs font-semibold"
             />
           </div>
-        </FormField>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border/60">
-        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">TMT Awal</span>}>
-          <Input
-            type="date"
-            value={values.tmtStartDate || ""}
-            onChange={(e) => handleUpdate({ tmtStartDate: e.target.value })}
-            className="h-9 text-xs font-semibold"
-          />
-        </FormField>
-
-        <FormField label={<span className="text-[11px] font-semibold text-muted-foreground">TMT Akhir / Kontrak</span>}>
-          <Input
-            type="date"
-            value={values.tmtEndDate || ""}
-            onChange={(e) => handleUpdate({ tmtEndDate: e.target.value })}
-            className="h-9 text-xs font-semibold"
-          />
         </FormField>
       </div>
     </div>

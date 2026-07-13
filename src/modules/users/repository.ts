@@ -145,6 +145,10 @@ export async function findManyUsers(filters?: UserFilter): Promise<UserRecord[] 
     where.employeeGroupId = filters.employeeGroupId;
   }
 
+  if (filters?.employeeRankId) {
+    where.employeeRankId = filters.employeeRankId;
+  }
+
   if (filters?.employeePositionId) {
     where.employeePositionId = filters.employeePositionId;
   }

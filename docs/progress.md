@@ -123,6 +123,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] Page Rekapitulasi Arsip Dokumen Pegawai ikut mendukung filter pegawai lanjutan dari shared `EmployeeFilterBar`.
 - [x] Pencarian daftar pegawai diberi debounce ringan agar tidak memicu request pada setiap ketikan.
 - [x] Filter TMT satu tanggal memakai rentang dari tanggal yang dipilih sampai hari ini.
+- [x] Label filter `Golongan / Kelompok` diperjelas menjadi `Jenis kepegawaian` dan filter `Golongan` pegawai ditambahkan ke daftar/users dan rekap arsip.
 
 ### Data TMT / Masa Kontrak Pegawai
 - [x] `prisma/schema.prisma`
