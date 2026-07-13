@@ -31,9 +31,9 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengambil data jenis dokumen" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengambil data jenis dokumen" },
       { status: 500 }
     );
   }
@@ -58,9 +58,9 @@ export async function PATCH(
     const data = await updateDocumentTypeService(id, body, user);
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengubah jenis dokumen" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengubah jenis dokumen" },
       { status: 400 }
     );
   }
@@ -84,9 +84,9 @@ export async function DELETE(
     await deleteDocumentTypeService(id, user);
 
     return NextResponse.json({ success: true, message: "Jenis dokumen berhasil dihapus" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal menghapus jenis dokumen" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal menghapus jenis dokumen" },
       { status: 400 }
     );
   }

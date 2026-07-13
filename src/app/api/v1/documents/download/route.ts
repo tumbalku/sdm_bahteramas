@@ -40,13 +40,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Akses ditolak" }, { status: 403 });
     }
 
+
     const storage = getStorageProvider();
     let storageFile;
 
     try {
       storageFile = await storage.getFile(fileName);
-    } catch (error: any) {
-      if (error?.message?.includes("tidak ditemukan")) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes("tidak ditemukan")) {
         return NextResponse.json({ message: "File fisik tidak ditemukan" }, { status: 404 });
       }
 
@@ -66,10 +67,11 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/documents/download Error:", error);
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan internal server";
     return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
+      { message },
       { status: 500 }
     );
   }

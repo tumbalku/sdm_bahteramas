@@ -19,14 +19,15 @@ export async function GET(
     const document = await getDocumentByIdService(id, actor);
 
     return ok(document);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/documents/[id] Error:", error);
-    const status = error.message.includes("tidak ditemukan")
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan internal server";
+    const status = message.includes("tidak ditemukan")
       ? 404
-      : error.message.includes("Akses ditolak")
+      : message.includes("Akses ditolak")
         ? 403
         : 500;
-    return fail(error.message || "Terjadi kesalahan internal server", status);
+    return fail(message, status);
   }
 }
 
@@ -52,13 +53,14 @@ export async function DELETE(
     await deleteDocumentService(id, actor, ipAddress);
 
     return ok({ message: "Dokumen berhasil dihapus" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("DELETE /api/v1/documents/[id] Error:", error);
-    const status = error.message.includes("tidak ditemukan")
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan internal server";
+    const status = message.includes("tidak ditemukan")
       ? 404
-      : error.message.includes("Akses ditolak") || error.message.includes("Tidak memiliki akses") || error.message.includes("Tidak dapat menghapus")
+      : message.includes("Akses ditolak") || message.includes("Tidak memiliki akses") || message.includes("Tidak dapat menghapus")
         ? 403
         : 500;
-    return fail(error.message || "Terjadi kesalahan internal server", status);
+    return fail(message, status);
   }
 }

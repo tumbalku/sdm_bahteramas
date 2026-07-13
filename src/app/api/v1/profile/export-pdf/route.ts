@@ -25,9 +25,9 @@ export async function GET(req: NextRequest) {
         "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/profile/export-pdf Error:", error);
-    const message = error.message || "Gagal mengekspor PDF profil";
+    const message = (error instanceof Error ? error.message : undefined) || "Gagal mengekspor PDF profil";
     const status = message.includes("tidak ditemukan") ? 404 : 500;
 
     return NextResponse.json(

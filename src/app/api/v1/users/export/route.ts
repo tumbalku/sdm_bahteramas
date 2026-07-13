@@ -33,9 +33,9 @@ export async function GET(req: NextRequest) {
         "Content-Disposition": `attachment; filename="${result.fileName}"`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengekspor data pegawai" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengekspor data pegawai" },
       { status: 500 }
     );
   }

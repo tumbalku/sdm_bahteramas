@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { getStorageProvider } from "@/lib/storage";
 import { DocumentUploadInput, DocumentFilterDto } from "./types";
 import {
@@ -55,8 +56,9 @@ async function generateStorageFileName(
   
   const nextVersion = Math.max(existingCount + 1, minimumVersion ?? 1);
   const version = `v${nextVersion}`;
+  const randomSuffix = crypto.randomBytes(4).toString("hex");
   
-  const rawFileName = `${employeeId}_${category}_${docCode}_${dateStr}_${version}${originalExt}`;
+  const rawFileName = `${employeeId}_${category}_${docCode}_${dateStr}_${version}_${randomSuffix}${originalExt}`;
   return slugifyFileName(rawFileName);
 }
 
@@ -65,6 +67,8 @@ export async function uploadDocumentService(
   actor: { id: string; name: string; role: string; employeeId: string },
   ipAddress?: string
 ) {
+  const ownerId = input.ownerId || actor.id;
+
   // 1. Dapatkan metadata jenis dokumen
   const docType = await findDocumentTypeById(input.documentTypeId);
   if (!docType) {
@@ -72,7 +76,7 @@ export async function uploadDocumentService(
   }
 
   if (!input.replaceDocumentId) {
-    const existingDocument = await findDocumentByOwnerAndType(input.ownerId, input.documentTypeId);
+    const existingDocument = await findDocumentByOwnerAndType(ownerId, input.documentTypeId);
     if (existingDocument) {
       throw new Error(`Dokumen ${docType.code} sudah pernah diupload. Gunakan upload ulang jika dokumen ditolak.`);
     }
@@ -87,7 +91,7 @@ export async function uploadDocumentService(
     if (!rejectedDocument) {
       throw new Error("Dokumen yang akan diganti tidak ditemukan");
     }
-    if (rejectedDocument.ownerId !== input.ownerId) {
+    if (rejectedDocument.ownerId !== ownerId) {
       throw new Error("Tidak memiliki akses untuk mengganti dokumen ini");
     }
     if (rejectedDocument.status !== DocumentStatus.REJECTED) {
@@ -171,7 +175,7 @@ export async function uploadDocumentService(
     docType.archiveCategory,
     docType.code,
     ext,
-    input.ownerId,
+    ownerId,
     input.documentTypeId,
     minimumStorageVersion
   );
@@ -189,7 +193,7 @@ export async function uploadDocumentService(
 
   // 7. Simpan record di database
   const document = await createDocumentRecord({
-    ownerId: input.ownerId,
+    ownerId: ownerId,
     documentTypeId: input.documentTypeId,
     fileName: originalName,
     filePath,
@@ -310,8 +314,9 @@ export async function deleteDocumentService(
   try {
     const storage = getStorageProvider();
     await storage.deleteFile(document.filePath);
-  } catch (err: any) {
-    console.warn(`[WARNING] Gagal menghapus file fisik dokumen ${document.filePath}:`, err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.warn(`[WARNING] Gagal menghapus file fisik dokumen ${document.filePath}:`, message);
   }
 
   // Log activity

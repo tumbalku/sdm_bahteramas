@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Settings,
   X,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,12 @@ const menuItems: MenuItem[] = [
     title: "Verifikasi Berkas",
     href: "/verification",
     icon: CheckSquare,
+    roles: [Role.ADMIN, Role.STAFF],
+  },
+  {
+    title: "Statistik",
+    href: "/statistics",
+    icon: BarChart3,
     roles: [Role.ADMIN, Role.STAFF],
   },
   {

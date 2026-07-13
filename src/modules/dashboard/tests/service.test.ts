@@ -21,6 +21,17 @@ vi.mock("../repository", () => ({
   groupEmployeesByEmploymentStatus: vi.fn(),
   groupEmployeesByGender: vi.fn(),
   groupEmployeesByWorkplace: vi.fn(),
+  groupEmployeesByRank: vi.fn(),
+  groupEmployeesByPosition: vi.fn(),
+  groupEmployeesByProfessionGroup: vi.fn(),
+  groupEmployeesByEducation: vi.fn(),
+  groupEmployeesByReligion: vi.fn(),
+  groupEmployeesByMaritalStatus: vi.fn(),
+  getEmployeeBirthDates: vi.fn(),
+  groupDocumentsByArchiveCategory: vi.fn(),
+  getDocumentTypesForArchiveGrouping: vi.fn(),
+  groupEmployeesByGenderAndEmployeeGroup: vi.fn(),
+  groupEmployeesByGenderAndEmploymentStatus: vi.fn(),
 }));
 
 describe("dashboard service", () => {
@@ -47,23 +58,21 @@ describe("dashboard service", () => {
       vi.mocked(repo.getRecentDocuments).mockResolvedValue([{ id: "doc-recent" }] as never);
     });
 
-    it("ADMIN dan STAFF melihat statistik keseluruhan", async () => {
-      await getDashboardDataService({ id: "admin-1", role: "ADMIN" });
-      await getDashboardDataService({ id: "staff-1", role: "STAFF" });
+    it("semua role melihat statistik personal milik sendiri dan mengembalikan DTO", async () => {
+      const resultAdmin = await getDashboardDataService({ id: "admin-1", role: "ADMIN" });
+      const resultStaff = await getDashboardDataService({ id: "staff-1", role: "STAFF" });
+      const resultEmployee = await getDashboardDataService({ id: "employee-1", role: "EMPLOYEE" });
 
-      expect(repo.getDashboardStats).toHaveBeenNthCalledWith(1, undefined);
-      expect(repo.getDashboardStats).toHaveBeenNthCalledWith(2, undefined);
-      expect(repo.getExpiringDocuments).toHaveBeenNthCalledWith(1, undefined, 30);
-      expect(repo.getRecentDocuments).toHaveBeenNthCalledWith(1, undefined);
-    });
-
-    it("EMPLOYEE hanya melihat statistik milik sendiri dan mengembalikan DTO", async () => {
-      const result = await getDashboardDataService({ id: "employee-1", role: "EMPLOYEE" });
-
-      expect(repo.getDashboardStats).toHaveBeenCalledWith("employee-1");
-      expect(repo.getExpiringDocuments).toHaveBeenCalledWith("employee-1", 30);
-      expect(repo.getRecentDocuments).toHaveBeenCalledWith("employee-1");
-      expect(result).toEqual({
+      expect(repo.getDashboardStats).toHaveBeenNthCalledWith(1, "admin-1");
+      expect(repo.getDashboardStats).toHaveBeenNthCalledWith(2, "staff-1");
+      expect(repo.getDashboardStats).toHaveBeenNthCalledWith(3, "employee-1");
+      expect(repo.getExpiringDocuments).toHaveBeenNthCalledWith(1, "admin-1", 30);
+      expect(repo.getExpiringDocuments).toHaveBeenNthCalledWith(2, "staff-1", 30);
+      expect(repo.getExpiringDocuments).toHaveBeenNthCalledWith(3, "employee-1", 30);
+      expect(repo.getRecentDocuments).toHaveBeenNthCalledWith(1, "admin-1");
+      expect(repo.getRecentDocuments).toHaveBeenNthCalledWith(2, "staff-1");
+      expect(repo.getRecentDocuments).toHaveBeenNthCalledWith(3, "employee-1");
+      expect(resultEmployee).toEqual({
         totalDocuments: 10,
         pendingDocuments: 2,
         approvedDocuments: 7,
@@ -102,6 +111,57 @@ describe("dashboard service", () => {
         groups: [{ workplaceId: "workplace-1", _count: { id: 2 } }],
         names: [{ id: "workplace-1", name: "Unit Rawat Inap" }],
       } as never);
+      vi.mocked(repo.groupEmployeesByRank).mockResolvedValue({
+        groups: [{ employeeRankId: "rank-1", _count: { id: 5 } }],
+        names: [{ id: "rank-1", name: "III/a" }],
+      } as never);
+      vi.mocked(repo.groupEmployeesByPosition).mockResolvedValue({
+        groups: [{ employeePositionId: "pos-1", _count: { id: 3 } }],
+        names: [{ id: "pos-1", name: "Dokter" }],
+      } as never);
+      vi.mocked(repo.groupEmployeesByProfessionGroup).mockResolvedValue({
+        groups: [{ professionGroupId: "prof-1", _count: { id: 4 } }],
+        names: [{ id: "prof-1", name: "Tenaga Medis" }],
+      } as never);
+      vi.mocked(repo.groupEmployeesByEducation).mockResolvedValue([
+        { lastEducation: "S1", _count: { id: 6 } },
+        { lastEducation: null, _count: { id: 1 } },
+      ] as never);
+      vi.mocked(repo.groupEmployeesByReligion).mockResolvedValue([
+        { religion: "Islam", _count: { id: 5 } },
+        { religion: null, _count: { id: 1 } },
+      ] as never);
+      vi.mocked(repo.groupEmployeesByMaritalStatus).mockResolvedValue([
+        { maritalStatus: "Menikah", _count: { id: 4 } },
+        { maritalStatus: null, _count: { id: 1 } },
+      ] as never);
+      vi.mocked(repo.groupEmployeesByGenderAndEmployeeGroup).mockResolvedValue({
+        employees: [
+          { gender: "L", employeeGroupId: "group-1" },
+          { gender: "P", employeeGroupId: "group-1" },
+        ],
+        groupNameMap: new Map([["group-1", "PPPK"]]),
+      } as never);
+      vi.mocked(repo.groupEmployeesByGenderAndEmploymentStatus).mockResolvedValue({
+        employees: [
+          { gender: "L", employmentStatusId: "status-1" },
+          { gender: "P", employmentStatusId: "status-1" },
+        ],
+        statusNameMap: new Map([["status-1", "PNS"]]),
+      } as never);
+      vi.mocked(repo.getEmployeeBirthDates).mockResolvedValue([
+        { birthDate: new Date("1990-01-01") },
+        { birthDate: new Date("1985-06-15") },
+        { birthDate: new Date("1995-12-20") },
+      ] as never);
+      vi.mocked(repo.groupDocumentsByArchiveCategory).mockResolvedValue([
+        { documentTypeId: "type-1", _count: { id: 10 } },
+        { documentTypeId: "type-2", _count: { id: 5 } },
+      ] as never);
+      vi.mocked(repo.getDocumentTypesForArchiveGrouping).mockResolvedValue([
+        { id: "type-1", archiveCategory: "UTAMA" },
+        { id: "type-2", archiveCategory: "PROFESI" },
+      ] as never);
       vi.mocked(repo.groupDocumentsByStatus).mockResolvedValue([
         { status: "APPROVED", _count: { id: 5 } },
         { status: "PENDING", _count: { id: 2 } },
@@ -140,42 +200,46 @@ describe("dashboard service", () => {
         .mockResolvedValueOnce(3);
     }
 
-    it("menolak akses selain ADMIN dan tidak memanggil repository chart", async () => {
-      await expect(getDashboardChartsService({ id: "staff-1", role: "STAFF" })).rejects.toThrow("Akses ditolak. Hanya ADMIN.");
-      await expect(getDashboardChartsService({ id: "employee-1", role: "EMPLOYEE" })).rejects.toThrow("Akses ditolak. Hanya ADMIN.");
+    it("menolak akses untuk EMPLOYEE dan tidak memanggil repository chart", async () => {
+      await expect(getDashboardChartsService({ id: "employee-1", role: "EMPLOYEE" })).rejects.toThrow("Akses ditolak. Hanya ADMIN dan STAFF.");
 
       expect(repo.groupEmployeesByEmploymentStatus).not.toHaveBeenCalled();
       expect(repo.findDocumentUploadsSince).not.toHaveBeenCalled();
     });
 
-    it("menghasilkan dashboard chart DTO untuk ADMIN", async () => {
+    it("menghasilkan dashboard chart DTO untuk ADMIN dan STAFF", async () => {
       mockChartRepositories();
 
-      const result = await getDashboardChartsService({ id: "admin-1", role: "ADMIN" });
+      const resultAdmin = await getDashboardChartsService({ id: "admin-1", role: "ADMIN" });
+      const resultStaff = await getDashboardChartsService({ id: "staff-1", role: "STAFF" });
 
       expect(repo.findDocumentUploadsSince).toHaveBeenCalledWith(new Date(2026, 1, 1));
       expect(repo.countExpiringDocumentsUntil).toHaveBeenNthCalledWith(1, new Date("2026-08-03T00:00:00.000Z"));
       expect(repo.countExpiringDocumentsUntil).toHaveBeenNthCalledWith(2, new Date("2026-09-02T00:00:00.000Z"));
       expect(repo.countExpiringDocumentsUntil).toHaveBeenNthCalledWith(3, new Date("2026-10-02T00:00:00.000Z"));
-      expect(result.employeeByEmploymentStatus).toEqual([
+      expect(resultAdmin.employeeByEmploymentStatus).toEqual([
         { label: "PNS", value: 3 },
         { label: "Belum Diisi", value: 1 },
       ]);
-      expect(result.employeeByGender).toEqual([
+      expect(resultStaff.employeeByEmploymentStatus).toEqual([
+        { label: "PNS", value: 3 },
+        { label: "Belum Diisi", value: 1 },
+      ]);
+      expect(resultAdmin.employeeByGender).toEqual([
         { label: "Laki-laki", value: 4 },
         { label: "Belum Diisi", value: 1 },
       ]);
-      expect(result.verificationStatusSummary).toEqual([
+      expect(resultAdmin.verificationStatusSummary).toEqual([
         { label: "Disetujui", value: 5 },
         { label: "Menunggu", value: 2 },
       ]);
-      expect(result.documentUploadTypeKeys).toEqual(["KTP"]);
-      expect(result.expiringDocumentsSummary).toEqual([
+      expect(resultAdmin.documentUploadTypeKeys).toEqual(["KTP"]);
+      expect(resultAdmin.expiringDocumentsSummary).toEqual([
         { label: "30 hari", days: 30, value: 1 },
         { label: "60 hari", days: 60, value: 2 },
         { label: "90 hari", days: 90, value: 3 },
       ]);
-      expect(result.generatedAt).toBe("2026-07-04T00:00:00.000Z");
+      expect(resultAdmin.generatedAt).toBe("2026-07-04T00:00:00.000Z");
     });
 
     it("menghitung top dokumen wajib yang belum upload sesuai applicability dan existing pair", async () => {

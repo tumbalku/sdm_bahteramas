@@ -119,6 +119,7 @@ export const userFilterSchema = z
     workplaceId: z.string().optional(),
     employmentStatusId: z.string().optional(),
     employeeGroupId: z.string().optional(),
+    employeeRankId: z.string().optional(),
     employeePositionId: z.string().optional(),
     tmtStartDate: optionalDateString,
     tmtEndDate: optionalDateString,
@@ -126,6 +127,8 @@ export const userFilterSchema = z
     retirementAgeMax: optionalAgeNumber,
     maritalStatus: z.string().trim().optional(),
     lastEducation: z.string().trim().optional(),
+    page: z.preprocess((val) => val === undefined ? undefined : Number(val), z.number().int().min(1).optional()),
+    pageSize: z.preprocess((val) => val === undefined ? undefined : Number(val), z.number().int().min(1).optional()),
   })
   .superRefine((data, ctx) => {
     if (

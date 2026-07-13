@@ -16,10 +16,10 @@ export async function GET() {
 
     const settings = await getSettingsService();
     return NextResponse.json({ success: true, data: settings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/settings Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Terjadi kesalahan internal server" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server" },
       { status: 500 }
     );
   }
@@ -49,10 +49,10 @@ export async function PATCH(request: Request) {
     );
 
     return NextResponse.json({ success: true, message: "Pengaturan berhasil diperbarui" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PATCH /api/v1/settings Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Terjadi kesalahan internal server" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server" },
       { status: 500 }
     );
   }

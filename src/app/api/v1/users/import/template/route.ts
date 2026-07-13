@@ -20,9 +20,9 @@ export async function GET() {
         "Content-Disposition": 'attachment; filename="smdp-users-import-template.csv"',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal membuat template import" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal membuat template import" },
       { status: 500 }
     );
   }

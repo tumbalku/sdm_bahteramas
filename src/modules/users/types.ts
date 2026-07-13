@@ -104,6 +104,7 @@ export interface UserFilter {
   workplaceId?: string;
   employmentStatusId?: string;
   employeeGroupId?: string;
+  employeeRankId?: string;
   employeePositionId?: string;
   tmtStartDate?: string;
   tmtEndDate?: string;
@@ -111,6 +112,15 @@ export interface UserFilter {
   retirementAgeMax?: number;
   maritalStatus?: string;
   lastEducation?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedUsersResult {
+  items: UserRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface ImportUserError {

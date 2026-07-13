@@ -1,5 +1,6 @@
 import type {
   DashboardChartItem,
+  DashboardGroupedChartItem,
   DashboardMonthlyUploadByType,
   DashboardUploadTrendItem,
 } from "./types";
@@ -135,4 +136,76 @@ export function buildDocumentUploadCharts(uploads: DashboardUploadRecord[], refe
   }));
 
   return { byType, trend, chartKeys };
+}
+
+export function calculateAge(birthDate: Date, referenceDate = new Date()): number {
+  const age = referenceDate.getFullYear() - birthDate.getFullYear();
+  const monthDiff = referenceDate.getMonth() - birthDate.getMonth();
+  const dayDiff = referenceDate.getDate() - birthDate.getDate();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    return age - 1;
+  }
+  
+  return age;
+}
+
+export function getAgeGroup(age: number): string {
+  if (age < 20) return "< 20 tahun";
+  if (age < 30) return "20-29 tahun";
+  if (age < 40) return "30-39 tahun";
+  if (age < 50) return "40-49 tahun";
+  if (age < 60) return "50-59 tahun";
+  return "≥ 60 tahun";
+}
+
+export function groupEmployeesByAge(birthDates: Array<{ birthDate: Date | null }>, referenceDate = new Date()): DashboardChartItem[] {
+  const ageCounts = new Map<string, number>();
+  const ageOrder = ["< 20 tahun", "20-29 tahun", "30-39 tahun", "40-49 tahun", "50-59 tahun", "≥ 60 tahun"];
+  
+  ageOrder.forEach((group) => ageCounts.set(group, 0));
+  
+  birthDates.forEach((record) => {
+    if (!record.birthDate) return;
+    const age = calculateAge(record.birthDate, referenceDate);
+    const group = getAgeGroup(age);
+    ageCounts.set(group, (ageCounts.get(group) || 0) + 1);
+  });
+  
+  return ageOrder.map((label) => ({ label, value: ageCounts.get(label) || 0 }));
+}
+
+export function buildGenderGroupedChart(
+  employees: Array<{ gender: string | null; employeeGroupId?: string | null; employmentStatusId?: string | null }>,
+  groupNameMap: Map<string, string>,
+  groupIdKey: "employeeGroupId" | "employmentStatusId"
+): DashboardGroupedChartItem[] {
+  const categoryMap = new Map<string, { "Laki-laki": number; Perempuan: number; "Belum Diisi": number }>();
+
+  employees.forEach((emp) => {
+    const groupId = groupIdKey === "employeeGroupId" ? emp.employeeGroupId : emp.employmentStatusId;
+    const categoryName = groupId ? groupNameMap.get(groupId) || "Belum Diisi" : "Belum Diisi";
+    const genderLabel = normalizeGenderLabel(emp.gender);
+
+    if (!categoryMap.has(categoryName)) {
+      categoryMap.set(categoryName, { "Laki-laki": 0, Perempuan: 0, "Belum Diisi": 0 });
+    }
+
+    const counts = categoryMap.get(categoryName)!;
+    counts[genderLabel as "Laki-laki" | "Perempuan" | "Belum Diisi"] += 1;
+  });
+
+  return Array.from(categoryMap.entries())
+    .map(([category, counts]) => ({
+      category,
+      "Laki-laki": counts["Laki-laki"],
+      Perempuan: counts.Perempuan,
+      "Belum Diisi": counts["Belum Diisi"],
+    }))
+    .sort((a, b) => {
+      const totalA = a["Laki-laki"] + a.Perempuan + a["Belum Diisi"];
+      const totalB = b["Laki-laki"] + b.Perempuan + b["Belum Diisi"];
+      return totalB - totalA;
+    })
+    .slice(0, 8);
 }

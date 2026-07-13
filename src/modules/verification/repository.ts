@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { DocumentStatus } from "@prisma/client";
 
-export async function findPendingDocuments() {
+export async function findPendingDocuments(excludeOwnerId?: string) {
   return prisma.documentRecord.findMany({
     where: {
       status: DocumentStatus.PENDING,
+      ...(excludeOwnerId ? { NOT: { ownerId: excludeOwnerId } } : {}),
     },
     include: {
       documentType: true,

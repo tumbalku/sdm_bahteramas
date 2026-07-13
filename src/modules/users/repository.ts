@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { Role } from "@prisma/client";
-import { CreateUserInput, UpdateUserInput, UserFilter, UserRecord } from "./types";
+import { Role, Prisma } from "@prisma/client";
+import { CreateUserInput, PaginatedUsersResult, UpdateUserInput, UserFilter, UserRecord } from "./types";
 import type { DocumentTypeRecord } from "@/modules/document-types/types";
 
 export interface BulkCreateUserInput extends CreateUserInput {
@@ -8,7 +8,18 @@ export interface BulkCreateUserInput extends CreateUserInput {
   role: Role;
 }
 
-function mapUserRecord(u: any): UserRecord {
+type UserWithRelations = Prisma.UserGetPayload<{
+  include: {
+    employmentStatus: true;
+    employeeGroup: true;
+    professionGroup: true;
+    employeePosition: true;
+    employeeRank: true;
+    workplace: true;
+  };
+}>;
+
+function mapUserRecord(u: UserWithRelations): UserRecord {
   return {
     id: u.id,
     employeeId: u.employeeId,
@@ -80,17 +91,21 @@ function birthDateLowerBoundForAge(age: number) {
   return date;
 }
 
-function applyDateRange(where: any, field: string, from?: string, to?: string) {
-  const range: Record<string, Date> = {};
+type UserDateRangeField = "tmtStartDate" | "tmtEndDate";
+
+function applyDateRange(where: Prisma.UserWhereInput, field: UserDateRangeField, from?: string, to?: string) {
+  const range: Prisma.DateTimeNullableFilter = {};
   const fromDate = from ? startOfDate(from) : undefined;
   const toDate = to ? endOfDate(to) : undefined;
 
   if (fromDate) range.gte = fromDate;
   if (toDate) range.lte = toDate;
-  if (Object.keys(range).length > 0) where[field] = range;
+  if (Object.keys(range).length > 0) {
+    where[field] = range;
+  }
 }
 
-function applyDateUntilToday(where: any, field: string, value?: string) {
+function applyDateUntilToday(where: Prisma.UserWhereInput, field: UserDateRangeField, value?: string) {
   if (!value) return;
   const today = new Date();
   const todayString = [
@@ -102,8 +117,8 @@ function applyDateUntilToday(where: any, field: string, value?: string) {
   applyDateRange(where, field, value, todayString);
 }
 
-export async function findManyUsers(filters?: UserFilter): Promise<UserRecord[]> {
-  const where: any = {};
+export async function findManyUsers(filters?: UserFilter): Promise<UserRecord[] | PaginatedUsersResult> {
+  const where: Prisma.UserWhereInput = {};
 
   if (filters?.search) {
     where.OR = [
@@ -130,6 +145,10 @@ export async function findManyUsers(filters?: UserFilter): Promise<UserRecord[]>
     where.employeeGroupId = filters.employeeGroupId;
   }
 
+  if (filters?.employeeRankId) {
+    where.employeeRankId = filters.employeeRankId;
+  }
+
   if (filters?.employeePositionId) {
     where.employeePositionId = filters.employeePositionId;
   }
@@ -154,6 +173,39 @@ export async function findManyUsers(filters?: UserFilter): Promise<UserRecord[]>
   }
   if (Object.keys(birthDateRange).length > 0) {
     where.birthDate = birthDateRange;
+  }
+
+  if (filters?.page !== undefined || filters?.pageSize !== undefined) {
+    const page = Math.max(Number(filters?.page) || 1, 1);
+    const pageSize = Math.max(Number(filters?.pageSize) || 10, 1);
+    const skip = (page - 1) * pageSize;
+
+    const [items, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: {
+          employmentStatus: true,
+          employeeGroup: true,
+          professionGroup: true,
+          employeePosition: true,
+          employeeRank: true,
+          workplace: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip,
+        take: pageSize,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return {
+      items: items.map(mapUserRecord),
+      total,
+      page,
+      pageSize,
+    };
   }
 
   const items = await prisma.user.findMany({
@@ -199,26 +251,46 @@ export async function findUserByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
 }
 
-function mapDocumentTypeRecord(item: any): DocumentTypeRecord {
+type DocumentTypeWithRelations = Prisma.DocumentTypeGetPayload<{
+  include: {
+    documentProfessions: {
+      include: { professionGroup: true };
+    };
+    documentStatuses: {
+      include: { employmentStatus: true };
+    };
+    documentGroups: {
+      include: { employeeGroup: true };
+    };
+    documentRanks: {
+      include: { employeeRank: true };
+    };
+    documentWorkplaces: {
+      include: { workplace: true };
+    };
+  };
+}>;
+
+function mapDocumentTypeRecord(item: DocumentTypeWithRelations): DocumentTypeRecord {
   return {
     ...item,
-    targetProfessions: item.documentProfessions?.map((dp: any) => ({
+    targetProfessions: item.documentProfessions?.map((dp) => ({
       id: dp.professionGroup.id,
       name: dp.professionGroup.name,
     })) || [],
-    targetStatuses: item.documentStatuses?.map((ds: any) => ({
+    targetStatuses: item.documentStatuses?.map((ds) => ({
       id: ds.employmentStatus.id,
       name: ds.employmentStatus.name,
     })) || [],
-    targetGroups: item.documentGroups?.map((dg: any) => ({
+    targetGroups: item.documentGroups?.map((dg) => ({
       id: dg.employeeGroup.id,
       name: dg.employeeGroup.name,
     })) || [],
-    targetRanks: item.documentRanks?.map((dr: any) => ({
+    targetRanks: item.documentRanks?.map((dr) => ({
       id: dr.employeeRank.id,
       name: dr.employeeRank.name,
     })) || [],
-    targetWorkplaces: item.documentWorkplaces?.map((dw: any) => ({
+    targetWorkplaces: item.documentWorkplaces?.map((dw) => ({
       id: dw.workplace.id,
       name: dw.workplace.name,
     })) || [],
@@ -432,7 +504,7 @@ export async function updateUser(
 ): Promise<UserRecord> {
   const { password, birthDate, birthPlace, joinDate, tmtStartDate, tmtEndDate, nik, academicDegree, lastEducation, religion, maritalStatus, phone, address, role, passwordHash, hasOldEmployeeId, oldEmployeeId, ...rest } = data;
 
-  const updateData: any = {
+  const updateData: Prisma.UserUpdateInput = {
     ...rest,
   };
 

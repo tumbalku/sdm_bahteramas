@@ -9,7 +9,7 @@ export interface SecurityLogDto {
   resource: string;
   ipAddress: string | null;
   status: SecurityLogStatus;
-  metadata: any | null;
+  metadata: Record<string, unknown> | null;
   timestamp: Date;
   createdAt?: Date;
 }

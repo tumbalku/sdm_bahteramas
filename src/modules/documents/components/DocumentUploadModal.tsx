@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/select";
 import { X, Loader2, UploadCloud, FileCheck, RefreshCcw } from "lucide-react";
 import { useDocumentTypes } from "@/modules/document-types/hooks";
 import { DocumentRecordDto, DocumentUploadInput } from "../types";
+import { toast } from "sonner";
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
@@ -74,11 +75,28 @@ export function DocumentUploadModal({
 
   if (!isOpen) return null;
 
+  const validateAndSetFile = (selectedFile: File) => {
+    const ext = selectedFile.name.split(".").pop()?.toLowerCase();
+    if (!ext || !allowedFormats.includes(ext)) {
+      toast.error(`Format file harus berformat ${allowedFormats.join(", ").toUpperCase()}!`);
+      return;
+    }
+
+    const maxSizeMb = selectedType?.maxSizeMb ?? 10;
+    const maxSizeInBytes = maxSizeMb * 1024 * 1024;
+    if (selectedFile.size > maxSizeInBytes) {
+      const formattedMax = maxSizeMb < 1 ? `${Math.round(maxSizeMb * 1024)} KB` : `${maxSizeMb} MB`;
+      toast.error(`Ukuran file melebihi batas maksimum (${formattedMax})!`);
+      return;
+    }
+
+    setFile(selectedFile);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !documentTypeId) return;
     onSubmit({
-      ownerId: "",
       documentTypeId,
       replaceDocumentId: replacementDocument?.id,
       documentNumber: documentNumber || undefined,
@@ -101,18 +119,20 @@ export function DocumentUploadModal({
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
+    if (!documentTypeId) {
+      toast.error("Pilih jenis dokumen terlebih dahulu!");
+      return;
+    }
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const droppedFile = e.dataTransfer.files[0];
-      const droppedExt = droppedFile.name.split(".").pop()?.toLowerCase();
-      if (droppedExt && allowedFormats.includes(droppedExt)) {
-        setFile(droppedFile);
-      } else {
-        alert(`File harus berformat ${allowedFormats.join(", ").toUpperCase()}!`);
-      }
+      validateAndSetFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleFilePickerOpen = () => {
+    if (!documentTypeId) {
+      toast.error("Pilih jenis dokumen terlebih dahulu!");
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -167,6 +187,7 @@ export function DocumentUploadModal({
                 setDocumentNumber("");
                 setIssueDate("");
                 setExpiryDate("");
+                setFile(null);
               }}
               disabled={isLoadingTypes || isReplacementMode}
               options={optionItems}
@@ -210,7 +231,9 @@ export function DocumentUploadModal({
                 className="hidden"
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
-                  if (e.target.files?.[0]) setFile(e.target.files[0]);
+                  if (e.target.files?.[0]) {
+                    validateAndSetFile(e.target.files[0]);
+                  }
                 }}
               />
               {file ? (
@@ -231,7 +254,6 @@ export function DocumentUploadModal({
                     Maksimal ukuran file: {(() => {
                       if (!selectedType) return "10 MB";
                       if (selectedType.maxSizeMb < 1) return `${Math.round(selectedType.maxSizeMb * 1024)} KB`;
-                      if (selectedType.maxSizeMb > 50) return `${Math.round(selectedType.maxSizeMb)} KB`;
                       return `${selectedType.maxSizeMb} MB`;
                     })()}
                   </p>

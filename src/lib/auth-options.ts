@@ -51,8 +51,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const appUser = user as typeof user & { employeeId?: string; role?: string };
         token.id = user.id;
-        token.employeeId = appUser.employeeId;
-        token.role = appUser.role;
+        token.employeeId = appUser.employeeId || "";
+        token.role = appUser.role || "EMPLOYEE";
       }
       return token;
     },
@@ -64,7 +64,7 @@ export const authOptions: NextAuthOptions = {
           role?: string;
         };
         sessionUser.id = typeof token.id === "string" ? token.id : "";
-        sessionUser.employeeId = typeof token.employeeId === "string" ? token.employeeId : undefined;
+        sessionUser.employeeId = typeof token.employeeId === "string" ? token.employeeId : "";
         sessionUser.role = typeof token.role === "string" ? token.role : "EMPLOYEE";
       }
       return session;

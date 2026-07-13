@@ -244,6 +244,7 @@ Ambil daftar dokumen.
   - `archiveCategory`: `UTAMA` | `KONDISIONAL` | `PROFESI` (opsional)
   - `status`: `PENDING` | `APPROVED` | `REJECTED` (opsional)
   - `ownerId`: string (opsional — hanya efektif untuk `ADMIN`; role lain tetap dipaksa ke dokumen milik sendiri)
+  - `page`, `pageSize`: number (opsional; jika dikirim repository memakai pagination dan menghitung `total`)
 - **Behavior:**
   - Default endpoint ini adalah konteks Dokumen Saya: `ADMIN`, `STAFF`, dan `EMPLOYEE` melihat dokumen personal milik sendiri.
   - `ADMIN` dapat memakai `ownerId` eksplisit untuk melihat dokumen user lain pada konteks admin-wide.
@@ -370,12 +371,13 @@ Daftar semua pegawai.
   - `search`: string — cari by nama atau NIP
   - `professionGroupId`: filter by profesi
   - `workplaceId`: filter by unit kerja
-  - `employmentStatusId`, `employeeGroupId`, `employeePositionId`: filter kategori kepegawaian
+  - `employmentStatusId`, `employeeGroupId`, `employeeRankId`, `employeePositionId`: filter kategori kepegawaian dan golongan
   - `tmtStartDate`: filter TMT awal dari tanggal ini sampai hari ini (`YYYY-MM-DD`)
   - `tmtEndDate`: filter TMT akhir/kontrak dari tanggal ini sampai hari ini (`YYYY-MM-DD`)
   - `retirementAgeMin`, `retirementAgeMax`: filter rentang usia pegawai saat ini untuk kebutuhan masa pensiun
   - `maritalStatus`: filter status pernikahan
   - `lastEducation`: filter pendidikan terakhir
+  - `page`, `pageSize`: number (opsional; repository mendukung pagination untuk query besar)
 - **Response:**
 ```json
 {
@@ -541,7 +543,7 @@ Ambil audit trail.
   - `from`: ISO date — filter dari tanggal
   - `to`: ISO date — filter sampai tanggal
   - `page`: number (pagination)
-  - `limit`: number (pagination, default: 50)
+  - `limit`: number (pagination, default: 100, maksimum: 500)
 - **Response:**
 ```json
 {
@@ -590,6 +592,30 @@ Endpoint master data aktual dipusatkan di `/api/v1/users/categories`.
 Ambil daftar dokumen yang perlu diverifikasi.
 
 - **Auth:** `ADMIN`, `STAFF`
+- **Behavior:**
+  - `STAFF` hanya dapat melihat dokumen `PENDING` milik orang lain. Dokumen pending milik staff yang bersangkutan secara otomatis dikecualikan.
+  - `ADMIN` dapat melihat seluruh dokumen `PENDING` tanpa pengecualian.
+- **Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "clx...",
+      "ownerId": "clx...",
+      "documentType": {
+        "id": "clx...",
+        "code": "KTP",
+        "name": "Kartu Tanda Penduduk",
+        "archiveCategory": "UTAMA"
+      },
+      "status": "PENDING",
+      "fileName": "KTP_Budi.pdf",
+      "uploadedAt": "2026-06-27T08:00:00.000Z"
+    }
+  ]
+}
+```
 
 ### `GET /api/v1/verification/document/[id]`
 Ambil detail dokumen untuk proses verifikasi.
@@ -600,28 +626,47 @@ Ambil detail dokumen untuk proses verifikasi.
 Approve dokumen.
 
 - **Auth:** `ADMIN`, `STAFF`
-- **Behavior:** update `DocumentRecord.status`, buat `VerificationHistory`, panggil `logActivity()`.
+- **Behavior:** Update `DocumentRecord.status` dan buat `VerificationHistory` secara atomik dalam satu transaksi database, kemudian panggil `logActivity()`. STAFF ditolak jika mencoba memverifikasi dokumen miliknya sendiri.
+- **Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Dokumen berhasil disetujui"
+  }
+}
+```
 
 ### `POST /api/v1/verification/[id]/reject`
 Reject dokumen.
 
 - **Auth:** `ADMIN`, `STAFF`
 - **Body:** `reviewNote` wajib berisi alasan penolakan.
-- **Behavior:** update `DocumentRecord.status`, buat `VerificationHistory`, panggil `logActivity()`.
+- **Behavior:** Update `DocumentRecord.status` dan buat `VerificationHistory` secara atomik dalam satu transaksi database, kemudian panggil `logActivity()`. STAFF ditolak jika mencoba memverifikasi dokumen miliknya sendiri.
+- **Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Dokumen ditolak"
+  }
+}
+```
 
 ---
 
 ## 10. Dashboard, Settings, Backup
 
 ### `GET /api/v1/dashboard/stats`
-Ambil statistik dashboard sesuai role user login.
+Ambil statistik dashboard personal (user-scoped) milik user login.
 
 - **Auth:** Required (semua role)
+- **Behavior:** Mengembalikan total dokumen, pending, approved, rejected, dan daftar dokumen personal terbaru/segera kedaluwarsa milik user login.
 
 ### `GET /api/v1/dashboard/charts`
-Ambil analytics chart dashboard admin.
+Ambil analytics chart statistik global/operasional.
 
-- **Auth:** `ADMIN`
+- **Auth:** `ADMIN`, `STAFF`
 - **Dependency UI:** data response dirender di frontend menggunakan `recharts`.
 - **Behavior:** response berisi data agregat siap-render, bukan data mentah seluruh pegawai/dokumen.
 - **Query strategy:** agregasi pegawai dan status dokumen memakai `groupBy`; upload dokumen 6 bulan terakhir memakai select minimal lalu agregasi service-side; chart ranking dibatasi top 8/top 10 dan sisanya digabung sebagai `Lainnya`.
@@ -662,6 +707,7 @@ Export database sebagai file `.sql`.
 
 - **Auth:** `ADMIN`
 - **Response:** SQL dump dengan header `Content-Disposition`.
+- **Performa:** dump dibuat per chunk/batch tabel agar tidak menumpuk seluruh row database besar ke array di memori sekaligus.
 
 ---
 

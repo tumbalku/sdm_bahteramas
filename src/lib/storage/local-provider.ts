@@ -68,8 +68,8 @@ export class LocalStorageProvider implements StorageProvider {
         storagePath,
         provider: "local",
       };
-    } catch (error: any) {
-      if (error?.code === "ENOENT") {
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
         throw new Error(`File tidak ditemukan: ${storagePath}`);
       }
 
@@ -83,8 +83,8 @@ export class LocalStorageProvider implements StorageProvider {
     try {
       await fs.promises.unlink(destination);
       return true;
-    } catch (error: any) {
-      if (error?.code === "ENOENT") {
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
         return false;
       }
 

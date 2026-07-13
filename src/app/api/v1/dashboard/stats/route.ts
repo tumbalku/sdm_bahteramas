@@ -16,10 +16,10 @@ export async function GET() {
     });
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/dashboard/stats Error:", error);
     return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
+      { message: (error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server" },
       { status: 500 }
     );
   }

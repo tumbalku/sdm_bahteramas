@@ -9,8 +9,9 @@ import {
 import { logActivity } from "@/lib/security-log";
 import { prisma } from "@/lib/prisma";
 
-export async function getPendingDocumentsService() {
-  return findPendingDocuments();
+export async function getPendingDocumentsService(actor: { id: string; role: string }) {
+  const excludeOwnerId = actor.role === "STAFF" ? actor.id : undefined;
+  return findPendingDocuments(excludeOwnerId);
 }
 
 export async function approveDocumentService(
@@ -27,15 +28,25 @@ export async function approveDocumentService(
     throw new Error("Hanya dokumen berstatus PENDING yang dapat diverifikasi");
   }
 
-  // Update Status
-  await updateDocumentStatus(documentId, DocumentStatus.APPROVED);
+  // STAFF tidak boleh memverifikasi dokumen sendiri
+  if (actor.role === "STAFF" && document.ownerId === actor.id) {
+    throw new Error("Staf tidak diperbolehkan menyetujui dokumen miliknya sendiri");
+  }
 
-  // Catat ke VerificationHistory
-  await createVerificationHistory({
-    documentRecordId: documentId,
-    status: DocumentStatus.APPROVED,
-    reviewedById: actor.id,
-  });
+  // Update Status & Create Verification History in a single transaction
+  await prisma.$transaction([
+    prisma.documentRecord.update({
+      where: { id: documentId },
+      data: { status: DocumentStatus.APPROVED },
+    }),
+    prisma.verificationHistory.create({
+      data: {
+        documentRecordId: documentId,
+        status: DocumentStatus.APPROVED,
+        reviewedById: actor.id,
+      },
+    }),
+  ]);
 
   // Log Aktivitas
   await logActivity(
@@ -69,16 +80,26 @@ export async function rejectDocumentService(
     throw new Error("Hanya dokumen berstatus PENDING yang dapat diverifikasi");
   }
 
-  // Update Status
-  await updateDocumentStatus(documentId, DocumentStatus.REJECTED);
+  // STAFF tidak boleh memverifikasi dokumen sendiri
+  if (actor.role === "STAFF" && document.ownerId === actor.id) {
+    throw new Error("Staf tidak diperbolehkan menolak dokumen miliknya sendiri");
+  }
 
-  // Catat ke VerificationHistory
-  await createVerificationHistory({
-    documentRecordId: documentId,
-    status: DocumentStatus.REJECTED,
-    reviewedById: actor.id,
-    reviewNote,
-  });
+  // Update Status & Create Verification History in a single transaction
+  await prisma.$transaction([
+    prisma.documentRecord.update({
+      where: { id: documentId },
+      data: { status: DocumentStatus.REJECTED },
+    }),
+    prisma.verificationHistory.create({
+      data: {
+        documentRecordId: documentId,
+        status: DocumentStatus.REJECTED,
+        reviewedById: actor.id,
+        reviewNote,
+      },
+    }),
+  ]);
 
   // Log Aktivitas
   await logActivity(

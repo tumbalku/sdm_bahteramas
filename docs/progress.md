@@ -1,6 +1,6 @@
 # Progress — SMDP Portal
 
-> **Last Updated:** 2026-07-04
+> **Last Updated:** 2026-07-12
 > **AI Agent:** Update file ini setelah menyelesaikan task besar. Tandai item sesuai statusnya.
 > **Rule:** Jika item pada `## 🔴 Yang Belum Dibuat` sudah diimplementasi, pindahkan/catat hasilnya ke `## ✅ Yang Sudah Selesai` dan hapus dari backlog.
 
@@ -15,6 +15,15 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 ---
 
 ## ✅ Yang Sudah Selesai
+
+### Remediasi Code Review 2026-07-13 (Selesai 2026-07-13)
+- [x] **BUG-01** — Rapikan kontrak upload dokumen agar client tidak lagi mengirim `ownerId: ""`; owner tetap ditentukan server dari session.
+- [x] **BUG-02** — Perbaiki label satuan maksimal ukuran file di modal upload agar nilai > 50 tetap ditampilkan sebagai MB, bukan KB.
+- [x] **MINOR-01** — Jadikan approve/reject dokumen atomik dengan transaksi database: update status dan tulis `VerificationHistory` harus berhasil bersama.
+- [x] **MINOR-05 / TYPE-06** — Standarkan response endpoint documents dan verification ke helper `ok()` / `fail()` tanpa mengubah kontrak UI.
+- [x] **TYPE-08** — Tegaskan dan implementasikan aturan bisnis: `STAFF` tidak boleh melihat/memverifikasi dokumen yang mereka upload sendiri; `ADMIN` tetap dapat memverifikasi semua dokumen.
+- [x] **IMPROVE-04** — Tambahkan validasi ukuran file sisi client sebelum upload agar user tidak menunggu upload yang pasti gagal.
+- [x] Verifikasi akhir: sukses menjalankan `npm test -- --run`, `npm run lint`, `npx tsc --noEmit`, dan `npm run build`.
 
 ### Dokumentasi
 - [x] PRD v1.0 (`PRD-SMDP-PORTAL-v1.0-20260627.md`) — selesai 2026-06-27
@@ -114,6 +123,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] Page Rekapitulasi Arsip Dokumen Pegawai ikut mendukung filter pegawai lanjutan dari shared `EmployeeFilterBar`.
 - [x] Pencarian daftar pegawai diberi debounce ringan agar tidak memicu request pada setiap ketikan.
 - [x] Filter TMT satu tanggal memakai rentang dari tanggal yang dipilih sampai hari ini.
+- [x] Label filter `Golongan / Kelompok` diperjelas menjadi `Jenis kepegawaian` dan filter `Golongan` pegawai ditambahkan ke daftar/users dan rekap arsip.
 
 ### Data TMT / Masa Kontrak Pegawai
 - [x] `prisma/schema.prisma`
@@ -356,6 +366,14 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 - [x] Chart hanya dirender untuk role `ADMIN`; role lain tetap memakai dashboard existing.
 - [x] `docs/api.md`, `docs/features.md`, dan `docs/progress.md` diperbarui.
 
+### Unified Dashboard & Halaman Statistik Global (Selesai 2026-07-12)
+- [x] Dashboard personal (user-scoped) seragam untuk semua role (ADMIN, STAFF, EMPLOYEE), menyembunyikan visualisasi chart global demi data safety.
+- [x] Halaman `/statistics` khusus ADMIN dan STAFF untuk visualisasi statistik global.
+- [x] Integrasi sidebar menu `Statistik` dengan proteksi role ADMIN dan STAFF.
+- [x] Modifikasi `getDashboardDataService` agar ownerId selalu ter-scoped ke `user.id`.
+- [x] Modifikasi `getDashboardChartsService` dan API route `/api/v1/dashboard/charts` agar STAFF diizinkan mengakses data charts.
+- [x] Update unit test dashboard dan seluruh quality gate passed.
+
 ### F09 — Settings
 - [x] `src/modules/settings/service.ts`
 - [x] `src/modules/settings/repository.ts`
@@ -527,9 +545,14 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 
 ---
 
-## 🟡 Sedang Dikerjakan
-
-*(Kosong — tidak ada task dokumentasi/implementasi aktif yang tercatat.)*
+## 🟢 Remediasi Lanjutan After Review 2026-07-13 (Selesai 2026-07-13)
+- [x] **MINOR-06** — Ganti `alert()` pada modal aksi verifikasi dengan feedback toast Sonner.
+- [x] **MINOR-02 / MINOR-03** — Hapus fallback dynamic Prisma/raw SQL untuk `SystemSetting` dan workaround `db-columns.ts` jika tidak lagi diperlukan oleh backup.
+- [x] **MINOR-04 / IMPROVE-05** — Tegaskan kebijakan audit login dan tambahkan rate limiting login credentials agar brute-force lebih terkendali.
+- [x] **TYPE-01 / TYPE-03 / TYPE-04 / TYPE-05** — Kurangi `any` yang disebut di AFTER-REVIEW, tambahkan typing NextAuth, rapikan tipe dashboard, dan ekstrak utility download bersama.
+- [x] **TYPE-02** — Ganti pola `catch (error: any)` pada API route menjadi `unknown` + helper error message yang aman.
+- [x] **IMPROVE-01 / IMPROVE-02 / IMPROVE-03 / IMPROVE-06** — Selesaikan peningkatan performa: backup tidak menumpuk besar di memori, pagination/limit list besar, dan nama file upload lebih unik terhadap race condition.
+- [x] Verifikasi akhir: `npm test -- --run`, `npm run lint`, `npx tsc --noEmit`, dan `npm run build`.
 
 ## 🟢 Audit Security RLS (Selesai 2026-07-01)
 - **Analisis masalah:** Terdapat peringatan `rls_disabled_in_public` dari Supabase. Project menggunakan Prisma dan tidak menggunakan REST API Supabase.
@@ -545,9 +568,7 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 > Perbaikan opsional/tambahan yang tidak memblokir rilis produksi namun penting sebagai peningkatan berkelanjutan.
 
 - [ ] **B-01** — Tambahkan teks peringatan keamanan di UI Settings sebelum tombol unduh backup database (misal: "File backup mengandung hash kata sandi...").
-- [ ] **B-02** — Bersihkan penggunaan `catch (error: any)` secara bertahap dengan beralih ke `error instanceof Error` agar type safety lebih terjamin.
 - [ ] **B-03** — Migrasikan in-memory rate limiter `verify-password` ke Redis atau tabel DB ketika deployment mulai menggunakan multi-instance.
-- [ ] **B-04** — Ganti mapping `mapUserRecord(u: any)` di repository users dengan tipe tergenerasi Prisma.
 - [ ] **B-05** — Definisikan tipe update data profil secara eksplisit (seperti `Partial<Prisma.UserUpdateInput>`) alih-alih `any` di repository profile.
 
 ## 📋 TODO Dari Analisis PRD
@@ -610,3 +631,6 @@ Dokumentasi sudah dirapikan agar mengikuti kondisi source code aktual per 2026-0
 | 2026-07-11 | AI Agent | Ubah engine export PDF Profil Pegawai ke Puppeteer dengan template HTML print, logo/foto via data URI, dan QR verifikasi nyata pada footer. |
 | 2026-07-11 | AI Agent | Tambah export PDF mandiri pada Page Profil Saya lewat endpoint `/api/v1/profile/export-pdf`, hook profile, tombol UI, dan audit `OWN_PROFILE_PDF`. |
 | 2026-07-12 | AI Agent | Remediasi audit kode 2026-07-12: perbaiki semua P0 (secret env helper, rate limit verify-password, backup OOM pagination, eslint CLI migration) dan P1 (getDocumentByIdService, fetch komponen ke hooks, standard response API, Prisma generated update, atomic delete, standard download id). Seluruh quality gate hijau, siap dideploy ke produksi. |
+| 2026-07-12 | AI Agent | Selesaikan implementasi Unified Employee Dashboard UI & Statistik Global (/statistics) untuk ADMIN & STAFF. |
+| 2026-07-13 | AI Agent | Selesaikan Remediasi Code Review 2026-07-13: perbaikan BUG-01, BUG-02, MINOR-01, MINOR-05/TYPE-06, TYPE-08, dan IMPROVE-04. Semua tests, lint, typecheck, dan build successfully passed. |
+| 2026-07-13 | AI Agent | Selesaikan Remediasi Lanjutan After Review: toast verifikasi, audit login + rate limit, typing NextAuth/users/dashboard, utility download, pagination/limit list besar, backup chunked streaming, hapus db-columns workaround, dan nama file upload unik. |

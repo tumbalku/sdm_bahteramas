@@ -28,8 +28,8 @@ export function DocumentsView() {
     setIsMounted(true);
   }, []);
 
-  const currentUserRole = (session?.user as any)?.role || "EMPLOYEE";
-  const currentUserId = (session?.user as any)?.id || "";
+  const currentUserRole = session?.user?.role || "EMPLOYEE";
+  const currentUserId = session?.user?.id || "";
 
   // Fetch all user documents and master document types applicable for this employee
   const { data: allDocuments = [], isLoading: isLoadingDocs } = useDocuments({});

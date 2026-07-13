@@ -10,8 +10,8 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Akses ditolak. Hanya ADMIN." }, { status: 403 });
+    if (session.user.role !== "ADMIN" && session.user.role !== "STAFF") {
+      return NextResponse.json({ message: "Akses ditolak. Hanya ADMIN dan STAFF." }, { status: 403 });
     }
 
     const data = await getDashboardChartsService({
@@ -20,10 +20,10 @@ export async function GET() {
     });
 
     return NextResponse.json({ data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/dashboard/charts Error:", error);
     return NextResponse.json(
-      { message: error.message || "Terjadi kesalahan internal server" },
+      { message: (error instanceof Error ? error.message : undefined) || "Terjadi kesalahan internal server" },
       { status: 500 }
     );
   }

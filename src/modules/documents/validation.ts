@@ -20,4 +20,6 @@ export const getDocumentsSchema = z.object({
   employeeGroupId: z.string().optional(),
   professionGroupId: z.string().optional(),
   employeePositionId: z.string().optional(),
+  page: z.preprocess((val) => val === undefined ? undefined : Number(val), z.number().int().min(1).optional()),
+  pageSize: z.preprocess((val) => val === undefined ? undefined : Number(val), z.number().int().min(1).optional()),
 });

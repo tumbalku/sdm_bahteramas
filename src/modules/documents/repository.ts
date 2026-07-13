@@ -49,6 +49,55 @@ export async function findDocuments(filters: DocumentFilterDto) {
     where.owner = ownerWhere;
   }
 
+  if (filters.page !== undefined || filters.pageSize !== undefined) {
+    const page = Math.max(Number(filters.page) || 1, 1);
+    const pageSize = Math.max(Number(filters.pageSize) || 10, 1);
+    const skip = (page - 1) * pageSize;
+
+    const [items, total] = await Promise.all([
+      prisma.documentRecord.findMany({
+        where,
+        include: {
+          documentType: true,
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              employeeId: true,
+              avatarUrl: true,
+            },
+          },
+          verificationHistories: {
+            take: 1,
+            orderBy: {
+              reviewedAt: "desc",
+            },
+            include: {
+              reviewedBy: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          uploadedAt: "desc",
+        },
+        skip,
+        take: pageSize,
+      }),
+      prisma.documentRecord.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+    };
+  }
+
   return prisma.documentRecord.findMany({
     where,
     include: {

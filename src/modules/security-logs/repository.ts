@@ -68,12 +68,20 @@ export async function findSecurityLogs(filters: SecurityLogFilterParams) {
   const page = Math.max(filters.page || 1, 1);
   const skip = (page - 1) * limit;
 
-  return prisma.securityLog.findMany({
-    where,
-    orderBy: {
-      timestamp: "desc",
-    },
-    skip,
-    take: limit,
-  });
+  const [items, total] = await Promise.all([
+    prisma.securityLog.findMany({
+      where,
+      orderBy: {
+        timestamp: "desc",
+      },
+      skip,
+      take: limit,
+    }),
+    prisma.securityLog.count({ where }),
+  ]);
+
+  return {
+    items,
+    total,
+  };
 }

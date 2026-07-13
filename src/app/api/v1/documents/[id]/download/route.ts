@@ -32,8 +32,8 @@ export async function GET(
 
     try {
       storageFile = await storage.getFile(document.filePath);
-    } catch (error: any) {
-      if (error?.message?.includes("tidak ditemukan")) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes("tidak ditemukan")) {
         return fail("File fisik tidak ditemukan", 404);
       }
 
@@ -53,13 +53,14 @@ export async function GET(
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/v1/documents/[id]/download Error:", error);
-    const status = error.message.includes("tidak ditemukan")
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan internal server";
+    const status = message.includes("tidak ditemukan")
       ? 404
-      : error.message.includes("Akses ditolak")
+      : message.includes("Akses ditolak")
         ? 403
         : 500;
-    return fail(error.message || "Terjadi kesalahan internal server", status);
+    return fail(message, status);
   }
 }

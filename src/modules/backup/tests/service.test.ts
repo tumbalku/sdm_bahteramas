@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { generateDatabaseSqlDump } from "../service";
 import { prisma } from "@/lib/prisma";
-import { hasUserColumn } from "@/lib/db-columns";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -14,10 +13,6 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/lib/db-columns", () => ({
-  hasUserColumn: vi.fn(),
-}));
-
 vi.mock("@/lib/security-log", () => ({
   logActivity: vi.fn(),
 }));
@@ -27,7 +22,6 @@ describe("Backup Service", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(hasUserColumn).mockResolvedValue(true);
     vi.mocked(prisma.documentRecord.count).mockResolvedValue(0);
   });
 

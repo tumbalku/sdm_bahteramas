@@ -27,9 +27,9 @@ export async function GET(req: NextRequest) {
     const data = await getAllUsers(parsed.data);
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengambil data pegawai" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal mengambil data pegawai" },
       { status: 500 }
     );
   }
@@ -50,9 +50,9 @@ export async function POST(req: NextRequest) {
     const data = await createUserService(body, user);
 
     return NextResponse.json({ success: true, data }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal membuat pegawai baru" },
+      { success: false, error: (error instanceof Error ? error.message : undefined) || "Gagal membuat pegawai baru" },
       { status: 400 }
     );
   }
